@@ -578,33 +578,34 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 ## Quick start
 
 > [!NOTE]
-> Commands below describe the intended developer experience of the first release.
+> `make setup`, `make check`, `make test-claim` and `make test-all` work today. `make site`
+> (web app, milestone M3) and `make ingest` (live data) are **planned** and exit with a message.
+> The cached fixtures are **synthetic** (simulated returns), so reports on them show the
+> machinery working, not facts about real markets.
 
 ### Recommended
 
 ```bash
 git clone https://github.com/McMuf/Spillover.git
 cd Spillover
-make setup      # installs uv, Python deps and pnpm packages; no API keys needed
-make check      # lint, type-check, tests, schema validation
-make site       # builds and serves the site at http://localhost:5173
+make setup      # installs uv (if missing) and the Python dependencies; no API keys needed
+make check      # format, lint, strict types, tests, claim and schema validation
+make test-all   # runs the seed claims on the fixtures, FDR-adjusted across the set
 ```
 
 The repo ships with cached **fixtures**, so everything runs offline.
 
 ### First run
 
-1. Open the site and browse the seed claims.
+1. Run a seed claim: `make test-claim CLAIM=claims/clm_fomc_abs_move_spx_v1.yaml`
 2. Copy the template: `cp claims/_template.yaml claims/my_first_claim.yaml`
 3. Edit it, then check feasibility: `make test-claim CLAIM=claims/my_first_claim.yaml`
 4. Read the printed report: matching events, effective sample, effect size and interval.
 
-### With live data (optional)
+### With live data (planned)
 
-```bash
-cp .env.example .env     # add your own keys; the repo never needs yours
-make ingest              # fetches new headlines and prices into the local cache
-```
+Live ingestion is not built yet. When it is, it will read your own keys from a local `.env`
+(never committed) and fill the local cache.
 
 ## Contributing
 
@@ -703,7 +704,7 @@ Security issues should be reported privately; see [`SECURITY.md`](SECURITY.md).
 
 | Milestone | Goal | Done when |
 |---|---|---|
-| **M1: Engine on fixtures** | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
+| **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, PR template, CI comment bot and `CONTRIBUTING.md` live; 20 starter claims registered |
@@ -715,9 +716,9 @@ Security issues should be reported privately; see [`SECURITY.md`](SECURITY.md).
 | 1 | Hyperscaler capex raise leads a supplier basket higher over day 0 to +5 | Core | Rough event count, to be verified |
 | 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag |
 | 3 | Mag-7 negative free-cash-flow headline hits MAGS beyond the company's weight | Thin | Few events; tests the weight decomposition |
-| 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first** |
+| 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
 | 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified |
-| 6 | Random dates show no effect | Placebo | Permanent; **build first** |
+| 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v1` |
 
 Build order: claims **4** and **6** first, because they have plenty of events and validate the engine before anything interesting is tested on it. Event counts for claims 1, 2, 3 and 5 are rough estimates and must be counted from data before launch.
 
@@ -834,8 +835,10 @@ spillover/
 | `make setup` | Install toolchain and dependencies |
 | `make check` | Lint, type-check, test, validate schemas |
 | `make test-claim CLAIM=claims/x.yaml` | Feasibility and event-study report for one claim |
-| `make site` | Build and serve the web app locally |
-| `make ingest` | Fetch live data into the local cache (needs your keys) |
+| `make site` | *(planned, M3)* Build and serve the web app locally |
+| `make test-all` | Run every claim; p-values adjusted across the set |
+| `make fmt` | Auto-format and apply safe lint fixes |
+| `make ingest` | *(planned)* Fetch live data into the local cache (needs your keys) |
 
 ## Contributors
 

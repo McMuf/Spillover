@@ -7,7 +7,7 @@ this, the claim is frozen (see ``frozen.py``): changing it means registering a n
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from datetime import UTC, datetime
 from datetime import datetime as _dt
 from pathlib import Path
@@ -23,13 +23,27 @@ def has_placeholder(text: str) -> bool:
     return PLACEHOLDER_LINE.search(text) is not None
 
 
-def register_claims(claims_dir: Path, now: datetime) -> list[Path]:
-    """Stamp every draft claim with ``now`` (UTC). Returns the files that changed."""
+def _selected(paths: list[Path], only: Collection[Path] | None) -> list[Path]:
+    """All paths, or just those named in ``only`` (compared by resolved location)."""
+    if only is None:
+        return paths
+    wanted = {p.resolve() for p in only}
+    return [p for p in paths if p.resolve() in wanted]
+
+
+def register_claims(
+    claims_dir: Path, now: datetime, only: Collection[Path] | None = None
+) -> list[Path]:
+    """Stamp draft claims with ``now`` (UTC). Returns the files that changed.
+
+    With ``only``, nothing but those files can be stamped: CI passes exactly the files a push
+    added, so an unrelated push can never register a draft that was merely sitting on main.
+    """
     if now.tzinfo is None:
         raise ClaimError("registration time must be timezone-aware")
     stamp = now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     changed: list[Path] = []
-    for path in claim_files(claims_dir):
+    for path in _selected(claim_files(claims_dir), only):
         claim = load_claim(path)  # never register an invalid claim
         if claim.registered_at_utc is not None:
             continue
@@ -57,12 +71,13 @@ def _stamp_submissions(
     now: datetime,
     load: Callable[[Path], object],
     is_stamped: Callable[[object], bool],
+    only: Collection[Path] | None = None,
 ) -> list[Path]:
     if now.tzinfo is None:
         raise ClaimError("submission time must be timezone-aware")
     stamp = now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     changed: list[Path] = []
-    for path in lane_files(directory):
+    for path in _selected(lane_files(directory), only):
         if is_stamped(load(path)):  # also validates: an invalid file is never stamped
             continue
         text = path.read_text(encoding="utf-8")
@@ -75,16 +90,25 @@ def _stamp_submissions(
     return changed
 
 
-def stamp_challenges(directory: Path, now: datetime) -> list[Path]:
+def stamp_challenges(
+    directory: Path, now: datetime, only: Collection[Path] | None = None
+) -> list[Path]:
     return _stamp_submissions(
-        directory, now, load_challenge, lambda c: isinstance(getattr(c, "submitted_at", None), _dt)
+        directory,
+        now,
+        load_challenge,
+        lambda c: isinstance(getattr(c, "submitted_at", None), _dt),
+        only,
     )
 
 
-def stamp_replications(directory: Path, now: datetime) -> list[Path]:
+def stamp_replications(
+    directory: Path, now: datetime, only: Collection[Path] | None = None
+) -> list[Path]:
     return _stamp_submissions(
         directory,
         now,
         load_replication,
         lambda r: isinstance(getattr(r, "submitted_at", None), _dt),
+        only,
     )

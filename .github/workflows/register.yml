@@ -7,8 +7,11 @@ on:
     branches: [main]
     paths:
       - "claims/*.yaml"
+      - "!claims/_*.yaml"
       - "challenges/*.yaml"
+      - "!challenges/_*.yaml"
       - "replications/*.yaml"
+      - "!replications/_*.yaml"
 
 permissions:
   contents: write
@@ -24,6 +27,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the stamping step diffs the push against its parent
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
@@ -32,8 +37,28 @@ jobs:
       - name: Install
         run: uv sync
 
-      - name: Stamp registered_at / submitted_at on what just merged
-        run: uv run spillover register
+      # Stamp ONLY the files this push added. Never "every draft on main": a draft that merely sits
+      # there (or an unrelated push that happens to match the path filter) must not be registered,
+      # because registration freezes a claim for good.
+      - name: Stamp registered_at / submitted_at on what this push added
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if ! [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] || [[ "$BEFORE" =~ ^0+$ ]]; then
+            BEFORE="${AFTER}^"
+          fi
+          added=$(git diff --name-only --diff-filter=A "$BEFORE" "$AFTER" -- claims challenges replications \
+            | grep -E '\.yaml$' | grep -Ev '(^|/)_[^/]*$' || true)
+          args=()
+          while IFS= read -r f; do
+            [ -n "$f" ] && args+=(--only "$f")
+          done <<< "$added"
+          if [ ${#args[@]} -eq 0 ]; then
+            echo "this push added no claim, challenge or replication"
+            exit 0
+          fi
+          uv run spillover register "${args[@]}"
 
       - name: Commit registration
         run: |

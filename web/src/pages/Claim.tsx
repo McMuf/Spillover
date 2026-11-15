@@ -13,6 +13,7 @@ import { useTheme } from "../components/ThemeContext";
 import type { SiteClaim, SiteData } from "../generated/site";
 import { findClaim } from "../lib/data";
 import { citation, claimVersion, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
+import { embedSnippet } from "../lib/embed";
 import { buildGraph } from "../lib/graph";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
 
@@ -23,6 +24,42 @@ const EventWindowChart = lazy(() =>
 );
 
 const TAB = "whitespace-nowrap rounded-full px-3 py-2 text-sm sm:px-4 text-muted data-[state=active]:bg-surface-alt data-[state=active]:font-semibold data-[state=active]:text-fg";
+
+function EmbedBox({ claimId }: { claimId: string }) {
+  const [copied, setCopied] = useState(false);
+  const snippet = embedSnippet(`${window.location.origin}${window.location.pathname}`, claimId);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Copy this snippet:", snippet);
+    }
+  };
+  return (
+    <details className="rounded-[10px] border border-line bg-surface p-4">
+      <summary className="cursor-pointer text-sm font-semibold">Embed this claim</summary>
+      <p className="mt-3 text-xs text-muted">
+        Paste this into a blog post or web page to show a live, read-only card for this claim. It always shows the
+        current status and keeps the &ldquo;not investment advice&rdquo; line.
+      </p>
+      <label className="mt-3 block text-xs text-muted">
+        Embed code
+        <textarea
+          readOnly
+          rows={3}
+          value={snippet}
+          onFocus={(e) => e.currentTarget.select()}
+          className="mt-1 w-full rounded-[10px] border border-line bg-surface-alt p-2 font-mono text-xs text-fg"
+        />
+      </label>
+      <button type="button" onClick={copy} className="mt-2 rounded-full border border-line px-4 py-1.5 text-sm hover:bg-surface-alt">
+        {copied ? "Copied" : "Copy embed code"}
+      </button>
+    </details>
+  );
+}
 
 function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
   const { theme } = useTheme();
@@ -70,6 +107,8 @@ function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
       </section>
 
       <NodeLegend compact />
+
+      <EmbedBox claimId={c.id} />
 
       <details className="rounded-[10px] border border-line bg-surface p-4">
         <summary className="cursor-pointer text-sm font-semibold">Claim file (YAML)</summary>

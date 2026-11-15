@@ -8,6 +8,8 @@ const PAGES = [
   ["claim overview", "/#/claims/clm_fomc_abs_move_spx_v1"],
   ["event", "/#/events/fomc_2025-12-17"],
   ["scoreboard", "/#/scoreboard"],
+  ["method", "/#/method"],
+  ["embed card", "/#/embed/claims/clm_fomc_abs_move_spx_v1"],
   ["submit", "/#/submit"],
 ] as const;
 

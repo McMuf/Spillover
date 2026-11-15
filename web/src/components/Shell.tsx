@@ -6,6 +6,7 @@ import { useTheme } from "./ThemeContext";
 const NAV = [
   { to: "/", label: "Claims", end: true },
   { to: "/scoreboard", label: "Scoreboard", end: false },
+  { to: "/method", label: "Method", end: false },
   { to: "/submit", label: "Submit", end: false },
 ];
 

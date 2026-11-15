@@ -375,3 +375,32 @@ def test_cli_register_and_predict_round_trip(
 def test_cli_now_requires_a_timezone() -> None:
     result = runner.invoke(app, ["register", "--now", "2026-01-05T12:00:00"])
     assert result.exit_code != 0
+
+
+def test_register_only_stamps_the_files_it_is_given(tmp_path: Path) -> None:
+    """A draft that merely sits on main must not be registered by an unrelated push."""
+    claims = tmp_path / "claims"
+    claims.mkdir()
+    a = write(claims, id="clm_a_v1", registered_at="set_by_ci_on_merge")
+    b = write(claims, id="clm_b_v1", registered_at="set_by_ci_on_merge")
+
+    assert register_claims(claims, NOW, only=[a]) == [a]
+    assert load_claim(a).registered_at_utc == NOW
+    assert load_claim(b).registered_at_utc is None, "the other draft stays a draft"
+    assert register_claims(claims, NOW, only=[]) == [], "nothing named means nothing stamped"
+    assert register_claims(claims, NOW, only=[tmp_path / "elsewhere.yaml"]) == []
+
+    result = runner.invoke(
+        app,
+        [
+            "register",
+            "--claims-dir",
+            str(claims),
+            "--only",
+            str(b),
+            "--now",
+            "2026-02-01T00:00:00Z",
+        ],
+    )
+    assert result.exit_code == 0 and "1 claim(s)" in result.output
+    assert load_claim(b).registered_at_utc is not None

@@ -1,0 +1,25 @@
+"""Words on the website that restate engine constants must not drift from the code."""
+
+from pathlib import Path
+
+from spillover.eventstudy import DEFAULT_BOOT, EST_GAP, EST_LEN
+from spillover.models import MIN_FORWARD_EVENTS_FLOOR
+
+ROOT = Path(__file__).resolve().parents[2]
+METHOD = (ROOT / "web" / "src" / "pages" / "Method.tsx").read_text()
+
+
+def test_the_method_page_states_the_engines_real_constants() -> None:
+    assert f"{EST_LEN} trading days" in METHOD, "estimation window length"
+    assert f"{EST_GAP} trading days before day 0" in METHOD, "gap before the event"
+    assert f"{DEFAULT_BOOT:,} resampled" in METHOD, "bootstrap resamples"
+
+
+def test_the_method_page_uses_the_real_status_names() -> None:
+    for status in ("Draft", "Proposed", "Supported", "Not supported", "Inconclusive"):
+        assert f">{status}<" in METHOD or f"{status}</dt>" in METHOD, status
+
+
+def test_the_claim_floor_is_still_what_the_readme_template_says() -> None:
+    assert MIN_FORWARD_EVENTS_FLOOR == 8
+    assert "min_forward_events: 8" in (ROOT / "claims" / "_template.yaml").read_text()

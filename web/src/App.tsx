@@ -4,8 +4,10 @@ import { Shell } from "./components/Shell";
 import { ThemeProvider } from "./components/ThemeContext";
 import { SiteProvider } from "./lib/data";
 import ClaimPage from "./pages/Claim";
+import EmbedClaim from "./pages/Embed";
 import EventPage from "./pages/Event";
 import Home from "./pages/Home";
+import Method from "./pages/Method";
 import NotFound from "./pages/NotFound";
 import ScoreboardPage from "./pages/Scoreboard";
 
@@ -19,11 +21,14 @@ export default function App() {
       <SiteProvider>
         <HashRouter>
           <Routes>
+            {/* Outside the shell on purpose: no header or footer, so it can be framed elsewhere. */}
+            <Route path="embed/claims/:id" element={<EmbedClaim />} />
             <Route element={<Shell />}>
               <Route index element={<Home />} />
               <Route path="claims/:id" element={<ClaimPage />} />
               <Route path="events/:id" element={<EventPage />} />
               <Route path="scoreboard" element={<ScoreboardPage />} />
+              <Route path="method" element={<Method />} />
               <Route path="submit" element={<Suspense fallback={<p className="text-muted">Loading form…</p>}><SubmitPage /></Suspense>} />
               <Route path="*" element={<NotFound />} />
             </Route>

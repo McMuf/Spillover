@@ -305,15 +305,22 @@ def register(
     replications_dir: Annotated[Path, typer.Option(help="Directory of replications.")] = Path(
         "replications"
     ),
+    only: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--only",
+            help="Stamp only these files (repeatable). CI passes exactly what a push added.",
+        ),
+    ] = None,
     now: NowOpt = None,
 ) -> None:
     """Stamp draft claims, challenges and replications (run by CI when their PR merges)."""
     when = _now(now)
     try:
-        claims = register_claims(claims_dir, when)
-        challenges = stamp_challenges(challenges_dir, when) if challenges_dir.exists() else []
+        claims = register_claims(claims_dir, when, only)
+        challenges = stamp_challenges(challenges_dir, when, only) if challenges_dir.exists() else []
         replications = (
-            stamp_replications(replications_dir, when) if replications_dir.exists() else []
+            stamp_replications(replications_dir, when, only) if replications_dir.exists() else []
         )
     except ClaimError as exc:
         raise _fail(str(exc)) from exc

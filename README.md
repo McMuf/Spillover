@@ -284,11 +284,15 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 - Per contributor: claims registered, share supported, **calibration plot** (stated confidence versus realized hit rate), and an explicit note on small samples.
 - A permanent **Placebo** row: a claim on random dates that should show nothing. If the placebo ever "works," the engine has a bug, and the site says so.
 
+### Also built
+
+- **Method page** (`#/method`): the steps behind every number, what each status means, what the method cannot tell you, a glossary, and a reading list of standard references. A test fails if its constants (estimation window, gap, bootstrap size) drift from the engine's.
+- **Embed widget:** every claim page has an "Embed this claim" box with a one-line `<iframe>` snippet. It shows a read-only card (status, evidence meter, backtest label, the not-advice line) with no site chrome, and links back. Checked in a browser by framing it on a separate page.
+
 ### Later screens (planned)
 
-- **What-if mode:** pick a claim, enter a hypothetical position size and leverage, and see a *liquidation distance* in plain language. Educational only; no execution.
-- **Reading list:** curated papers and posts per claim family.
-- **Embed widget:** a one-line snippet to put a live claim card in a blog post.
+- **What-if mode:** pick a claim, enter a hypothetical position size and leverage, and see a *liquidation distance* in plain language. Educational only; no execution. Not built: correct margin rules differ by venue and a wrong number would mislead.
+- **Per-claim-family reading lists:** the Method page has the general references; curated lists per claim family need a person's judgment.
 
 ### Visual system starter set
 
@@ -521,7 +525,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 | Workflow | Trigger | Permissions | Does |
 |---|---|---|---|
 | `check.yml` | `pull_request`, push to `main` | read-only, no secrets | Lint, type-check, test, schema-validate, verify the ledger, and block PRs that edit registered claims or hand-edit generated outputs |
-| `register.yml` | push to `main` touching `claims/` | write to `main`; checks out only trusted code | Stamp `registered_at` on newly merged claims |
+| `register.yml` | push to `main` adding a claim, challenge or replication | write to `main`; checks out only trusted code | Stamp `registered_at` / `submitted_at` on **only the files that push added** (never every draft on `main`, because registration freezes a claim). Templates are excluded |
 | `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Reads the PR's changed files through the GitHub API as plain text, validates them with trusted code from `main`, and posts or updates one comment. Everything taken from the PR is shown inertly (code spans, length-limited) and the bot only edits its own comment |
 | `ingest.yml` | schedule on `main` | secrets for data keys; write to `main` | Fetch headlines, extract events, build the price cache, freeze predictions. **Off by default** (repository variable `INGEST_ENABLED`) |
 | `score.yml` | schedule on `main` | `FRED_API_KEY` secret; write to `main` | Grade closed windows against real prices, rebuild scoreboard data. Same off-by-default switch |
@@ -746,7 +750,6 @@ Build order: claims **4** and **6** first, because they have plenty of events an
 
 - "What if" mode with liquidation-distance education.
 - Cross-venue claims (equity versus perpetual) including closed-market behavior.
-- Embeddable claim cards.
 - Optional read-only MCP server.
 - Translations of the README and docs.
 

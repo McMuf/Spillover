@@ -34,7 +34,7 @@ def test_site_data_covers_every_seed_claim(site: SiteData) -> None:
     assert ids == sorted(ids) and len(ids) >= 2
     assert site.meta.data_synthetic is True and site.meta.repo == "McMuf/Spillover"
     for c in site.claims:
-        assert c.status == "Draft", "seed claims are not registered yet"
+        assert c.status == "Proposed", "registered, with no forward events graded yet"
         assert c.backtest is not None and c.chart is not None
         assert "registered_at" in c.yaml, "the claim page shows the real YAML"
 
@@ -111,4 +111,6 @@ def test_cli_export_site_writes_valid_json(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "SYNTHETIC" in result.output
     parsed = SiteData.model_validate(json.loads((out / "site.json").read_text()))
-    assert parsed.scoreboard.claims == []  # drafts never appear on the scoreboard
+    # Registered claims appear on the scoreboard as Proposed, with nothing graded yet.
+    assert {r.status for r in parsed.scoreboard.claims} == {"Proposed"}
+    assert all(r.effective_events == 0 for r in parsed.scoreboard.claims)

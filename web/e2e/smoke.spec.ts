@@ -38,7 +38,8 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
     "href",
     /github\.com\/McMuf\/Spillover\/new\/main\/replications\?filename=rep_REPLACE_ME_v1\.yaml/,
   );
-  await expect(page.getByRole("note").filter({ hasText: "This claim is a draft" })).toBeVisible();
+  // Registered claims are open to challenge, so the "draft" notice must not appear.
+  await expect(page.getByRole("note").filter({ hasText: "This claim is a draft" })).toHaveCount(0);
 
   // Forward log is honest about being empty; nothing is backfilled.
   await page.getByRole("tab", { name: /Forward log/ }).click();
@@ -65,6 +66,11 @@ test("submit form validates live and the scoreboard states what is missing", asy
   );
 
   await page.goto("/#/scoreboard");
-  await expect(page.getByText("No claims are registered yet")).toBeVisible();
+  // The seed claims are registered, so they are listed, with nothing graded yet.
+  const table = page.getByRole("table", { name: "Scoreboard by claim" });
+  await expect(table).toBeVisible();
+  await expect(table.getByRole("row")).toHaveCount(3); // header + two claims
+  await expect(table.getByText("Proposed")).toHaveCount(2);
+  await expect(table.getByText("0 of 8")).toHaveCount(2);
   await expect(page.getByText("No placebo claim has shown a significant result.")).toBeVisible();
 });

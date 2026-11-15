@@ -1,0 +1,116 @@
+"""Policy tests for .github/workflows: the security review, kept as code so it cannot regress."""
+
+import re
+from pathlib import Path
+from typing import Any
+
+import pytest
+import yaml
+
+ROOT = Path(__file__).resolve().parents[2]
+WORKFLOWS = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
+
+
+def load(path: Path) -> dict[str, Any]:
+    data = yaml.safe_load(path.read_text())
+    data["_triggers"] = set(data.get(True) or data.get("on") or {})  # YAML reads `on:` as True
+    return data
+
+
+SECRET = re.compile(r"\$\{\{\s*secrets\.")  # an actual expression, not the word in a comment
+
+
+def on_block(path: Path) -> dict[str, Any]:
+    """The `on:` table (YAML reads the key `on` as the boolean True)."""
+    data: Any = yaml.safe_load(path.read_text())
+    block: dict[str, Any] = data.get(True) or data.get("on")
+    return block
+
+
+def steps(wf: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    return [(job, st) for job, j in wf["jobs"].items() for st in j.get("steps", [])]
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_every_action_is_pinned_to_a_commit_sha(path: Path) -> None:
+    for uses in re.findall(r"uses:\s*(\S+)", path.read_text()):
+        assert re.search(r"@[0-9a-f]{40}$", uses), f"{path.name}: {uses} is not pinned to a commit"
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_no_expression_is_interpolated_into_a_shell_script(path: Path) -> None:
+    """Untrusted values must travel through env: a ${{ }} inside run: is script injection."""
+    for job, step in steps(load(path)):
+        assert "${{" not in step.get("run", ""), f"{path.name}/{job}: expression inside run:"
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_pull_request_target_is_never_used(path: Path) -> None:
+    assert "pull_request_target" not in load(path)["_triggers"]
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_secrets_are_scoped_to_single_steps_and_never_to_whole_jobs(path: Path) -> None:
+    wf = load(path)
+    for name, job in wf["jobs"].items():
+        assert not SECRET.search(str(job.get("env", ""))), f"{path.name}/{name}: job-level secret"
+        for st in job.get("steps", []):
+            assert not SECRET.search(str(st.get("with", ""))), (
+                f"{path.name}/{name}: secret in with:"
+            )
+            assert not SECRET.search(st.get("run", "")), f"{path.name}/{name}: secret in a script"
+
+
+def test_write_access_is_never_reachable_from_a_pull_request() -> None:
+    for path in WORKFLOWS:
+        wf = load(path)
+        grants = str(wf.get("permissions", "")) + "".join(
+            str(j.get("permissions", "")) for j in wf["jobs"].values()
+        )
+        if "write" in grants and path.name != "check.yml":
+            assert not (wf["_triggers"] & {"pull_request", "pull_request_target"}), path.name
+    check = load(ROOT / ".github" / "workflows" / "check.yml")
+    assert check["permissions"] == {"contents": "read"}
+    assert not SECRET.search((ROOT / ".github" / "workflows" / "check.yml").read_text())
+
+
+@pytest.mark.parametrize("name", ["ingest.yml", "score.yml"])
+def test_jobs_that_spend_money_or_write_to_main_stay_off_until_enabled(name: str) -> None:
+    wf = load(ROOT / ".github" / "workflows" / name)
+    assert wf["_triggers"] <= {"schedule", "workflow_dispatch"}, "never on push or pull_request"
+    for job in wf["jobs"].values():
+        assert "vars.INGEST_ENABLED == 'true'" in job["if"]
+        assert "github.repository ==" in job["if"], "forks must never run it"
+
+
+def test_comment_bot_never_checks_out_the_pull_request() -> None:
+    wf = load(ROOT / ".github" / "workflows" / "comment.yml")
+    assert wf["_triggers"] == {"workflow_run"}
+    for _, st in steps(wf):
+        if "actions/checkout" in st.get("uses", ""):
+            assert "ref" not in st.get("with", {}), "checking out a ref could fetch fork code"
+
+
+# --- registration is precise: only what a push added, never every draft on main -----------------
+
+
+def test_register_triggers_ignore_templates() -> None:
+    paths = on_block(ROOT / ".github" / "workflows" / "register.yml")["push"]["paths"]
+    for folder in ("claims", "challenges", "replications"):
+        assert f"{folder}/*.yaml" in paths and f"!{folder}/_*.yaml" in paths
+        assert paths.index(f"{folder}/*.yaml") < paths.index(f"!{folder}/_*.yaml"), (
+            "exclude after include"
+        )
+
+
+def test_register_never_stamps_every_draft() -> None:
+    """A bare `spillover register` would freeze any draft sitting on main (this happened once)."""
+    wf = load(ROOT / ".github" / "workflows" / "register.yml")
+    scripts = "\n".join(st.get("run", "") for _, st in steps(wf))
+    calls = [line for line in scripts.splitlines() if "spillover register" in line]
+    assert calls, "register.yml must call spillover register"
+    for line in calls:
+        assert '"${args[@]}"' in line, f"unscoped register call: {line.strip()}"
+    assert "--only" in scripts and "--diff-filter=A" in scripts
+    checkout = next(st for _, st in steps(wf) if "actions/checkout" in st.get("uses", ""))
+    assert checkout["with"]["fetch-depth"] == 0, "the diff against the push's parent needs history"

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="t d">
+  <title id="t">Spillover</title>
+  <desc id="d">Banner showing six node shapes (event, entity, instrument, factor, condition, prediction) connected by edges, next to the project name and tagline.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f1115"/>
+      <stop offset="1" stop-color="#16181d"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="360" fill="url(#bg)"/>
+  <rect width="1280" height="360" fill="url(#grid)"/>
+
+  <!-- title block -->
+  <g font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="72" y="150" font-size="76" font-weight="700" fill="#f4f5f7" letter-spacing="-2">Spillover</text>
+    <text x="74" y="196" font-size="26" font-weight="500" fill="#2f9e5a">Write the claim. Freeze the call. Let the market grade it.</text>
+    <text x="74" y="238" font-size="18" fill="#9aa1ad">An open, community-run ledger that tests how news spills over into markets.</text>
+    <text x="74" y="266" font-size="18" fill="#9aa1ad">Pre-registered. Scored on what actually happened. Research, not advice.</text>
+  </g>
+
+  <!-- graph -->
+  <g stroke="#3a3f4b" stroke-width="2" fill="none">
+    <path d="M860 110 L960 80"/>
+    <path d="M860 110 L950 190"/>
+    <path d="M960 80 L1070 120"/>
+    <path d="M950 190 L1070 120"/>
+    <path d="M950 190 L1050 270"/>
+    <path d="M1070 120 L1170 190"/>
+    <path d="M1050 270 L1170 190" stroke-dasharray="6 6"/>
+  </g>
+  <g stroke-width="3" fill="#16181d">
+    <!-- EVENT: square -->
+    <rect x="836" y="86" width="48" height="48" rx="4" stroke="#e8eaee"/>
+    <!-- ENTITY: circle -->
+    <circle cx="960" cy="80" r="26" stroke="#7aa2ff"/>
+    <!-- INSTRUMENT: diamond -->
+    <path d="M1070 90 L1100 120 L1070 150 L1040 120 Z" stroke="#2f9e5a"/>
+    <!-- FACTOR: hexagon -->
+    <path d="M926 190 L938 168 L962 168 L974 190 L962 212 L938 212 Z" stroke="#c9a227"/>
+    <!-- CONDITION: triangle -->
+    <path d="M1050 242 L1078 292 L1022 292 Z" stroke="#b58cff"/>
+    <!-- PREDICTION: star -->
+    <path d="M1170 160 L1179 180 L1201 182 L1184 196 L1189 218 L1170 206 L1151 218 L1156 196 L1139 182 L1161 180 Z" stroke="#f26b3a"/>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#9aa1ad" text-anchor="middle">
+    <text x="860" y="152">EVT</text>
+    <text x="960" y="124">ENT</text>
+    <text x="1070" y="170">INS</text>
+    <text x="950" y="232">FAC</text>
+    <text x="1050" y="312">CON</text>
+    <text x="1170" y="236">PRD</text>
+  </g>
+</svg>

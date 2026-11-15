@@ -1,0 +1,47 @@
+# Copy to data/sources.toml and edit. data/sources.toml and everything else under data/ is
+# git-ignored: this file holds no secrets (keys come from the environment), and the cache holds
+# derived returns only. Paths are relative to where you run the command.
+#
+# Run:  export FRED_API_KEY=...   (free key at https://fred.stlouisfed.org/docs/api/api_key.html)
+#       uv run spillover ingest
+# Then: uv run spillover test-claim claims/clm_fomc_abs_move_spx_v1.yaml --data data/cache
+#
+# READ EACH PROVIDER'S TERMS before using it. Spillover stores only derived daily returns (never
+# vendor price files) and keeps them out of version control by default, but whether you may use a
+# provider's data this way, or publish results derived from it, is for you to check. Some FRED
+# series carry their own copyright notices (the S&P 500 series does, among others).
+
+[data]
+out = "data/cache"
+start = "2021-01-01"
+# A single-day move larger than this is rejected as a probable data error (unadjusted split).
+max_abs_return = 0.5
+
+# Prices from FRED (bring your own key). Any FRED series of daily levels works.
+[[series]]
+symbol = "SPX"
+provider = "fred"
+id = "SP500"
+
+# Prices from a CSV you exported yourself from any vendor: a Date column (YYYY-MM-DD) and one
+# of Adj Close / Close / Price. Use dividend- and split-adjusted prices for ETFs and stocks.
+# [[series]]
+# symbol = "XLK"
+# provider = "csv"
+# path = "data/raw/XLK.csv"
+
+# The market factor that factor-only baselines control for. Here: the S&P 500 itself.
+[[series]]
+symbol = "MKT"
+provider = "alias"
+of = "SPX"
+
+# Built in: FOMC decision dates from the Federal Reserve's public calendar (US government work).
+[[events]]
+type = "fomc"
+
+# Your own events: columns event_id,event_type,entity,date,scheduled,source (source is required;
+# event_type is UPPER_SNAKE_CASE).
+# [[events]]
+# type = "csv"
+# path = "data/raw/events.csv"

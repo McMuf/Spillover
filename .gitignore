@@ -7,6 +7,9 @@ docs/design/private/
 docs/launch/
 
 # Local data and secrets
+# Ingested caches and raw exports stay on this machine (derived data only, never vendor files).
+data/*
+!data/sources.example.toml
 .env
 fixtures/live/
 *.parquet.tmp

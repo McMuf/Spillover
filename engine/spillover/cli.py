@@ -18,6 +18,11 @@ from spillover.eventstudy import (
 )
 from spillover.fixtures_gen import generate
 from spillover.frozen import FrozenError, check_frozen
+from spillover.ingest.config import ConfigError, load_config
+from spillover.ingest.fomc import FomcParseError
+from spillover.ingest.http import FetchError, http_get, redact
+from spillover.ingest.prices import PriceError
+from spillover.ingest.store import IngestError, build_cache
 from spillover.ledger import LedgerError, predict, verify_ledger
 from spillover.models import ClaimError, claim_files, claim_json_schema, load_claim
 from spillover.placebo import placebo_rejection_rate
@@ -64,7 +69,12 @@ def _now(value: str | None) -> datetime:
 
 
 DataOpt = Annotated[
-    Path, typer.Option("--data", help="Directory with prices.parquet and events.parquet.")
+    Path,
+    typer.Option(
+        "--data",
+        envvar="SPILLOVER_DATA",
+        help="Directory with prices.parquet and events.parquet (env: SPILLOVER_DATA).",
+    ),
 ]
 
 
@@ -328,6 +338,35 @@ def grade(
     )
     if summary.refused:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def ingest(
+    config: Annotated[
+        Path, typer.Option("--config", help="Sources file (copy data/sources.example.toml).")
+    ] = Path("data/sources.toml"),
+) -> None:
+    """Fetch prices and events from your configured sources into the local cache."""
+    import os
+
+    try:
+        cfg = load_config(config)
+        summary = build_cache(cfg, http_get, os.environ, datetime.now(UTC).date())
+    except (ConfigError, IngestError, PriceError, FetchError, FomcParseError) as exc:
+        raise _fail(redact(str(exc))) from exc
+    typer.echo(
+        f"wrote {summary.out}: {summary.n_days} trading days "
+        f"({summary.first} to {summary.last}), series {', '.join(summary.symbols)}, "
+        f"{summary.n_events} event(s)"
+    )
+    for symbol, n in summary.dropped_days.items():
+        if n:
+            typer.echo(
+                f"  note: {symbol} had {n} day(s) missing from another series; dropped from all"
+            )
+    for line in summary.skipped_events:
+        typer.echo(f"  note: {line}")
+    typer.echo(f"Use it with: --data {summary.out}   (or export SPILLOVER_DATA={summary.out})")
 
 
 @app.command("verify-outcomes")

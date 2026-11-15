@@ -264,7 +264,9 @@ def run_backtest(
     n_days = len(data.dates)
 
     ev = data.events
+    # Upcoming scheduled events (a real calendar lists next year's meetings) are not history.
     matched = matching_events(claim, data)
+    matched = matched.filter(matched["date"] <= data.as_of)
 
     # Scheduled events of *other* types (central-bank decisions etc.) contaminate a window.
     sched = ev.filter(ev["scheduled"] & (ev["event_type"] != claim.event_type))

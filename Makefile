@@ -13,7 +13,7 @@ help:
 	@echo "make check-web                     web: generate types, type-check, unit tests, build"
 	@echo "make e2e                           browser smoke test against the built site"
 	@echo "make site                          export the data and serve the web app (needs pnpm)"
-	@echo "make ingest                        (planned) fetch live data into the local cache"
+	@echo "make ingest                        fetch prices and events into data/cache (needs data/sources.toml)"
 
 setup:
 	@command -v $(UV) >/dev/null 2>&1 || python3 -m pip install --user uv
@@ -64,4 +64,4 @@ site: export-data
 	pnpm --dir web dev
 
 ingest:
-	@echo "Live data ingestion is not built yet (planned). Everything runs on fixtures for now."; exit 1
+	$(UV) run spillover ingest

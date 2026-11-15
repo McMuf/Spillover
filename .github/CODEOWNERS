@@ -1,0 +1,4 @@
+# The scoring rules and CI are the trust root and need extra eyes.
+/rules/        @McMuf
+/.github/      @McMuf
+/engine/       @McMuf

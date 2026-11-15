@@ -27,8 +27,10 @@ from spillover.eventstudy import (
     mean_window_path,
     run_backtest,
 )
+from spillover.lanes import describe_changes, lane_files, load_challenge, load_replication
 from spillover.ledger import RULES_VERSION, engine_version, load_prediction, prediction_files
 from spillover.models import Claim
+from spillover.replicate import load_result, result_path
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import load_outcome, outcome_files, window_closed
 
@@ -169,6 +171,43 @@ class ForwardRow(_M):
     proof: Literal["none", "present"]
 
 
+class EvidenceOut(_M):
+    kind: Literal["link", "replication", "placebo", "data"]
+    ref: str
+    note: str
+
+
+class ChallengeOut(_M):
+    id: str
+    aspect: Literal["definition", "baseline", "sample", "data", "timing", "other"]
+    argument: str
+    evidence: list[EvidenceOut]
+    submitted_by: str
+    submitted_at: str | None
+
+
+class ReplicationResultOut(_M):
+    n_matched: int
+    n_effective: int
+    min_events: int
+    mean: float | None
+    ci_lo: float | None
+    ci_hi: float | None
+    p_value: float
+    verdict: str
+    as_of: str
+    data_synthetic: bool
+
+
+class ReplicationOut(_M):
+    id: str
+    rationale: str
+    changes: dict[str, str]
+    submitted_by: str
+    submitted_at: str | None
+    result: ReplicationResultOut | None
+
+
 class SiteClaim(_M):
     claim: Claim
     yaml: str
@@ -178,6 +217,8 @@ class SiteClaim(_M):
     chart: Chart | None
     forward_log: list[ForwardRow]
     event_ids: list[str]
+    challenges: list[ChallengeOut]
+    replications: list[ReplicationOut]
 
 
 class EventClaimStat(_M):
@@ -306,6 +347,60 @@ def _forward_log(
     return sorted(rows, key=lambda r: (r.event_date, r.event_id))
 
 
+def _stamp(value: object) -> str | None:
+    return value.isoformat() if isinstance(value, datetime) else None
+
+
+def _challenges(directory: Path | None) -> dict[str, list[ChallengeOut]]:
+    out: dict[str, list[ChallengeOut]] = {}
+    for path in lane_files(directory) if directory and directory.exists() else []:
+        c = load_challenge(path)
+        out.setdefault(c.claim, []).append(
+            ChallengeOut(
+                id=c.id,
+                aspect=c.aspect,
+                argument=c.argument.strip(),
+                evidence=[EvidenceOut(kind=e.kind, ref=e.ref, note=e.note) for e in c.evidence],
+                submitted_by=c.submitted_by,
+                submitted_at=_stamp(c.submitted_at),
+            )
+        )
+    return out
+
+
+def _replications(directory: Path | None, results: Path | None) -> dict[str, list[ReplicationOut]]:
+    out: dict[str, list[ReplicationOut]] = {}
+    for path in lane_files(directory) if directory and directory.exists() else []:
+        r = load_replication(path)
+        file = result_path(results, r.id) if results else None
+        result = None
+        if file is not None and file.exists():
+            x = load_result(file)  # verifies the hash: a hand-edited result fails the export
+            result = ReplicationResultOut(
+                n_matched=x.n_matched,
+                n_effective=x.n_effective,
+                min_events=x.min_events,
+                mean=x.mean,
+                ci_lo=x.ci_lo,
+                ci_hi=x.ci_hi,
+                p_value=x.p_value,
+                verdict=x.verdict,
+                as_of=x.as_of,
+                data_synthetic=x.data_synthetic,
+            )
+        out.setdefault(r.claim, []).append(
+            ReplicationOut(
+                id=r.id,
+                rationale=r.rationale.strip(),
+                changes=describe_changes(r.changes),
+                submitted_by=r.submitted_by,
+                submitted_at=_stamp(r.submitted_at),
+                result=result,
+            )
+        )
+    return out
+
+
 def build_site_data(
     claims: list[tuple[Claim, str]],
     data: MarketData,
@@ -313,6 +408,9 @@ def build_site_data(
     outcomes_root: Path,
     n_boot: int = DEFAULT_BOOT,
     seed: int = DEFAULT_SEED,
+    challenges_dir: Path | None = None,
+    replications_dir: Path | None = None,
+    results_dir: Path | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
     board = Scoreboard.model_validate(
@@ -320,6 +418,8 @@ def build_site_data(
     )
     status_of = {row.claim_id: row.status for row in board.claims}
 
+    challenges_by_claim = _challenges(challenges_dir)
+    replications_by_claim = _replications(replications_dir, results_dir)
     site_claims: list[SiteClaim] = []
     stat_values: dict[tuple[str, str], float] = {}
     event_to_claims: dict[str, list[str]] = {}
@@ -352,6 +452,8 @@ def build_site_data(
                 chart=chart,
                 forward_log=_forward_log(claim, data, predictions_root, outcomes_root),
                 event_ids=ids,
+                challenges=challenges_by_claim.get(claim.id, []),
+                replications=replications_by_claim.get(claim.id, []),
             )
         )
 

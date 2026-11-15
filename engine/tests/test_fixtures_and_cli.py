@@ -27,7 +27,7 @@ def test_fixtures_store_returns_only() -> None:
 def test_cli_validate_passes_on_seed_claims() -> None:
     result = runner.invoke(app, ["validate", *map(str, sorted(CLAIMS.glob("clm_*.yaml")))])
     assert result.exit_code == 0, result.output
-    assert "claim file(s) valid" in result.output
+    assert "file(s) valid" in result.output
 
 
 def test_cli_validate_fails_on_the_template() -> None:

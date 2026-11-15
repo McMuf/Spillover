@@ -35,13 +35,21 @@ from spillover.ingest.headlines import FeedError
 from spillover.ingest.http import FetchError, http_get, redact
 from spillover.ingest.prices import PriceError
 from spillover.ingest.store import IngestError, build_cache
+from spillover.lanes import (
+    apply_changes,
+    check_target,
+    lane_files,
+    load_challenge,
+    load_replication,
+)
 from spillover.ledger import LedgerError, predict, verify_ledger
-from spillover.models import ClaimError, claim_files, claim_json_schema, load_claim
+from spillover.models import Claim, ClaimError, claim_files, claim_json_schema, load_claim
 from spillover.placebo import placebo_rejection_rate
 from spillover.placebo_events import PLACEBO_DIR, ensure_future_draws
 from spillover.pr_bot import BotError, make_request
 from spillover.pr_bot import run as run_pr_bot
-from spillover.register import register_claims
+from spillover.register import register_claims, stamp_challenges, stamp_replications
+from spillover.replicate import RESULTS_DIR, run_pending
 from spillover.report import format_report
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import ScoreError, grade_all, verify_outcomes
@@ -98,30 +106,57 @@ def _fail(message: str) -> typer.Exit:
     return typer.Exit(code=1)
 
 
+def _inspect(path: Path, claims: dict[str, Claim]) -> tuple[str, str | None]:
+    """(id, problem) for one claim, challenge or replication; raises ClaimError if unreadable."""
+    kind = path.parent.name
+    if kind == "challenges":
+        challenge = load_challenge(path)
+        return challenge.id, check_target(claims.get(challenge.claim), challenge.claim)
+    if kind == "replications":
+        rep = load_replication(path)
+        problem = check_target(claims.get(rep.claim), rep.claim)
+        if problem is None:
+            apply_changes(claims[rep.claim], rep.changes)  # the changed claim must be valid too
+        return rep.id, problem
+    return load_claim(path).id, None
+
+
 @app.command()
 def validate(
     paths: Annotated[
-        list[Path] | None, typer.Argument(help="Claim files (default: claims/).")
+        list[Path] | None,
+        typer.Argument(help="Claim, challenge or replication files (default: all of them)."),
     ] = None,
+    claims_dir: Annotated[
+        Path, typer.Option(help="Where target claims are looked up.")
+    ] = DEFAULT_CLAIMS,
 ) -> None:
-    """Validate claim files against the claim model."""
-    files = paths or claim_files(DEFAULT_CLAIMS)
+    """Validate claims, challenges and replications (a file's kind follows its folder)."""
+    files = paths or [
+        *claim_files(DEFAULT_CLAIMS),
+        *lane_files(Path("challenges")),
+        *lane_files(Path("replications")),
+    ]
+    claims = {c.id: c for c in (load_claim(p) for p in claim_files(claims_dir))}
     failures = 0
     for path in files:
         try:
-            claim = load_claim(path)
-        except ClaimError as exc:
+            ident, problem = _inspect(path, claims)
+        except ClaimError as exc:  # LaneError is a ClaimError
             failures += 1
             typer.echo(str(exc), err=True)
+            continue
+        if path.stem != ident:
+            failures += 1
+            typer.echo(f"{path}: file name must match the id ({ident}.yaml)", err=True)
+        elif problem is not None:
+            failures += 1
+            typer.echo(f"{path}: {problem}", err=True)
         else:
-            if path.stem != claim.id:
-                failures += 1
-                typer.echo(f"{path}: file name must match the claim id ({claim.id}.yaml)", err=True)
-            else:
-                typer.echo(f"ok  {claim.id}")
+            typer.echo(f"ok  {ident}")
     if failures:
-        raise _fail(f"{failures} claim file(s) failed validation")
-    typer.echo(f"{len(files)} claim file(s) valid")
+        raise _fail(f"{failures} file(s) failed validation")
+    typer.echo(f"{len(files)} file(s) valid")
 
 
 @app.command()
@@ -162,7 +197,16 @@ def export_site(
     """Write the single typed JSON file the static website reads (generated, never committed)."""
     try:
         claims = [(load_claim(p), p.read_text(encoding="utf-8")) for p in claim_files(claims_dir)]
-        site = build_site_data(claims, load_market_data(data), predictions, outcomes, n_boot=n_boot)
+        site = build_site_data(
+            claims,
+            load_market_data(data),
+            predictions,
+            outcomes,
+            n_boot=n_boot,
+            challenges_dir=Path("challenges"),
+            replications_dir=Path("replications"),
+            results_dir=RESULTS_DIR,
+        )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc
     out.mkdir(parents=True, exist_ok=True)
@@ -255,16 +299,63 @@ def placebo_check(
 @app.command()
 def register(
     claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
+    challenges_dir: Annotated[Path, typer.Option(help="Directory of challenges.")] = Path(
+        "challenges"
+    ),
+    replications_dir: Annotated[Path, typer.Option(help="Directory of replications.")] = Path(
+        "replications"
+    ),
     now: NowOpt = None,
 ) -> None:
-    """Stamp registered_at on draft claims (run by CI when a claim PR merges)."""
+    """Stamp draft claims, challenges and replications (run by CI when their PR merges)."""
+    when = _now(now)
     try:
-        changed = register_claims(claims_dir, _now(now))
+        claims = register_claims(claims_dir, when)
+        challenges = stamp_challenges(challenges_dir, when) if challenges_dir.exists() else []
+        replications = (
+            stamp_replications(replications_dir, when) if replications_dir.exists() else []
+        )
     except ClaimError as exc:
         raise _fail(str(exc)) from exc
-    for path in changed:
+    for path in [*claims, *challenges, *replications]:
         typer.echo(f"registered {path}")
-    typer.echo(f"{len(changed)} claim(s) registered")
+    typer.echo(
+        f"{len(claims)} claim(s), {len(challenges)} challenge(s), "
+        f"{len(replications)} replication(s) stamped"
+    )
+
+
+@app.command()
+def replicate(
+    replications_dir: Annotated[Path, typer.Option(help="Replication configs.")] = Path(
+        "replications"
+    ),
+    claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
+    results_dir: Annotated[Path, typer.Option(help="Where results are written.")] = RESULTS_DIR,
+    data: DataOpt = DEFAULT_DATA,
+    n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
+    allow_synthetic: Annotated[
+        bool, typer.Option("--allow-synthetic", help="Run on SYNTHETIC fixtures (tests only).")
+    ] = False,
+) -> None:
+    """Run replications that have no result yet and write their hashed, append-only results."""
+    try:
+        market = load_market_data(data)
+        if market.synthetic and not allow_synthetic:
+            raise _fail(
+                f"{data} holds SYNTHETIC data; a result written from it would look real. "
+                "Pass --allow-synthetic only for tests."
+            )
+        written, problems = run_pending(replications_dir, claims_dir, results_dir, market, n_boot)
+    except (ClaimError, DataError) as exc:
+        raise _fail(str(exc)) from exc
+    for path in written:
+        typer.echo(f"wrote {path}")
+    for problem in problems:
+        typer.echo(f"problem: {problem}", err=True)
+    typer.echo(f"{len(written)} result(s) written, {len(problems)} problem(s)")
+    if problems:
+        raise typer.Exit(code=1)
 
 
 @app.command("predict")

@@ -228,6 +228,63 @@
       "title": "CalibrationBin",
       "type": "object"
     },
+    "ChallengeOut": {
+      "additionalProperties": false,
+      "properties": {
+        "argument": {
+          "title": "Argument",
+          "type": "string"
+        },
+        "aspect": {
+          "enum": [
+            "definition",
+            "baseline",
+            "sample",
+            "data",
+            "timing",
+            "other"
+          ],
+          "title": "Aspect",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceOut"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "submitted_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Submitted At"
+        },
+        "submitted_by": {
+          "title": "Submitted By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "aspect",
+        "argument",
+        "evidence",
+        "submitted_by",
+        "submitted_at"
+      ],
+      "title": "ChallengeOut",
+      "type": "object"
+    },
     "Chart": {
       "additionalProperties": false,
       "properties": {
@@ -582,6 +639,36 @@
       "title": "EventStatOut",
       "type": "object"
     },
+    "EvidenceOut": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "link",
+            "replication",
+            "placebo",
+            "data"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        },
+        "ref": {
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "ref",
+        "note"
+      ],
+      "title": "EvidenceOut",
+      "type": "object"
+    },
     "ForwardRow": {
       "additionalProperties": false,
       "properties": {
@@ -706,6 +793,141 @@
         "message"
       ],
       "title": "PlaceboInfo",
+      "type": "object"
+    },
+    "ReplicationOut": {
+      "additionalProperties": false,
+      "properties": {
+        "changes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Changes",
+          "type": "object"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplicationResultOut"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "submitted_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Submitted At"
+        },
+        "submitted_by": {
+          "title": "Submitted By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "rationale",
+        "changes",
+        "submitted_by",
+        "submitted_at",
+        "result"
+      ],
+      "title": "ReplicationOut",
+      "type": "object"
+    },
+    "ReplicationResultOut": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "ci_hi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Hi"
+        },
+        "ci_lo": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Lo"
+        },
+        "data_synthetic": {
+          "title": "Data Synthetic",
+          "type": "boolean"
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean"
+        },
+        "min_events": {
+          "title": "Min Events",
+          "type": "integer"
+        },
+        "n_effective": {
+          "title": "N Effective",
+          "type": "integer"
+        },
+        "n_matched": {
+          "title": "N Matched",
+          "type": "integer"
+        },
+        "p_value": {
+          "title": "P Value",
+          "type": "number"
+        },
+        "verdict": {
+          "title": "Verdict",
+          "type": "string"
+        }
+      },
+      "required": [
+        "n_matched",
+        "n_effective",
+        "min_events",
+        "mean",
+        "ci_lo",
+        "ci_hi",
+        "p_value",
+        "verdict",
+        "as_of",
+        "data_synthetic"
+      ],
+      "title": "ReplicationResultOut",
       "type": "object"
     },
     "Scoreboard": {
@@ -1031,6 +1253,13 @@
           ],
           "title": "Backtest Error"
         },
+        "challenges": {
+          "items": {
+            "$ref": "#/$defs/ChallengeOut"
+          },
+          "title": "Challenges",
+          "type": "array"
+        },
         "chart": {
           "anyOf": [
             {
@@ -1058,6 +1287,13 @@
           "title": "Forward Log",
           "type": "array"
         },
+        "replications": {
+          "items": {
+            "$ref": "#/$defs/ReplicationOut"
+          },
+          "title": "Replications",
+          "type": "array"
+        },
         "status": {
           "enum": [
             "Draft",
@@ -1082,7 +1318,9 @@
         "backtest_error",
         "chart",
         "forward_log",
-        "event_ids"
+        "event_ids",
+        "challenges",
+        "replications"
       ],
       "title": "SiteClaim",
       "type": "object"

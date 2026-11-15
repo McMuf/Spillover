@@ -364,7 +364,7 @@ def test_cli_register_and_predict_round_trip(
     r = runner.invoke(
         app, ["register", "--claims-dir", str(claims), "--now", "2025-06-01T00:00:00Z"]
     )
-    assert r.exit_code == 0 and "1 claim(s) registered" in r.output
+    assert r.exit_code == 0 and "1 claim(s), 0 challenge(s), 0 replication(s) stamped" in r.output
     assert yaml.safe_load((claims / "clm_syn_shock_v1.yaml").read_text())["registered_at"]
 
     r = runner.invoke(app, ["predict", *data_args, *base, "--now", "2026-01-05T12:00:00Z"])

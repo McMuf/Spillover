@@ -10,9 +10,11 @@ import subprocess
 from collections.abc import Callable, Iterable
 from pathlib import Path, PurePosixPath
 
-from spillover.register import has_placeholder
+from spillover.register import has_placeholder, has_submission_placeholder
 
 GENERATED_DIRS = ("events", "predictions", "outcomes", "scoreboard")
+SUBMISSION_DIRS = ("challenges", "replications")
+GENERATED_PREFIXES = ("replications/results/",)
 
 
 class FrozenError(RuntimeError):
@@ -30,6 +32,16 @@ def _git(repo: Path, *args: str) -> str:
     if proc.returncode != 0:
         raise FrozenError(f"git {' '.join(args)} failed: {proc.stderr.strip()}")
     return proc.stdout
+
+
+def is_submission_path(path: str) -> bool:
+    """A challenge or replication file (the templates, starting with ``_``, are not)."""
+    p = PurePosixPath(path)
+    return (
+        p.parent.as_posix() in SUBMISSION_DIRS
+        and p.suffix == ".yaml"
+        and not p.name.startswith("_")
+    )
 
 
 def is_claim_path(path: str) -> bool:
@@ -54,10 +66,22 @@ def frozen_violations(
         name = PurePosixPath(path).name
         top = PurePosixPath(path).parts[0] if PurePosixPath(path).parts else ""
 
-        if top in GENERATED_DIRS and name != ".gitkeep":
+        if any(path.startswith(prefix) for prefix in GENERATED_PREFIXES) and name != ".gitkeep":
+            problems.append(f"{path}: replication results are generated; never edit them by hand")
+        elif top in GENERATED_DIRS and name != ".gitkeep":
             problems.append(
                 f"{path}: generated output ({top}/) must not be changed by a pull request"
             )
+        elif is_submission_path(path):
+            if status != "A":
+                problems.append(
+                    f"{path}: challenges and replications are append-only; "
+                    "submit a new one (_v2) instead of editing or deleting this"
+                )
+            elif not has_submission_placeholder(read_head(path)):
+                problems.append(
+                    f"{path}: leave submitted_at as set_by_ci_on_merge; CI stamps the time"
+                )
         elif is_claim_path(path):
             if status == "A":
                 if not has_placeholder(read_head(path)):

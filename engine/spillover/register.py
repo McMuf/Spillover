@@ -7,9 +7,12 @@ this, the claim is frozen (see ``frozen.py``): changing it means registering a n
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime
+from datetime import datetime as _dt
 from pathlib import Path
 
+from spillover.lanes import lane_files, load_challenge, load_replication
 from spillover.models import ClaimError, claim_files, load_claim
 
 PLACEHOLDER = "set_by_ci_on_merge"
@@ -40,3 +43,48 @@ def register_claims(claims_dir: Path, now: datetime) -> list[Path]:
             raise ClaimError(f"{path}: registration did not take effect")
         changed.append(path)
     return changed
+
+
+SUBMITTED_LINE = re.compile(rf"^submitted_at:[ \t]*{PLACEHOLDER}[ \t]*(#.*)?$", re.MULTILINE)
+
+
+def has_submission_placeholder(text: str) -> bool:
+    return SUBMITTED_LINE.search(text) is not None
+
+
+def _stamp_submissions(
+    directory: Path,
+    now: datetime,
+    load: Callable[[Path], object],
+    is_stamped: Callable[[object], bool],
+) -> list[Path]:
+    if now.tzinfo is None:
+        raise ClaimError("submission time must be timezone-aware")
+    stamp = now.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    changed: list[Path] = []
+    for path in lane_files(directory):
+        if is_stamped(load(path)):  # also validates: an invalid file is never stamped
+            continue
+        text = path.read_text(encoding="utf-8")
+        new_text, n = SUBMITTED_LINE.subn(lambda m: f"submitted_at: {stamp}", text)
+        if n != 1:
+            raise ClaimError(f"{path}: expected exactly one submitted_at line to stamp")
+        path.write_text(new_text, encoding="utf-8")
+        load(path)
+        changed.append(path)
+    return changed
+
+
+def stamp_challenges(directory: Path, now: datetime) -> list[Path]:
+    return _stamp_submissions(
+        directory, now, load_challenge, lambda c: isinstance(getattr(c, "submitted_at", None), _dt)
+    )
+
+
+def stamp_replications(directory: Path, now: datetime) -> list[Path]:
+    return _stamp_submissions(
+        directory,
+        now,
+        load_replication,
+        lambda r: isinstance(getattr(r, "submitted_at", None), _dt),
+    )

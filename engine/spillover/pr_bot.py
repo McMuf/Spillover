@@ -29,7 +29,14 @@ from typing import Any
 
 from spillover.data import DataError, MarketData
 from spillover.eventstudy import run_backtest
-from spillover.frozen import frozen_violations, is_claim_path
+from spillover.frozen import frozen_violations, is_claim_path, is_submission_path
+from spillover.lanes import (
+    Replication,
+    apply_changes,
+    check_target,
+    parse_challenge,
+    parse_replication,
+)
 from spillover.models import ClaimError, parse_claim
 
 MARKER = "<!-- spillover-bot:pr-report -->"
@@ -38,6 +45,7 @@ MAX_FILE_BYTES = 64 * 1024
 MAX_COMMENT_CHARS = 20_000
 MAX_CLAIMS_REVIEWED = 10
 _CLAIM_PATH = re.compile(r"^claims/[A-Za-z0-9_]+\.yaml$")
+_LANE_PATH = re.compile(r"^(challenges|replications)/[A-Za-z0-9_]+\.yaml$")
 # "." and ".." are made of allowed characters but are path components, never real names.
 _REPO = re.compile(r"^(?!\.{1,2}/)[A-Za-z0-9_.-]+/(?!\.{1,2}$)[A-Za-z0-9_.-]+$")
 _SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -136,6 +144,7 @@ class ClaimReview:
     errors: list[str]
     feasibility: Feasibility | None
     note: str | None
+    kind: str = "claim"
 
 
 @dataclass(frozen=True)
@@ -198,6 +207,45 @@ def review_claim(path: str, text: str, data: MarketData | None) -> ClaimReview:
     )
 
 
+def review_submission(path: str, text: str, base_claims_dir: Path) -> ClaimReview:
+    """Review a challenge or replication. The target claim comes from trusted main, not the PR."""
+    kind = "challenge" if path.startswith("challenges/") else "replication"
+    try:
+        item = parse_challenge(text, path) if kind == "challenge" else parse_replication(text, path)
+    except ClaimError as exc:
+        lines = str(exc).splitlines()
+        errors = lines[1:] if lines and "invalid" in lines[0] else [str(exc)]
+        return ClaimReview(path, None, errors, None, None, kind)
+    if PurePosixPath(path).stem != item.id:
+        return ClaimReview(
+            path, item.id, [f"file name must match the id ({item.id}.yaml)"], None, None, kind
+        )
+
+    target_file = base_claims_dir / f"{item.claim}.yaml"  # claim ids are pattern-validated
+    try:
+        target = (
+            parse_claim(target_file.read_text(encoding="utf-8"), item.claim)
+            if target_file.exists()
+            else None
+        )
+    except ClaimError:
+        target = None
+    problem = check_target(target, item.claim)
+    if problem is None and isinstance(item, Replication) and target is not None:
+        try:
+            apply_changes(target, item.changes)
+        except ClaimError as exc:
+            problem = str(exc)
+    if problem is not None:
+        return ClaimReview(path, item.id, [problem], None, None, kind)
+    note = (
+        f"Targets {item.claim}. After merge the engine runs the replication and writes the result."
+        if kind == "replication"
+        else f"Targets {item.claim}."
+    )
+    return ClaimReview(path, item.id, [], None, note, kind)
+
+
 def _finite(x: float) -> float | None:
     return None if math.isnan(x) or math.isinf(x) else x
 
@@ -230,7 +278,7 @@ def render_comment(review: PrReview) -> str:
             lines.append(f"- ❌ {head} does not validate:")
             lines += [f"  - {code(e, 200)}" for e in c.errors[:12]]
             continue
-        lines.append(f"- ✅ {head} is a valid claim (`{c.claim_id}`).")
+        lines.append(f"- ✅ {head} is a valid {c.kind} (`{c.claim_id}`).")
         f = c.feasibility
         if f is not None:
             tag = " on SYNTHETIC fixture data (a smoke test only)" if f.synthetic else ""
@@ -315,9 +363,11 @@ def build_review(
 
     head_text: dict[str, str] = {}
     reviews: list[ClaimReview] = []
-    claim_changes = [(s, p) for s, p in changes if s != "D" and is_claim_path(p)]
+    claim_changes = [
+        (s, p) for s, p in changes if s != "D" and (is_claim_path(p) or is_submission_path(p))
+    ]
     for _status, path in claim_changes[:MAX_CLAIMS_REVIEWED]:
-        if not _CLAIM_PATH.match(path):
+        if not (_CLAIM_PATH.match(path) or _LANE_PATH.match(path)):
             reviews.append(
                 ClaimReview(path, None, ["unexpected file name for a claim"], None, None)
             )
@@ -327,7 +377,10 @@ def build_review(
         except BotError as exc:
             reviews.append(ClaimReview(path, None, [str(exc)], None, None))
             continue
-        reviews.append(review_claim(path, head_text[path], data))
+        if _LANE_PATH.match(path):
+            reviews.append(review_submission(path, head_text[path], base_claims_dir))
+        else:
+            reviews.append(review_claim(path, head_text[path], data))
     if len(claim_changes) > MAX_CLAIMS_REVIEWED:
         notes.append(f"Only the first {MAX_CLAIMS_REVIEWED} claim files are reviewed here.")
 
@@ -343,7 +396,7 @@ def build_review(
     def read_head(path: str) -> str:
         if path in head_text:
             return head_text[path]
-        if not _CLAIM_PATH.match(path):
+        if not (_CLAIM_PATH.match(path) or _LANE_PATH.match(path)):
             return ""
         return _fetch_text(request, head_repo, path, head_sha)
 

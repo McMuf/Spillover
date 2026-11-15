@@ -321,3 +321,95 @@ def test_cli_requires_a_token_and_never_prints_it(monkeypatch: pytest.MonkeyPatc
         app, ["pr-comment", "--head-sha", SHA, "--head-repo", FORK, "--repo", REPO]
     )
     assert result.exit_code == 1 and "GITHUB_TOKEN" in result.output
+
+
+# --- challenges and replications ----------------------------------------------------------------
+
+
+def lane_yaml(kind: str, **over: Any) -> str:
+    if kind == "challenge":
+        data: dict[str, Any] = {
+            "id": "chl_demo_v1",
+            "claim": "clm_old_v1",
+            "aspect": "sample",
+            "argument": "Three of these dates fall inside the same scheduled event window, which inflates n.",
+            "submitted_by": "someone",
+            "submitted_at": "set_by_ci_on_merge",
+        }
+    else:
+        data = {
+            "id": "rep_demo_v1",
+            "claim": "clm_old_v1",
+            "changes": {"window_end": "+3_trading_days"},
+            "rationale": "A longer window tests whether the effect fades after the first day.",
+            "submitted_by": "someone",
+            "submitted_at": "set_by_ci_on_merge",
+        }
+    data.update(over)
+    return yaml.safe_dump(data)
+
+
+def test_a_valid_challenge_and_replication_are_reviewed_against_the_registered_claim(
+    base_claims: Path,
+) -> None:
+    gh = FakeGitHub(
+        [added("challenges/chl_demo_v1.yaml"), added("replications/rep_demo_v1.yaml")],
+        {
+            f"{FORK}:challenges/chl_demo_v1.yaml": lane_yaml("challenge"),
+            f"{FORK}:replications/rep_demo_v1.yaml": lane_yaml("replication"),
+        },
+    )
+    _, body = go(gh, base_claims)
+    assert "is a valid challenge (`chl_demo_v1`)" in body
+    assert "is a valid replication (`rep_demo_v1`)" in body
+    assert "the engine runs the replication" in body
+    assert "No registered claim or generated output is touched" in body
+
+
+def test_challenging_a_draft_or_missing_claim_is_flagged(base_claims: Path) -> None:
+    gh = FakeGitHub(
+        [added("challenges/chl_demo_v1.yaml"), added("challenges/chl_gone_v1.yaml")],
+        {
+            f"{FORK}:challenges/chl_demo_v1.yaml": lane_yaml("challenge", claim="clm_draft_v1"),
+            f"{FORK}:challenges/chl_gone_v1.yaml": lane_yaml(
+                "challenge", id="chl_gone_v1", claim="clm_nope_v1"
+            ),
+        },
+    )
+    _, body = go(gh, base_claims)
+    assert "not registered yet" in body and "does not exist" in body
+
+
+def test_a_replication_whose_changes_break_the_claim_is_flagged(base_claims: Path) -> None:
+    broken = lane_yaml("replication", changes={"window_end": "tomorrow"})
+    gh = FakeGitHub(
+        [added("replications/rep_demo_v1.yaml")], {f"{FORK}:replications/rep_demo_v1.yaml": broken}
+    )
+    _, body = go(gh, base_claims)
+    assert "does not validate" in body
+
+
+def test_editing_an_old_submission_or_writing_a_result_is_blocked(base_claims: Path) -> None:
+    files = [
+        {"status": "modified", "filename": "challenges/chl_demo_v1.yaml"},
+        {"status": "removed", "filename": "replications/rep_demo_v1.yaml"},
+        added("replications/results/rep_demo_v1.json"),
+    ]
+    _, body = go(
+        FakeGitHub(files, {f"{FORK}:challenges/chl_demo_v1.yaml": lane_yaml("challenge")}),
+        base_claims,
+    )
+    assert body.count("append-only") == 2 and "replication results are generated" in body
+
+
+def test_a_challenge_that_stamps_its_own_time_is_flagged(base_claims: Path) -> None:
+    gh = FakeGitHub(
+        [added("challenges/chl_demo_v1.yaml")],
+        {
+            f"{FORK}:challenges/chl_demo_v1.yaml": lane_yaml(
+                "challenge", submitted_at="2020-01-01T00:00:00Z"
+            )
+        },
+    )
+    _, body = go(gh, base_claims)
+    assert "leave submitted_at" in body

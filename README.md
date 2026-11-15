@@ -404,7 +404,7 @@ flowchart LR
 
 **How.** `spillover ingest` reads `data/sources.toml` and builds a local cache in the same format as the synthetic fixtures, so every command works on real data by pointing `--data` (or `SPILLOVER_DATA`) at it. Built today: **FRED** (bring your own free key, read from `FRED_API_KEY`), **CSV files you export yourself** from any vendor, and the **Federal Reserve's public FOMC calendar** (US government work). Series are aligned on their common trading days before returns are computed, and implausible data (a one-day move over a configurable limit, which is usually an unadjusted split) is refused instead of written. Tests use fixtures and fake fetchers, so CI never needs a live API.
 
-*Not built yet:* a headline feed and the LLM event extractor, so real events come from the FOMC calendar and your own events CSV for now. Live exchange APIs are not included; whether you may use a given vendor's data this way is for you to check in their terms.
+Events come from the FOMC calendar, your own events CSV, and [headline feeds run through the extractor](#4-event-extractor). Live exchange APIs are not included; whether you may use a given vendor's data this way is for you to check in their terms.
 
 **Why this design.**
 - *Parquet plus DuckDB plus Polars:* columnar storage is compact and fast for time series, DuckDB queries it with SQL without a server, and Polars gives a fast, readable DataFrame API. This stack is also what many modern data teams use, so contributors' skills transfer.
@@ -425,11 +425,13 @@ flowchart LR
 
 **What it does.** Converts a headline into a typed event: event type from a fixed taxonomy, entities, and a confidence label.
 
+**Status.** Built and tested with a fake model and the real feed formats. **Not yet run against the live Claude API**, and the 50-headline gold set is **not labeled yet**, so no accuracy number exists. Until it does, treat extracted events as unmeasured.
+
 **How.**
-- An LLM is called with a strict structured-output schema; the response is validated by Pydantic and rejected if it does not parse.
-- Responses are **cached by content hash** and committed for historical headlines, so CI is deterministic and fork CI never calls an API.
-- A **50-headline hand-labeled gold set** measures accuracy on every extractor change, and the accuracy number is published in the repo.
-- Low-confidence results get a **Needs review** label and are excluded from scoring until a human confirms them.
+- `spillover ingest-headlines` reads the official feeds in `data/sources.toml` (titles, links, ids and publication times only), skips anything already stored, and sends each new headline to Claude (`claude-haiku-5-5` by default, low effort) with a strict structured-output schema whose event type is an enum of the taxonomy in `engine/spillover/taxonomy.py`. The answer is validated again by Pydantic and rejected if it does not parse. A per-run cost cap (`max_new_per_run`) bounds spend.
+- Responses are **cached by content hash** (extractor version, source, title) under `events/extractions/` and committed, so CI is deterministic and fork CI never calls an API. A prompt change changes the version, so old answers are never silently reused. Accepted events are appended to `events/YYYY-MM.jsonl`, which is append-only; the same story from several sources becomes one event when the cache is built.
+- A **50-headline hand-labeled gold set** (`labels/gold.jsonl`, labeled by people) measures accuracy with `spillover eval-extractor`; `spillover gold-template` writes unlabeled candidates to label. The report is tied to a hash of the labels and to the extractor version.
+- Low-confidence results get a **Needs review** label and are excluded from scoring until a person lists their `event_key` in `labels/confirmed.txt`. Headlines are untrusted text: the schema bounds what a hostile one can make the model output, but a feed you do not trust is still a risk, which is why only official feeds are listed.
 - The **extractor version is frozen inside every prediction**, so improving the extractor never rewrites history.
 
 **Why this design.**
@@ -521,12 +523,12 @@ flowchart LR
 | `check.yml` | `pull_request`, push to `main` | read-only, no secrets | Lint, type-check, test, schema-validate, verify the ledger, and block PRs that edit registered claims or hand-edit generated outputs |
 | `register.yml` | push to `main` touching `claims/` | write to `main`; checks out only trusted code | Stamp `registered_at` on newly merged claims |
 | `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Reads the PR's changed files through the GitHub API as plain text, validates them with trusted code from `main`, and posts or updates one comment. Everything taken from the PR is shown inertly (code spans, length-limited) and the bot only edits its own comment |
-| `ingest.yml` | schedule on `main` | secrets for data keys | Fetch headlines and prices, extract new events, write predictions |
-| `score.yml` | schedule on `main` | write to `main` | Grade closed windows, rebuild scoreboard data |
+| `ingest.yml` | schedule on `main` | secrets for data keys; write to `main` | Fetch headlines, extract events, build the price cache, freeze predictions. **Off by default** (repository variable `INGEST_ENABLED`) |
+| `score.yml` | schedule on `main` | `FRED_API_KEY` secret; write to `main` | Grade closed windows against real prices, rebuild scoreboard data. Same off-by-default switch |
 | `site.yml` | push to `main` | Pages deploy | Build and deploy the static site |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
-`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml` and `site.yml` exist today. `ingest.yml` and `score.yml` are **planned**. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
+`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` do nothing until you add the `ANTHROPIC_API_KEY` and `FRED_API_KEY` secrets and set the repository variable `INGEST_ENABLED` to `true`; they have never run on GitHub. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
 
@@ -841,6 +843,8 @@ spillover/
 | `make e2e` | Build the site and run the browser smoke and accessibility tests |
 | `make test-all` | Run every claim; p-values adjusted across the set |
 | `make fmt` | Auto-format and apply safe lint fixes |
+| `uv run spillover ingest-headlines` | Fetch the configured feeds, extract events (cache first; needs `ANTHROPIC_API_KEY` for new ones) and append them to `events/` |
+| `uv run spillover eval-extractor` / `gold-template` | Score the extractor against `labels/gold.jsonl` / write unlabeled candidates to label |
 | `uv run spillover predict` | Freeze predictions for qualifying forward events whose window is still open |
 | `uv run spillover grade` | Grade closed windows into append-only `outcomes/` records (refuses synthetic data unless told otherwise) |
 | `uv run spillover scoreboard` | Build the scoreboard data (per claim, per contributor, calibration, placebo alert) from outcome records |

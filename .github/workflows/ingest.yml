@@ -1,0 +1,72 @@
+name: ingest
+
+# Fetches headlines, extracts events with Claude (cache first), builds the price cache, and freezes
+# predictions for qualifying forward events. Appends to events/ and predictions/ on main.
+#
+# OFF BY DEFAULT. It spends API credits and writes to main, so nothing runs until you turn it on:
+#   1. Add repository secrets ANTHROPIC_API_KEY and FRED_API_KEY.
+#   2. Read the notes in data/sources.ci.toml about the data terms.
+#   3. Set the repository variable INGEST_ENABLED to "true" (Settings > Secrets and variables > Actions).
+# The cost cap is max_new_per_run in data/sources.ci.toml.
+#
+# It never runs pull-request code: scheduled and manual runs only, from main.
+on:
+  schedule:
+    - cron: "11 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Shared with register.yml and stamp.yml so only one job writes the ledger at a time.
+concurrency:
+  group: ledger-writes
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    if: github.repository == 'McMuf/Spillover' && vars.INGEST_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install (with the Claude SDK)
+        run: uv sync --group llm
+
+      # Never build on a ledger that has been tampered with.
+      - name: Verify the ledger
+        run: |
+          uv run spillover verify-ledger
+          uv run spillover verify-outcomes
+
+      - name: Fetch headlines and extract events
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run spillover ingest-headlines --config data/sources.ci.toml
+
+      - name: Build the price and event cache (derived returns only, not committed)
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: uv run spillover ingest --config data/sources.ci.toml
+
+      - name: Freeze predictions for forward events
+        run: uv run spillover predict --data data/cache
+
+      - name: Commit new events and predictions
+        run: |
+          git add events predictions
+          if git diff --cached --quiet; then
+            echo "nothing new"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -s -m "chore: ingest events and freeze predictions"
+          git pull --rebase --autostash origin main
+          git push

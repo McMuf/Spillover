@@ -1,0 +1,41 @@
+# Spillover claim template. Copy to claims/<short_name>.yaml and edit.
+# After your PR merges this file is frozen. Changes require a new version (_v2).
+
+# Unique, lowercase, ends in a version. Example: clm_semis_korea_us_v1
+id: clm_REPLACE_ME_v1
+
+# One sentence a non-expert can understand. State trigger, instrument, direction.
+statement: >
+  After <trigger>, <instrument> <rises/falls> by more than <what the market explains> over <window>.
+
+# Must come from the event taxonomy (see docs/METHODOLOGY.md). Open an issue to propose a new type.
+event_type: REPLACE_ME
+
+# Entities the headline must be about.
+trigger_entities: [TICKER_OR_ENTITY_ID]
+
+# Always include the venue. "GOOGL on Nasdaq" and "GOOGL perp" are different instruments.
+instrument: {venue: us_equity, symbol: TICKER}
+
+# When the window starts and ends relative to the headline's first verifiable time.
+window: {start: first_report, end: +1_trading_day}
+
+# positive | negative
+expected_sign: negative
+
+# Optional. Use when the instrument is a basket that contains the trigger entity.
+decompose: [mechanical_weight, spillover]
+
+# What counts as "normal". factor_only is the default naive baseline.
+baseline: factor_only
+
+# How the claim is judged. min_forward_events is a floor set by rules/scoring.md.
+success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
+
+# Mandatory. What result would show you are wrong?
+falsifier: >
+  REPLACE_ME
+
+# Set these two as shown. CI fills registered_at when the PR merges.
+registered_by: YOUR_GITHUB_HANDLE
+registered_at: set_by_ci_on_merge

@@ -15,6 +15,7 @@ dependencies = [
     "scipy>=1.13",
     "statsmodels>=0.14",
     "typer>=0.12",
+    "defusedxml>=0.7.1",
 ]
 
 [dependency-groups]
@@ -23,6 +24,10 @@ dev = [
     "ruff>=0.5",
     "pyright>=1.1.370",
     "types-pyyaml>=6.0",
+    "types-defusedxml>=0.7.0.20260504",
+]
+llm = [
+    "anthropic>=2.8.0",
 ]
 # Only the scheduled stamping job needs the OpenTimestamps client: `uv sync --group ots`.
 ots = [
@@ -68,3 +73,8 @@ reportUnknownVariableType = false
 reportUnknownArgumentType = false
 reportUnknownParameterType = false
 reportUnknownLambdaType = false
+
+[tool.uv]
+# The Claude SDK is installed by default so type-checking and the tests see the real package.
+# It is only *called* when ANTHROPIC_API_KEY is set. The OpenTimestamps client stays opt-in.
+default-groups = ["dev", "llm"]

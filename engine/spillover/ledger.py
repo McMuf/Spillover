@@ -80,7 +80,11 @@ def compute_hash(prediction: Prediction) -> str:
 
 
 def build_prediction(
-    claim: Claim, event_id: str, event_date: date, created_at: datetime
+    claim: Claim,
+    event_id: str,
+    event_date: date,
+    created_at: datetime,
+    extractor: str = EXTRACTOR_VERSION,
 ) -> Prediction:
     if created_at.tzinfo is None:
         raise LedgerError("created_at must be timezone-aware (UTC)")
@@ -97,7 +101,7 @@ def build_prediction(
         "factor": claim.factor,
         "measure": claim.measure,
         "confidence": claim.confidence,
-        "extractor_version": EXTRACTOR_VERSION,
+        "extractor_version": extractor,
         "engine_version": engine_version(),
         "rules_version": RULES_VERSION,
         "created_at": created_at.astimezone(UTC),
@@ -196,6 +200,16 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
             drafts.append(claim.id)
             continue
         events = matching_events(claim, data)
+        # Events from the extractor carry its version; calendar and CSV events carry "none".
+        versions: dict[str, str] = (
+            dict(
+                zip(
+                    events["event_id"].to_list(), events["extractor_version"].to_list(), strict=True
+                )
+            )
+            if "extractor_version" in events.columns
+            else {}
+        )
         for event_id, when in zip(
             events["event_id"].to_list(), events["date"].to_list(), strict=True
         ):
@@ -204,7 +218,9 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
             elif not window_is_open(data, when, claim.window.end_offset):
                 closed += 1
             else:
-                pred = build_prediction(claim, event_id, when, now)
+                pred = build_prediction(
+                    claim, event_id, when, now, versions.get(event_id, EXTRACTOR_VERSION)
+                )
                 try:
                     written.append(write_prediction(root, pred))
                 except LedgerError:

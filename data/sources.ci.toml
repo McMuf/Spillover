@@ -1,0 +1,45 @@
+# The configuration the scheduled GitHub workflows (ingest.yml, score.yml) use. No secrets here:
+# FRED_API_KEY and ANTHROPIC_API_KEY come from repository secrets.
+#
+# REVIEW BEFORE TURNING THE WORKFLOWS ON (repository variable INGEST_ENABLED=true):
+#  - FRED's S&P 500 series carries its own copyright notice from S&P. Check that you may use it
+#    this way, or replace it with a source whose terms you have read.
+#  - Only derived daily returns are used, in the runner. No price file is ever committed.
+
+[data]
+out = "data/cache"
+start = "2021-01-01"
+
+[[series]]
+symbol = "SPX"
+provider = "fred"
+id = "SP500"
+
+[[series]]
+symbol = "MKT"
+provider = "alias"
+of = "SPX"
+
+[[events]]
+type = "fomc"
+
+[[events]]
+type = "store"
+path = "events"
+confirmed = "labels/confirmed.txt"
+
+[[headlines]]
+name = "fed-press"
+url = "https://www.federalreserve.gov/feeds/press_all.xml"
+terms = "US federal government work, public domain (17 U.S.C. 105)"
+
+[[headlines]]
+name = "sec-press"
+url = "https://www.sec.gov/news/pressreleases.rss"
+terms = "US federal government work, public domain; SEC asks automated clients to stay under 10 requests per second and to identify themselves"
+
+[extractor]
+model = "claude-haiku-5-5"
+store = "events"
+cache = "events/extractions"
+max_new_per_run = 100

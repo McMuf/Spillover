@@ -10,6 +10,7 @@ docs/launch/
 # Ingested caches and raw exports stay on this machine (derived data only, never vendor files).
 data/*
 !data/sources.example.toml
+!data/sources.ci.toml
 .env
 fixtures/live/
 *.parquet.tmp

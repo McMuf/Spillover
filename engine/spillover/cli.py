@@ -10,16 +10,28 @@ from typing import Annotated
 import typer
 
 from spillover.data import DataError, load_market_data
+from spillover.eventstore import StoreError
 from spillover.eventstudy import (
     DEFAULT_BOOT,
     DEFAULT_SEED,
     fdr_adjust,
     run_backtest,
 )
+from spillover.extractor import AnthropicLlm, ExtractionError, Llm
 from spillover.fixtures_gen import generate
 from spillover.frozen import FrozenError, check_frozen
+from spillover.gold import (
+    CANDIDATES_FILE,
+    GOLD_FILE,
+    GoldError,
+    evaluate_gold,
+    load_gold,
+    write_candidates,
+)
 from spillover.ingest.config import ConfigError, load_config
 from spillover.ingest.fomc import FomcParseError
+from spillover.ingest.headline_run import run_headlines
+from spillover.ingest.headlines import FeedError
 from spillover.ingest.http import FetchError, http_get, redact
 from spillover.ingest.prices import PriceError
 from spillover.ingest.store import IngestError, build_cache
@@ -403,6 +415,98 @@ def pr_comment(
     typer.echo(outcome)
     if dry_run and body:
         typer.echo(body)
+
+
+def _llm_from_env(model: str) -> Llm | None:
+    """A Claude client if ANTHROPIC_API_KEY is set, else None (cache-only mode)."""
+    import os
+
+    if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        return None
+    try:
+        return AnthropicLlm.from_env(model)
+    except ImportError:
+        raise _fail("the Anthropic SDK is not installed; run `uv sync --group llm`") from None
+
+
+@app.command("ingest-headlines")
+def ingest_headlines(
+    config: Annotated[
+        Path, typer.Option("--config", help="Sources file (see data/sources.example.toml).")
+    ] = Path("data/sources.toml"),
+) -> None:
+    """Fetch headline feeds, extract events (cache first) and append them to events/."""
+    try:
+        cfg = load_config(config)
+        if not cfg.headlines:
+            raise _fail(f"{config} lists no [[headlines]] feeds")
+        summary = run_headlines(cfg, http_get, _llm_from_env(cfg.extractor.model))
+    except (ConfigError, StoreError, FeedError, FetchError) as exc:
+        raise _fail(redact(str(exc))) from exc
+    typer.echo(
+        f"feeds ok: {summary.feeds_ok}/{len(cfg.headlines)}; fetched {summary.fetched}, "
+        f"already stored {summary.already_stored}, new records written {summary.written} "
+        f"({summary.live_calls} model call(s), {summary.from_cache} from cache, "
+        f"{summary.no_event} with no event, {summary.needs_review} need review)"
+    )
+    for line in summary.feed_errors:
+        typer.echo(f"  feed problem: {line}", err=True)
+    if summary.skipped_items:
+        typer.echo(f"  note: {summary.skipped_items} feed item(s) skipped (no usable link or time)")
+    if summary.pending_no_client:
+        typer.echo(
+            f"  note: {summary.pending_no_client} headline(s) wait for ANTHROPIC_API_KEY "
+            "(nothing was guessed)"
+        )
+    if summary.deferred_by_cap:
+        typer.echo(f"  note: {summary.deferred_by_cap} more deferred by max_new_per_run")
+    for line in summary.extraction_errors[:10]:
+        typer.echo(f"  extraction problem: {redact(line)}", err=True)
+    if summary.feeds_ok == 0:
+        raise _fail("no feed could be read")
+
+
+@app.command("eval-extractor")
+def eval_extractor(
+    gold: Annotated[Path, typer.Option(help="Hand-labeled gold set (JSONL).")] = GOLD_FILE,
+    cache: Annotated[Path, typer.Option(help="Extraction cache.")] = Path("events/extractions"),
+    model: Annotated[str, typer.Option(help="Model id.")] = "claude-haiku-5-5",
+    out: Annotated[Path | None, typer.Option(help="Write the accuracy report here.")] = None,
+) -> None:
+    """Score the extractor against the gold set (cache first; live only if a key is set)."""
+    try:
+        rows, sha = load_gold(gold)
+        report = evaluate_gold(rows, sha, _llm_from_env(model), cache, model)
+    except (GoldError, ExtractionError) as exc:
+        raise _fail(str(exc)) from exc
+    text = json.dumps(report.to_dict(), indent=2, sort_keys=True)
+    if out is not None:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text + "\n", encoding="utf-8")
+    typer.echo(text)
+    if report.n_unscored:
+        typer.echo(
+            f"{report.n_unscored} row(s) not scored: no cached answer and no API key", err=True
+        )
+
+
+@app.command("gold-template")
+def gold_template(
+    store: Annotated[Path, typer.Option(help="Event store directory.")] = Path("events"),
+    out: Annotated[
+        Path, typer.Option(help="Where to write unlabeled candidates.")
+    ] = CANDIDATES_FILE,
+    n: Annotated[int, typer.Option(help="How many candidates.")] = 50,
+) -> None:
+    """Write unlabeled candidate headlines for a person to label into labels/gold.jsonl."""
+    try:
+        count = write_candidates(store, out, n)
+    except StoreError as exc:
+        raise _fail(str(exc)) from exc
+    typer.echo(
+        f"wrote {count} unlabeled candidate(s) to {out}. Fill in expected_type (a taxonomy name "
+        "or NONE) and expected_entities for each, then save the result as labels/gold.jsonl."
+    )
 
 
 @app.command("verify-outcomes")

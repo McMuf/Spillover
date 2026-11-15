@@ -1,0 +1,6 @@
+# Event keys a person has reviewed and confirmed. One per line; # starts a comment.
+#
+# The extractor marks low-confidence results "needs review" and they are excluded from scoring
+# until their key is listed here (in a pull request, like any other change). A key looks like
+#   EARNINGS_MISS|ACME|2026-11-03
+# and is shown in the event store (events/YYYY-MM.jsonl) as "event_key".

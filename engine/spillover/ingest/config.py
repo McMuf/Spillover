@@ -42,8 +42,9 @@ class SeriesSpec(_Strict):
 
 
 class EventsSpec(_Strict):
-    type: Literal["fomc", "csv"]
-    path: Path | None = None
+    type: Literal["fomc", "csv", "store"]
+    path: Path | None = None  # csv: the file; store: the events/ directory (default events)
+    confirmed: Path | None = None  # store: human-confirmed low-confidence events
 
     @model_validator(mode="after")
     def _fields(self) -> Self:
@@ -52,13 +53,34 @@ class EventsSpec(_Strict):
         return self
 
 
+class FeedSpec(_Strict):
+    """A headline feed. ``terms`` is required: say why you are allowed to use it."""
+
+    name: Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")]
+    url: Annotated[str, Field(pattern=r"^https://")]
+    terms: Annotated[str, Field(min_length=3)]
+
+
+class ExtractorSettings(_Strict):
+    model: str = "claude-haiku-5-5"
+    store: Path = Path("events")
+    cache: Path = Path("events/extractions")
+    # A cost cap: at most this many new headlines are sent to the model in one run.
+    max_new_per_run: Annotated[int, Field(ge=1, le=1000)] = 100
+
+
 class Config(_Strict):
     data: DataSettings = DataSettings()
     series: Annotated[list[SeriesSpec], Field(min_length=1)]
     events: list[EventsSpec] = Field(default_factory=lambda: list[EventsSpec]())
+    headlines: list[FeedSpec] = Field(default_factory=lambda: list[FeedSpec]())
+    extractor: ExtractorSettings = ExtractorSettings()
 
     @model_validator(mode="after")
     def _consistent(self) -> Self:
+        names = [f.name for f in self.headlines]
+        if len(set(names)) != len(names):
+            raise ValueError("headline feed names must be unique")
         symbols = [s.symbol for s in self.series]
         if len(set(symbols)) != len(symbols):
             raise ValueError("series symbols must be unique")

@@ -12,6 +12,13 @@ from pathlib import Path
 
 import polars as pl
 
+from spillover.eventstore import (
+    CONFIRMED_FILE,
+    EVENTS_DIR,
+    events_frame,
+    load_records,
+    read_confirmed,
+)
 from spillover.ingest.config import Config, EventsSpec, SeriesSpec
 from spillover.ingest.fomc import FOMC_URL, fetch_fomc
 from spillover.ingest.http import Fetcher
@@ -29,6 +36,7 @@ EVENT_SCHEMA = {
     "date": pl.Date,
     "scheduled": pl.Boolean,
     "source": pl.String,
+    "extractor_version": pl.String,
 }
 
 
@@ -132,6 +140,7 @@ def read_events_csv(path: Path) -> pl.DataFrame:
                     "date": when,
                     "scheduled": row.get("scheduled", "").lower() in ("1", "true", "yes"),
                     "source": row["source"],
+                    "extractor_version": "none",
                 }
             )
     return pl.DataFrame(rows, schema=EVENT_SCHEMA)
@@ -157,10 +166,23 @@ def build_events(
                         "date": parsed.decisions,
                         "scheduled": [True] * len(parsed.decisions),
                         "source": [FOMC_URL] * len(parsed.decisions),
+                        "extractor_version": ["none"] * len(parsed.decisions),
                     },
                     schema=EVENT_SCHEMA,
                 )
             )
+        elif spec.type == "store":
+            root = spec.path or EVENTS_DIR
+            built = events_frame(
+                load_records(root), read_confirmed(spec.confirmed or CONFIRMED_FILE), EVENT_SCHEMA
+            )
+            if built.n_needs_review:
+                skipped.append(
+                    f"{built.n_needs_review} low-confidence event(s) excluded until confirmed "
+                    f"in {spec.confirmed or CONFIRMED_FILE}"
+                )
+            sources.append(str(root))
+            frames.append(built.events)
         else:
             assert spec.path is not None
             sources.append(str(spec.path))

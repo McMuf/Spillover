@@ -1,4 +1,4 @@
-.PHONY: setup check check-web e2e export-data fmt test-claim test-all site ingest help
+.PHONY: setup check check-web e2e export-data headlines fmt test-claim test-all site ingest help
 
 UV ?= uv
 # Avoid uv warning about an unrelated active virtualenv (conda, etc.).
@@ -14,6 +14,7 @@ help:
 	@echo "make e2e                           browser smoke test against the built site"
 	@echo "make site                          export the data and serve the web app (needs pnpm)"
 	@echo "make ingest                        fetch prices and events into data/cache (needs data/sources.toml)"
+	@echo "make headlines                     fetch feeds and extract events (needs ANTHROPIC_API_KEY for new ones)"
 
 setup:
 	@command -v $(UV) >/dev/null 2>&1 || python3 -m pip install --user uv
@@ -65,3 +66,6 @@ site: export-data
 
 ingest:
 	$(UV) run spillover ingest
+
+headlines:
+	$(UV) run spillover ingest-headlines

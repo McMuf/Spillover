@@ -45,3 +45,36 @@ type = "fomc"
 # [[events]]
 # type = "csv"
 # path = "data/raw/events.csv"
+
+# Events extracted from headlines (see [[headlines]] below), read from the committed events/ store.
+# Low-confidence extractions are excluded until a person lists their event_key in
+# labels/confirmed.txt.
+[[events]]
+type = "store"
+
+# --- Headlines -> events ----------------------------------------------------------------------
+# `uv run spillover ingest-headlines` fetches these feeds and keeps only each item's title, link,
+# source name, id and publication time (never article text). `terms` is required: say why you may
+# use the feed. Only official feeds are listed; add others only after reading their terms.
+# The extractor needs your own ANTHROPIC_API_KEY (uv sync --group llm); without one, it only
+# replays answers already in the committed cache and never guesses.
+#
+# Note: official regulator feeds mostly carry regulatory news, so expect few company events
+# (earnings, guidance) from them. The feed list decides how useful the event stream is.
+
+[[headlines]]
+name = "fed-press"
+url = "https://www.federalreserve.gov/feeds/press_all.xml"
+terms = "US federal government work, public domain (17 U.S.C. 105)"
+
+[[headlines]]
+name = "sec-press"
+url = "https://www.sec.gov/news/pressreleases.rss"
+terms = "US federal government work, public domain; SEC asks automated clients to stay under 10 requests per second and to identify themselves"
+
+[extractor]
+model = "claude-haiku-5-5"
+store = "events"
+cache = "events/extractions"
+# A cost cap: at most this many NEW headlines are sent to the model per run.
+max_new_per_run = 100

@@ -235,7 +235,7 @@ def test_events_csv_requires_a_source_and_a_valid_type(tmp_path: Path) -> None:
 def test_the_example_config_is_valid() -> None:
     cfg = load_config(ROOT / "data" / "sources.example.toml")
     assert {s.symbol for s in cfg.series} == {"SPX", "MKT"}
-    assert [e.type for e in cfg.events] == ["fomc"]
+    assert [e.type for e in cfg.events] == ["fomc", "store"]
 
 
 @pytest.mark.parametrize(

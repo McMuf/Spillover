@@ -136,22 +136,31 @@ def claim_json_schema() -> dict[str, Any]:
     return schema
 
 
-def load_claim(path: Path) -> Claim:
-    """Parse and validate one claim file. Raises ``ClaimError`` with a readable message."""
+def parse_claim(text: str, label: str) -> Claim:
+    """Parse and validate claim YAML from text. ``label`` names the source in error messages."""
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except (OSError, yaml.YAMLError) as exc:
-        raise ClaimError(f"{path}: cannot read claim: {exc}") from exc
+        raw = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ClaimError(f"{label}: cannot read claim: {exc}") from exc
     if not isinstance(raw, dict):
-        raise ClaimError(f"{path}: a claim file must be a YAML mapping")
+        raise ClaimError(f"{label}: a claim file must be a YAML mapping")
     try:
         return Claim.model_validate(raw)
     except ValidationError as exc:
-        lines = [f"{path}: invalid claim"]
+        lines = [f"{label}: invalid claim"]
         for err in exc.errors():
             where = ".".join(str(p) for p in err["loc"]) or "<root>"
             lines.append(f"  - {where}: {err['msg']}")
         raise ClaimError("\n".join(lines)) from exc
+
+
+def load_claim(path: Path) -> Claim:
+    """Parse and validate one claim file. Raises ``ClaimError`` with a readable message."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ClaimError(f"{path}: cannot read claim: {exc}") from exc
+    return parse_claim(text, str(path))
 
 
 def claim_files(directory: Path) -> list[Path]:

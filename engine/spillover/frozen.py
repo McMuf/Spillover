@@ -7,6 +7,7 @@ directories; contributors never should, so any change there from a PR is a viola
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable, Iterable
 from pathlib import Path, PurePosixPath
 
 from spillover.register import has_placeholder
@@ -31,17 +32,25 @@ def _git(repo: Path, *args: str) -> str:
     return proc.stdout
 
 
-def _is_claim(path: str) -> bool:
+def is_claim_path(path: str) -> bool:
     p = PurePosixPath(path)
     return p.parent.as_posix() == "claims" and p.suffix == ".yaml" and not p.name.startswith("_")
 
 
-def check_frozen(base_ref: str, repo: Path = Path(".")) -> list[str]:
-    """Return a list of violations in the changes between ``base_ref`` and HEAD (empty is good)."""
-    diff = _git(repo, "diff", "--name-status", "--no-renames", f"{base_ref}...HEAD")
+ReadText = Callable[[str], str]
+"""Reads a file's text at one side of a change (base or head); raises if it does not exist."""
+
+
+def frozen_violations(
+    changes: Iterable[tuple[str, str]], read_base: ReadText, read_head: ReadText
+) -> list[str]:
+    """Pure rule check on a list of ``(status, path)`` changes, status being A, M or D.
+
+    Taking the file contents through callbacks lets the same rules run on a local git diff
+    (``check_frozen``) and on a pull request's files fetched as data by the trusted comment bot.
+    """
     problems: list[str] = []
-    for line in diff.splitlines():
-        status, _, path = line.partition("\t")
+    for status, path in changes:
         name = PurePosixPath(path).name
         top = PurePosixPath(path).parts[0] if PurePosixPath(path).parts else ""
 
@@ -49,20 +58,29 @@ def check_frozen(base_ref: str, repo: Path = Path(".")) -> list[str]:
             problems.append(
                 f"{path}: generated output ({top}/) must not be changed by a pull request"
             )
-        elif _is_claim(path):
+        elif is_claim_path(path):
             if status == "A":
-                if not has_placeholder(_git(repo, "show", f"HEAD:{path}")):
+                if not has_placeholder(read_head(path)):
                     problems.append(
                         f"{path}: a new claim must leave registered_at as set_by_ci_on_merge; "
                         "CI stamps the registration time"
                     )
-            else:
-                base_text = _git(repo, "show", f"{base_ref}:{path}")
-                if not has_placeholder(base_text):
-                    problems.append(
-                        f"{path}: this claim is registered and frozen; "
-                        "register a new version (_v2) instead of editing or deleting it"
-                    )
-                elif status == "M" and not has_placeholder(_git(repo, "show", f"HEAD:{path}")):
-                    problems.append(f"{path}: do not set registered_at yourself; CI stamps it")
+            elif not has_placeholder(read_base(path)):
+                problems.append(
+                    f"{path}: this claim is registered and frozen; "
+                    "register a new version (_v2) instead of editing or deleting it"
+                )
+            elif status == "M" and not has_placeholder(read_head(path)):
+                problems.append(f"{path}: do not set registered_at yourself; CI stamps it")
     return problems
+
+
+def check_frozen(base_ref: str, repo: Path = Path(".")) -> list[str]:
+    """Return a list of violations in the changes between ``base_ref`` and HEAD (empty is good)."""
+    diff = _git(repo, "diff", "--name-status", "--no-renames", f"{base_ref}...HEAD")
+    changes = [(line.partition("\t")[0], line.partition("\t")[2]) for line in diff.splitlines()]
+    return frozen_violations(
+        changes,
+        read_base=lambda path: _git(repo, "show", f"{base_ref}:{path}"),
+        read_head=lambda path: _git(repo, "show", f"HEAD:{path}"),
+    )

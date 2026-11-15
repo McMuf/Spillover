@@ -26,6 +26,8 @@ from spillover.ingest.store import IngestError, build_cache
 from spillover.ledger import LedgerError, predict, verify_ledger
 from spillover.models import ClaimError, claim_files, claim_json_schema, load_claim
 from spillover.placebo import placebo_rejection_rate
+from spillover.pr_bot import BotError, make_request
+from spillover.pr_bot import run as run_pr_bot
 from spillover.register import register_claims
 from spillover.report import format_report
 from spillover.scoreboard import build_scoreboard
@@ -367,6 +369,40 @@ def ingest(
     for line in summary.skipped_events:
         typer.echo(f"  note: {line}")
     typer.echo(f"Use it with: --data {summary.out}   (or export SPILLOVER_DATA={summary.out})")
+
+
+@app.command("pr-comment")
+def pr_comment(
+    head_sha: Annotated[str, typer.Option(help="Commit sha of the pull request's head.")],
+    head_repo: Annotated[str, typer.Option(help="owner/name of the repository the head lives in.")],
+    repo: Annotated[
+        str, typer.Option(envvar="GITHUB_REPOSITORY", help="owner/name of this repository.")
+    ],
+    claims_dir: Annotated[
+        Path, typer.Option(help="Trusted claims on the base branch.")
+    ] = DEFAULT_CLAIMS,
+    data: DataOpt = DEFAULT_DATA,
+    dry_run: Annotated[bool, typer.Option(help="Print the comment instead of posting it.")] = False,
+) -> None:
+    """Post the trusted review comment on a pull request (run by comment.yml, from main)."""
+    import os
+
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if not token:
+        raise _fail("GITHUB_TOKEN is not set")
+    try:
+        market = load_market_data(data)
+    except DataError:
+        market = None
+    try:
+        outcome, body = run_pr_bot(
+            make_request(token), repo, head_sha, head_repo, claims_dir, market, dry_run
+        )
+    except BotError as exc:
+        raise _fail(str(exc).replace(token, "***")) from exc
+    typer.echo(outcome)
+    if dry_run and body:
+        typer.echo(body)
 
 
 @app.command("verify-outcomes")

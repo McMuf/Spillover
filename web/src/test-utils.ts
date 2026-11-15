@@ -57,6 +57,8 @@ export function makeClaim(id = "clm_demo_v1", over: Partial<SiteClaim> = {}): Si
     chart: null,
     forward_log: [],
     event_ids: ["ev1"],
+    challenges: [],
+    replications: [],
     ...over,
   };
 }

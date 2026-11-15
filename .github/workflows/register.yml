@@ -1,12 +1,14 @@
 name: register
 
-# When a claim merges to main, stamp its registered_at. Only trusted code on main runs here;
+# When a claim, challenge or replication merges to main, stamp its registered_at / submitted_at. Only trusted code on main runs here;
 # no fork code is ever checked out. Commits pushed with GITHUB_TOKEN do not re-trigger workflows.
 on:
   push:
     branches: [main]
     paths:
       - "claims/*.yaml"
+      - "challenges/*.yaml"
+      - "replications/*.yaml"
 
 permissions:
   contents: write
@@ -30,17 +32,17 @@ jobs:
       - name: Install
         run: uv sync
 
-      - name: Stamp registered_at on new claims
+      - name: Stamp registered_at / submitted_at on what just merged
         run: uv run spillover register
 
       - name: Commit registration
         run: |
-          if git diff --quiet -- claims; then
-            echo "no new claims to register"
+          if git diff --quiet -- claims challenges replications; then
+            echo "nothing new to stamp"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add claims
-          git commit -s -m "chore: register claims (CI stamps registered_at)"
+          git add claims challenges replications
+          git commit -s -m "chore: stamp registrations and submissions (CI sets the time)"
           git push

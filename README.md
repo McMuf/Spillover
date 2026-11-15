@@ -629,8 +629,8 @@ Spillover only works if it is easy to contribute to and hard to cheat in. Contri
 | Lane | Branch prefix | You are… | Typical size |
 |---|---|---|---|
 | **Claim** | `claim/…` | Proposing a new testable claim | One YAML file |
-| **Challenge** | `challenge/…` | Arguing a claim is wrong, with evidence | One YAML file plus notes |
-| **Replication** | `replication/…` | Re-running a claim with different data or method | A config plus results |
+| **Challenge** | `challenge/…` | Arguing a *registered* claim is wrong, with evidence | One YAML file in `challenges/` (`challenges/_template.yaml`) |
+| **Replication** | `replication/…` | Re-running a registered claim with named changes (instrument, window, baseline, factor or measure) | A config in `replications/` (`replications/_template.yaml`); **the engine runs it and writes the result**, you never do |
 | **Code** | `feat/…`, `fix/…` | Improving the engine, data adapters or web app | Any |
 | **Docs and labels** | `docs/…`, `fix/…` | Fixing docs or correcting extractor labels | Small |
 
@@ -675,7 +675,8 @@ flowchart LR
 ### Rules of the road
 
 - **No edits to registered claims.** New version, new ID.
-- **No hand-edited outputs.** Predictions, outcomes and the scoreboard are generated. PRs that modify them by hand fail CI.
+- **No hand-edited outputs.** Predictions, outcomes, replication results and the scoreboard are generated. PRs that modify them by hand fail CI.
+- **Challenges and replications are append-only too.** Submit a new one (`_v2`) instead of editing an old one. They apply to *registered* claims only; before that, comment on the claim's own pull request.
 - **Be specific.** "Tech drops after bad news" is rejected as untestable; the review comment will say what to tighten.
 - **Be kind.** The project's Code of Conduct (the Contributor Covenant 2.1) applies everywhere, including challenges. Attack the claim, not the person.
 
@@ -822,7 +823,8 @@ spillover/
 ├── events/            # extracted events (generated)
 ├── predictions/       # frozen, hashed predictions (append-only, generated)
 ├── outcomes/          # graded results (generated)
-├── replications/      # replication configs and results
+├── challenges/        # challenges against registered claims (+ _template.yaml)
+├── replications/      # replication configs (+ _template.yaml); results/ is generated
 ├── schemas/           # JSON Schema generated from Pydantic
 ├── engine/            # Python: extractor, event study, ledger, scoring, CLI
 ├── web/               # TypeScript: React app, design tokens, components
@@ -848,6 +850,7 @@ spillover/
 | `make e2e` | Build the site and run the browser smoke and accessibility tests |
 | `make test-all` | Run every claim; p-values adjusted across the set |
 | `make fmt` | Auto-format and apply safe lint fixes |
+| `uv run spillover replicate` | Run replications that have no result yet and write their hashed, append-only results (refuses synthetic data unless forced) |
 | `uv run spillover placebo-events` | Pre-register random placebo dates for future months (idempotent; an existing month is never rewritten) |
 | `uv run spillover ingest-headlines` | Fetch the configured feeds, extract events (cache first; needs `ANTHROPIC_API_KEY` for new ones) and append them to `events/` |
 | `uv run spillover eval-extractor` / `gold-template` | Score the extractor against `labels/gold.jsonl` / write unlabeled candidates to label |

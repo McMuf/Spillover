@@ -7,12 +7,14 @@ import { Histogram } from "../components/Histogram";
 import { InstrumentChip } from "../components/InstrumentChip";
 import { NodeLegend } from "../components/NodeLegend";
 import { Ready, Row } from "../components/Ready";
+import { ChallengeList, ReplicationList } from "../components/Submissions";
 import { StatusBadge } from "../components/StatusBadge";
 import { useTheme } from "../components/ThemeContext";
 import type { SiteClaim, SiteData } from "../generated/site";
 import { findClaim } from "../lib/data";
 import { citation, claimVersion, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
 import { buildGraph } from "../lib/graph";
+import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
 
 const GraphView = lazy(() => import("../components/GraphView"));
 // The charting library is large, so it loads only when the Evidence tab shows a chart.
@@ -198,25 +200,64 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
 
 function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
   const repo = site.meta.repo;
-  // Opens the "Challenge a claim" issue form with the claim id filled in.
-  const q = new URLSearchParams({ template: "challenge.yml", title: `Challenge: ${item.claim.id}`, claim: item.claim.id });
+  const id = item.claim.id;
+  // Opens the "Challenge a claim" issue form with the claim id filled in (a quick, informal start).
+  const q = new URLSearchParams({ template: "challenge.yml", title: `Challenge: ${id}`, claim: id });
+  const registered = item.status !== "Draft";
+  const link = "inline-block rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-surface-alt";
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <p className="text-sm text-muted">
-        Disagreement is a structured activity here. Challenge a claim with evidence, or replicate it with different data
-        or a different method. Both are first-class, reviewed contributions.
+        Disagreement is a structured activity here. A <strong className="text-fg">challenge</strong> argues the claim is
+        wrong, with evidence. A <strong className="text-fg">replication</strong> reruns it with named changes; the engine
+        runs it and writes the result, so nobody can hand-write a favorable one. Both are reviewed, append-only pull
+        requests.
       </p>
-      <p className="rounded-[10px] border border-dashed border-line p-4 text-sm text-muted">
-        No open challenges or replications are recorded for this claim. The structured challenge and replication format
-        is planned; for now, start one as an issue, or as a pull request on a <code className="font-mono">challenge/</code> or{" "}
-        <code className="font-mono">replication/</code> branch.
-      </p>
-      <a
-        className="inline-block rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent"
-        href={`https://github.com/${repo}/issues/new?${q.toString()}`}
-      >
-        Start a challenge on GitHub
-      </a>
+
+      {!registered && (
+        <p role="note" className="rounded-[10px] border border-dashed border-line p-3 text-sm text-muted">
+          This claim is a draft. Challenges and replications apply after it is registered; before that, comment on its pull
+          request.
+        </p>
+      )}
+
+      <section aria-labelledby="chl-h">
+        <h2 id="chl-h" className="mb-2 text-sm font-semibold">Challenges ({item.challenges.length})</h2>
+        {item.challenges.length > 0 ? (
+          <ChallengeList items={item.challenges} />
+        ) : (
+          <p className="rounded-[10px] border border-dashed border-line p-4 text-sm text-muted">None yet.</p>
+        )}
+      </section>
+
+      <section aria-labelledby="rep-h">
+        <h2 id="rep-h" className="mb-2 text-sm font-semibold">Replications ({item.replications.length})</h2>
+        {item.replications.length > 0 ? (
+          <ReplicationList items={item.replications} />
+        ) : (
+          <p className="rounded-[10px] border border-dashed border-line p-4 text-sm text-muted">None yet.</p>
+        )}
+      </section>
+
+      <section aria-labelledby="start-h" className="space-y-3">
+        <h2 id="start-h" className="text-sm font-semibold">Contribute</h2>
+        <div className="flex flex-wrap gap-2">
+          <a className={link} href={newFileUrl(repo, "challenges", "chl_REPLACE_ME_v1.yaml", challengeTemplate(id))}>
+            Write a challenge (pull request)
+          </a>
+          <a className={link} href={newFileUrl(repo, "replications", "rep_REPLACE_ME_v1.yaml", replicationTemplate(id))}>
+            Propose a replication (pull request)
+          </a>
+          <a className={link} href={`https://github.com/${repo}/issues/new?${q.toString()}`}>
+            Raise it as an issue first
+          </a>
+        </div>
+        <p className="text-xs text-muted">
+          The links open GitHub&apos;s editor with the file pre-filled. Rename it to match the id you choose, fill in the
+          placeholders, and choose &ldquo;Create a new branch and start a pull request&rdquo;. Leave{" "}
+          <code className="font-mono">submitted_at</code> as it is; CI stamps it.
+        </p>
+      </section>
     </div>
   );
 }
@@ -256,7 +297,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
           <Tabs.Trigger value="overview" className={TAB}>Overview</Tabs.Trigger>
           <Tabs.Trigger value="evidence" className={TAB}>Evidence</Tabs.Trigger>
           <Tabs.Trigger value="forward" className={TAB}>Forward log ({item.forward_log.length})</Tabs.Trigger>
-          <Tabs.Trigger value="challenge" className={TAB}>Challenge</Tabs.Trigger>
+          <Tabs.Trigger value="challenge" className={TAB}>Challenge ({item.challenges.length + item.replications.length})</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="overview"><Overview item={item} site={site} /></Tabs.Content>
         <Tabs.Content value="evidence"><Evidence item={item} site={site} /></Tabs.Content>

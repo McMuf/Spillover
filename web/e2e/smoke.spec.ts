@@ -30,6 +30,16 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
   await page.getByRole("button", { name: "table", exact: true }).click();
   await expect(page.getByRole("table", { name: /Mean abnormal path/ })).toBeVisible();
 
+  // Challenge tab: structured lanes, with pull-request links pre-filled from the templates.
+  await page.getByRole("tab", { name: /Challenge/ }).click();
+  await expect(page.getByRole("heading", { name: /Challenges \(0\)/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Replications \(0\)/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Propose a replication (pull request)" })).toHaveAttribute(
+    "href",
+    /github\.com\/McMuf\/Spillover\/new\/main\/replications\?filename=rep_REPLACE_ME_v1\.yaml/,
+  );
+  await expect(page.getByRole("note").filter({ hasText: "This claim is a draft" })).toBeVisible();
+
   // Forward log is honest about being empty; nothing is backfilled.
   await page.getByRole("tab", { name: /Forward log/ }).click();
   await expect(page.getByText("Nothing here is backfilled.")).toBeVisible();

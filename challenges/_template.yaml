@@ -1,0 +1,25 @@
+# Spillover challenge template. Copy to challenges/<id>.yaml and edit.
+# A challenge argues that a REGISTERED claim is wrong. Attack the claim, not the person.
+# After your pull request merges this file is frozen; submit a new one (_v2) to add to it.
+
+# chl_<short_name>_v1, lowercase, ending in a version. The file name must match.
+id: chl_REPLACE_ME_v1
+
+# The registered claim you are challenging, e.g. clm_fomc_abs_move_spx_v1
+claim: clm_REPLACE_ME_v1
+
+# What is wrong: definition | baseline | sample | data | timing | other
+aspect: other
+
+# At least a few sentences: what is wrong, and why it changes the conclusion.
+argument: >
+  REPLACE_ME
+
+# Optional, up to 10. kind: link | data (https:// URLs) or replication | placebo (a rep_..._v1 id).
+evidence: []
+#  - {kind: link, ref: "https://example.org/analysis", note: "what this shows"}
+#  - {kind: replication, ref: "rep_my_check_v1", note: "the effect vanishes with a different window"}
+
+submitted_by: YOUR_GITHUB_HANDLE
+# CI fills this in when the pull request merges. Leave it as shown.
+submitted_at: set_by_ci_on_merge

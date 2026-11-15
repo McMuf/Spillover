@@ -1,0 +1,27 @@
+# Spillover replication template. Copy to replications/<id>.yaml and edit.
+# A replication is a CONFIG: the registered claim, with the named changes below. The engine runs it
+# and writes the result to replications/results/ by itself. You never write a result.
+# After your pull request merges this file is frozen; submit a new one (_v2) to try something else.
+
+# rep_<short_name>_v1, lowercase, ending in a version. The file name must match.
+id: rep_REPLACE_ME_v1
+
+# The registered claim to replicate.
+claim: clm_REPLACE_ME_v1
+
+# Change at least one thing. The event type and trigger entities define the claim and cannot change.
+changes:
+  # instrument: {venue: us_equity, symbol: XLF}
+  # window_end: +3_trading_days
+  # baseline: factor_only          # or constant_mean
+  # factor: MKT
+  # measure: abnormal_return       # or abs_excess_return
+  window_end: +3_trading_days
+
+# Why is this a fair test of the claim? One or two sentences.
+rationale: >
+  REPLACE_ME
+
+submitted_by: YOUR_GITHUB_HANDLE
+# CI fills this in when the pull request merges. Leave it as shown.
+submitted_at: set_by_ci_on_merge

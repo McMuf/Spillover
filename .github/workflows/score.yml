@@ -45,6 +45,10 @@ jobs:
       - name: Grade closed windows
         run: uv run spillover grade --data data/cache
 
+      # A replication is a config; the engine runs it and writes the hashed result. People never do.
+      - name: Run pending replications
+        run: uv run spillover replicate --data data/cache
+
       - name: Rebuild the scoreboard
         run: |
           uv run spillover verify-outcomes
@@ -52,13 +56,13 @@ jobs:
 
       - name: Commit outcomes and scoreboard
         run: |
-          git add outcomes scoreboard
+          git add outcomes scoreboard replications/results
           if git diff --cached --quiet; then
             echo "nothing new"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -s -m "chore: grade closed windows and update the scoreboard"
+          git commit -s -m "chore: grade closed windows, run replications, update the scoreboard"
           git pull --rebase --autostash origin main
           git push

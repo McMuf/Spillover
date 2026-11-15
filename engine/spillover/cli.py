@@ -38,6 +38,7 @@ from spillover.ingest.store import IngestError, build_cache
 from spillover.ledger import LedgerError, predict, verify_ledger
 from spillover.models import ClaimError, claim_files, claim_json_schema, load_claim
 from spillover.placebo import placebo_rejection_rate
+from spillover.placebo_events import PLACEBO_DIR, ensure_future_draws
 from spillover.pr_bot import BotError, make_request
 from spillover.pr_bot import run as run_pr_bot
 from spillover.register import register_claims
@@ -346,6 +347,10 @@ def grade(
         typer.echo(f"graded {path}")
     for problem in summary.refused:
         typer.echo(f"refused: {problem}", err=True)
+    for note in summary.ungradable[:10]:
+        typer.echo(f"  note: not graded, no data: {redact(note)}")
+    if len(summary.ungradable) > 10:
+        typer.echo(f"  note: ...and {len(summary.ungradable) - 10} more without data")
     typer.echo(
         f"{len(summary.graded)} graded, {summary.still_open} window(s) still open, "
         f"{summary.already_graded} already graded, {len(summary.refused)} refused"
@@ -507,6 +512,25 @@ def gold_template(
         f"wrote {count} unlabeled candidate(s) to {out}. Fill in expected_type (a taxonomy name "
         "or NONE) and expected_entities for each, then save the result as labels/gold.jsonl."
     )
+
+
+@app.command("placebo-events")
+def placebo_events(
+    root: Annotated[Path, typer.Option(help="Where the monthly draws are kept.")] = PLACEBO_DIR,
+    months: Annotated[int, typer.Option(min=1, max=24, help="Whole future months to cover.")] = 3,
+    per_month: Annotated[int, typer.Option(min=1, max=20, help="Random dates per month.")] = 4,
+    today: Annotated[
+        str | None, typer.Option(help="Override today (YYYY-MM-DD), for tests.")
+    ] = None,
+) -> None:
+    """Pre-register random placebo dates for future months (never rewrites an existing month)."""
+    from datetime import date as _date
+
+    when = _date.fromisoformat(today) if today else datetime.now(UTC).date()
+    created = ensure_future_draws(root, when, months, per_month)
+    for path in created:
+        typer.echo(f"drew {path}")
+    typer.echo(f"{len(created)} new month(s) drawn; existing months are never rewritten")
 
 
 @app.command("verify-outcomes")

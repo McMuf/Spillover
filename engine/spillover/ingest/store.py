@@ -23,6 +23,7 @@ from spillover.ingest.config import Config, EventsSpec, SeriesSpec
 from spillover.ingest.fomc import FOMC_URL, fetch_fomc
 from spillover.ingest.http import Fetcher
 from spillover.ingest.prices import Levels, PriceError, fred_levels, read_csv_levels
+from spillover.placebo_events import PLACEBO_DIR, placebo_files
 
 MIN_DAYS = 200  # an estimation window is 130 days; fewer than this cannot test anything
 FRED_KEY_ENV = "FRED_API_KEY"
@@ -171,6 +172,11 @@ def build_events(
                     schema=EVENT_SCHEMA,
                 )
             )
+        elif spec.type == "placebo":
+            root = spec.path or PLACEBO_DIR
+            files = placebo_files(root)
+            sources.append(str(root))
+            frames.extend(read_events_csv(f) for f in files)
         elif spec.type == "store":
             root = spec.path or EVENTS_DIR
             built = events_frame(

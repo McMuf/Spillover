@@ -16,7 +16,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from spillover.data import MarketData
+from spillover.data import DataError, MarketData
 from spillover.eventstudy import Baseline, Measure, compute_stat, has_history
 from spillover.ledger import (
     RULES_VERSION,
@@ -173,6 +173,8 @@ class GradeSummary:
     still_open: int = 0
     already_graded: int = 0
     refused: list[str] = field(default_factory=lambda: list[str]())
+    # Not an error: the data to grade them is not available (yet), so they stay open.
+    ungradable: list[str] = field(default_factory=lambda: list[str]())
 
 
 def grade_all(
@@ -186,6 +188,7 @@ def grade_all(
     tampered = {c.path for c in verify_ledger(predictions_root) if c.problems}
     graded: list[Path] = []
     refused: list[str] = []
+    ungradable: list[str] = []
     still_open = already = 0
 
     for path in prediction_files(predictions_root):
@@ -202,6 +205,10 @@ def grade_all(
             continue
         try:
             outcome = grade_prediction(pred, data, now)
+        except DataError as exc:
+            # Missing prices for one instrument must not stop everything else from being graded.
+            ungradable.append(f"{pred.claim_id}/{pred.event_id}: {exc}")
+            continue
         except ScoreError as exc:
             refused.append(str(exc))
             continue
@@ -210,7 +217,7 @@ def grade_all(
         else:
             graded.append(write_outcome(outcomes_root, outcome))
 
-    return GradeSummary(graded, still_open, already, refused)
+    return GradeSummary(graded, still_open, already, refused, ungradable)
 
 
 @dataclass(frozen=True)

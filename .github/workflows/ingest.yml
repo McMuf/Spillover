@@ -45,6 +45,11 @@ jobs:
           uv run spillover verify-ledger
           uv run spillover verify-outcomes
 
+      # Pre-register random placebo dates for future months. Idempotent: an existing month is
+      # never rewritten, so a date is always committed before it happens.
+      - name: Draw placebo dates ahead of time
+        run: uv run spillover placebo-events
+
       - name: Fetch headlines and extract events
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

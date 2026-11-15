@@ -315,7 +315,7 @@ The rules below are applied identically to every claim. Changes need a **7-day p
 4. **Naive baseline.** Every claim is scored against a factor-only baseline. Beating zero is not enough; the claim must beat what the market and sector already explain.
 5. **Independent events.** Overlapping windows are collapsed. Scheduled-event windows (such as central-bank decisions) that overlap an event are excluded or flagged. The **effective** sample size is what counts.
 6. **Multiple-comparison control.** Because many claims are tested, results are adjusted with a false-discovery-rate procedure across the set of claims. A single lucky claim does not get a free pass.
-7. **Permanent placebo.** A random-dates claim runs forever. If it shows significance more often than chance allows, the engine is treated as broken until fixed.
+7. **Permanent placebo.** A random-dates claim runs forever. If it shows significance more often than chance allows, the engine is treated as broken until fixed. Its dates are drawn **in advance** (`spillover placebo-events`, deterministic from a public seed, one file per future month, never rewritten), so a placebo date is committed before it happens exactly like a real forward event. The placebo claim's instrument needs a price source in the scoring job; until it has one, its predictions stay open and are reported as "no data" instead of failing the run.
 8. **Append-only history.** Verdicts, predictions and outcomes are never edited or deleted. Corrections are new records that link to the old ones.
 
 ### Status thresholds
@@ -843,6 +843,7 @@ spillover/
 | `make e2e` | Build the site and run the browser smoke and accessibility tests |
 | `make test-all` | Run every claim; p-values adjusted across the set |
 | `make fmt` | Auto-format and apply safe lint fixes |
+| `uv run spillover placebo-events` | Pre-register random placebo dates for future months (idempotent; an existing month is never rewritten) |
 | `uv run spillover ingest-headlines` | Fetch the configured feeds, extract events (cache first; needs `ANTHROPIC_API_KEY` for new ones) and append them to `events/` |
 | `uv run spillover eval-extractor` / `gold-template` | Score the extractor against `labels/gold.jsonl` / write unlabeled candidates to label |
 | `uv run spillover predict` | Freeze predictions for qualifying forward events whose window is still open |

@@ -28,6 +28,12 @@ type = "store"
 path = "events"
 confirmed = "labels/confirmed.txt"
 
+# Pre-registered random dates for the permanent placebo claim. `spillover placebo-events` draws
+# whole future months once, in advance, and never rewrites a month (so no hindsight).
+[[events]]
+type = "placebo"
+path = "events/placebo"
+
 [[headlines]]
 name = "fed-press"
 url = "https://www.federalreserve.gov/feeds/press_all.xml"

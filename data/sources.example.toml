@@ -52,6 +52,12 @@ type = "fomc"
 [[events]]
 type = "store"
 
+# Pre-registered random dates for the permanent placebo claim. `spillover placebo-events` draws
+# whole future months once, in advance, and never rewrites a month (so no hindsight).
+[[events]]
+type = "placebo"
+path = "events/placebo"
+
 # --- Headlines -> events ----------------------------------------------------------------------
 # `uv run spillover ingest-headlines` fetches these feeds and keeps only each item's title, link,
 # source name, id and publication time (never article text). `terms` is required: say why you may

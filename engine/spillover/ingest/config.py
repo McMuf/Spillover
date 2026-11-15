@@ -42,8 +42,9 @@ class SeriesSpec(_Strict):
 
 
 class EventsSpec(_Strict):
-    type: Literal["fomc", "csv", "store"]
-    path: Path | None = None  # csv: the file; store: the events/ directory (default events)
+    type: Literal["fomc", "csv", "store", "placebo"]
+    # csv: the file; store: the events/ directory (default events); placebo: events/placebo
+    path: Path | None = None
     confirmed: Path | None = None  # store: human-confirmed low-confidence events
 
     @model_validator(mode="after")

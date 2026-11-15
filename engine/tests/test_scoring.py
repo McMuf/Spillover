@@ -399,3 +399,38 @@ def test_cli_grade_scoreboard_round_trip(market: MarketData, tmp_path: Path) -> 
     board = json.loads(out.read_text())
     assert board["claims"][0]["claim_id"] == "clm_syn_shock_v1"
     assert board["synthetic"] is True
+
+
+def test_a_prediction_without_price_data_is_left_open_not_fatal(
+    market: MarketData, tmp_path: Path
+) -> None:
+    """One instrument with no prices must not stop the rest of the ledger from being graded."""
+    good = make_claim(tmp_path)
+    nodata = make_claim(
+        tmp_path, id="clm_nodata_v1", instrument={"venue": "us_equity", "symbol": "NOPRICES"}
+    )
+    preds, outs = tmp_path / "predictions", tmp_path / "outcomes"
+    for event_id, when in shock_events(market)[:3]:
+        freeze(good, preds, event_id, when)
+        freeze(nodata, preds, event_id, when)
+    summary = grade_all(preds, outs, market, NOW)
+    assert len(summary.graded) == 3 and summary.refused == []
+    assert len(summary.ungradable) == 3 and "NOPRICES" in summary.ungradable[0]
+    # They stay open: a later run with data will grade them.
+    assert not (outs / "clm_nodata_v1").exists()
+
+    result = runner.invoke(
+        app,
+        [
+            "grade",
+            "--data",
+            str(FIXTURES),
+            "--predictions",
+            str(preds),
+            "--outcomes",
+            str(tmp_path / "o2"),
+            "--allow-synthetic",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "not graded, no data" in result.output

@@ -1,0 +1,12 @@
+# Private strategy and third-party reference material. Never commit publicly.
+docs/design/private/
+docs/launch/
+
+# Local data and secrets
+.env
+fixtures/live/
+*.parquet.tmp
+.venv/
+node_modules/
+dist/
+.DS_Store

@@ -1,4 +1,4 @@
-.PHONY: setup check fmt test-claim test-all site ingest help
+.PHONY: setup check check-web e2e export-data fmt test-claim test-all site ingest help
 
 UV ?= uv
 # Avoid uv warning about an unrelated active virtualenv (conda, etc.).
@@ -10,14 +10,18 @@ help:
 	@echo "make fmt                           auto-format and apply safe lint fixes"
 	@echo "make test-claim CLAIM=claims/x.yaml  feasibility and event-study report for one claim"
 	@echo "make test-all                      run every claim, FDR-adjusted across the set"
-	@echo "make site                          (planned, M3) build and serve the web app"
+	@echo "make check-web                     web: generate types, type-check, unit tests, build"
+	@echo "make e2e                           browser smoke test against the built site"
+	@echo "make site                          export the data and serve the web app (needs pnpm)"
 	@echo "make ingest                        (planned) fetch live data into the local cache"
 
 setup:
 	@command -v $(UV) >/dev/null 2>&1 || python3 -m pip install --user uv
 	$(UV) sync
-	@if [ -f web/package.json ]; then pnpm --dir web install; \
-	else echo "web/ has no package.json yet (planned, M3): skipping pnpm install"; fi
+	@if [ -f web/package.json ]; then \
+	  if command -v pnpm >/dev/null 2>&1; then pnpm --dir web install; \
+	  else echo "pnpm not found: install it (https://pnpm.io/installation) to work on web/"; fi; \
+	fi
 
 check:
 	$(UV) run ruff format --check .
@@ -42,8 +46,22 @@ endif
 test-all:
 	$(UV) run spillover test-all
 
-site:
-	@echo "The web app is not built yet (planned, milestone M3)."; exit 1
+check-web: export-data
+	pnpm --dir web typecheck
+	pnpm --dir web test
+	pnpm --dir web build
+
+e2e: export-data
+	pnpm --dir web build
+	pnpm --dir web e2e
+
+# The website reads one generated, typed JSON file. Never committed.
+export-data:
+	$(UV) run spillover export-site
+
+site: export-data
+	pnpm --dir web install
+	pnpm --dir web dev
 
 ingest:
 	@echo "Live data ingestion is not built yet (planned). Everything runs on fixtures for now."; exit 1

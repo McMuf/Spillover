@@ -1,0 +1,1258 @@
+{
+  "$defs": {
+    "Backtest": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date",
+          "title": "As Of",
+          "type": "string"
+        },
+        "baseline": {
+          "title": "Baseline",
+          "type": "string"
+        },
+        "ci_hi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Hi"
+        },
+        "ci_lo": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Lo"
+        },
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "data_synthetic": {
+          "title": "Data Synthetic",
+          "type": "boolean"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/EventStatOut"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "expected_sign": {
+          "enum": [
+            "positive",
+            "negative"
+          ],
+          "title": "Expected Sign",
+          "type": "string"
+        },
+        "instrument": {
+          "title": "Instrument",
+          "type": "string"
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean"
+        },
+        "measure": {
+          "title": "Measure",
+          "type": "string"
+        },
+        "min_events": {
+          "title": "Min Events",
+          "type": "integer"
+        },
+        "n_boot": {
+          "title": "N Boot",
+          "type": "integer"
+        },
+        "n_effective": {
+          "title": "N Effective",
+          "type": "integer"
+        },
+        "n_matched": {
+          "title": "N Matched",
+          "type": "integer"
+        },
+        "n_no_history": {
+          "title": "N No History",
+          "type": "integer"
+        },
+        "n_overlap_collapsed": {
+          "title": "N Overlap Collapsed",
+          "type": "integer"
+        },
+        "n_scheduled_overlap": {
+          "title": "N Scheduled Overlap",
+          "type": "integer"
+        },
+        "p_value": {
+          "title": "P Value",
+          "type": "number"
+        },
+        "seed": {
+          "title": "Seed",
+          "type": "integer"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "verdict": {
+          "title": "Verdict",
+          "type": "string"
+        },
+        "window_days": {
+          "title": "Window Days",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "claim_id",
+        "statement",
+        "instrument",
+        "baseline",
+        "measure",
+        "expected_sign",
+        "window_days",
+        "data_synthetic",
+        "as_of",
+        "n_matched",
+        "n_no_history",
+        "n_scheduled_overlap",
+        "n_overlap_collapsed",
+        "n_effective",
+        "min_events",
+        "mean",
+        "ci_lo",
+        "ci_hi",
+        "p_value",
+        "n_boot",
+        "seed",
+        "verdict",
+        "events"
+      ],
+      "title": "Backtest",
+      "type": "object"
+    },
+    "CalibrationBin": {
+      "additionalProperties": false,
+      "properties": {
+        "hit_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit Rate"
+        },
+        "hit_rate_ci": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit Rate Ci"
+        },
+        "mean_confidence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean Confidence"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "range": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Range",
+          "type": "array"
+        }
+      },
+      "required": [
+        "range",
+        "n",
+        "mean_confidence",
+        "hit_rate",
+        "hit_rate_ci"
+      ],
+      "title": "CalibrationBin",
+      "type": "object"
+    },
+    "Chart": {
+      "additionalProperties": false,
+      "properties": {
+        "days": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Days",
+          "type": "array"
+        },
+        "estimation_end": {
+          "title": "Estimation End",
+          "type": "integer"
+        },
+        "event_window_end": {
+          "title": "Event Window End",
+          "type": "integer"
+        },
+        "hi": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Hi",
+          "type": "array"
+        },
+        "lo": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Lo",
+          "type": "array"
+        },
+        "mean": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Mean",
+          "type": "array"
+        },
+        "n_events": {
+          "title": "N Events",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "days",
+        "mean",
+        "lo",
+        "hi",
+        "n_events",
+        "event_window_end",
+        "estimation_end"
+      ],
+      "title": "Chart",
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "default": "factor_only",
+          "enum": [
+            "factor_only",
+            "constant_mean"
+          ],
+          "title": "Baseline",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 0.99,
+              "minimum": 0.5,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "decompose": {
+          "items": {
+            "enum": [
+              "mechanical_weight",
+              "spillover"
+            ],
+            "type": "string"
+          },
+          "title": "Decompose",
+          "type": "array"
+        },
+        "event_type": {
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "expected_sign": {
+          "enum": [
+            "positive",
+            "negative"
+          ],
+          "title": "Expected Sign",
+          "type": "string"
+        },
+        "factor": {
+          "default": "MKT",
+          "minLength": 1,
+          "title": "Factor",
+          "type": "string"
+        },
+        "falsifier": {
+          "minLength": 10,
+          "title": "Falsifier",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^clm_[a-z0-9]+(?:_[a-z0-9]+)*_v[0-9]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "instrument": {
+          "$ref": "#/$defs/Instrument"
+        },
+        "measure": {
+          "default": "abnormal_return",
+          "enum": [
+            "abnormal_return",
+            "abs_excess_return"
+          ],
+          "title": "Measure",
+          "type": "string"
+        },
+        "registered_at": {
+          "anyOf": [
+            {
+              "const": "set_by_ci_on_merge",
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ],
+          "title": "Registered At"
+        },
+        "registered_by": {
+          "minLength": 1,
+          "title": "Registered By",
+          "type": "string"
+        },
+        "statement": {
+          "minLength": 10,
+          "title": "Statement",
+          "type": "string"
+        },
+        "success": {
+          "$ref": "#/$defs/Success"
+        },
+        "trigger_entities": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Trigger Entities",
+          "type": "array"
+        },
+        "window": {
+          "$ref": "#/$defs/Window"
+        }
+      },
+      "required": [
+        "id",
+        "statement",
+        "event_type",
+        "trigger_entities",
+        "instrument",
+        "window",
+        "expected_sign",
+        "decompose",
+        "baseline",
+        "factor",
+        "measure",
+        "confidence",
+        "success",
+        "falsifier",
+        "registered_by",
+        "registered_at"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "Contributor": {
+      "additionalProperties": false,
+      "properties": {
+        "calibration": {
+          "items": {
+            "$ref": "#/$defs/CalibrationBin"
+          },
+          "title": "Calibration",
+          "type": "array"
+        },
+        "claims_registered": {
+          "title": "Claims Registered",
+          "type": "integer"
+        },
+        "claims_with_verdict": {
+          "title": "Claims With Verdict",
+          "type": "integer"
+        },
+        "effective_events": {
+          "title": "Effective Events",
+          "type": "integer"
+        },
+        "hit_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit Rate"
+        },
+        "hit_rate_ci": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit Rate Ci"
+        },
+        "registered_by": {
+          "title": "Registered By",
+          "type": "string"
+        },
+        "share_supported": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Share Supported"
+        },
+        "small_sample": {
+          "title": "Small Sample",
+          "type": "boolean"
+        },
+        "small_sample_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Small Sample Note"
+        }
+      },
+      "required": [
+        "registered_by",
+        "claims_registered",
+        "claims_with_verdict",
+        "share_supported",
+        "effective_events",
+        "hit_rate",
+        "hit_rate_ci",
+        "small_sample",
+        "small_sample_note",
+        "calibration"
+      ],
+      "title": "Contributor",
+      "type": "object"
+    },
+    "EventClaimStat": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "effective": {
+          "title": "Effective",
+          "type": "boolean"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "claim_id",
+        "effective",
+        "value"
+      ],
+      "title": "EventClaimStat",
+      "type": "object"
+    },
+    "EventStatOut": {
+      "additionalProperties": false,
+      "properties": {
+        "car": {
+          "title": "Car",
+          "type": "number"
+        },
+        "event_date": {
+          "format": "date",
+          "title": "Event Date",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "event_id",
+        "event_date",
+        "car",
+        "value"
+      ],
+      "title": "EventStatOut",
+      "type": "object"
+    },
+    "ForwardRow": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "event_date": {
+          "format": "date",
+          "title": "Event Date",
+          "type": "string"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "hit": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit"
+        },
+        "proof": {
+          "enum": [
+            "none",
+            "present"
+          ],
+          "title": "Proof",
+          "type": "string"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "closed",
+            "graded"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "event_id",
+        "event_date",
+        "created_at",
+        "sha256",
+        "status",
+        "hit",
+        "value",
+        "proof"
+      ],
+      "title": "ForwardRow",
+      "type": "object"
+    },
+    "Instrument": {
+      "additionalProperties": false,
+      "description": "A thing with a price, always labeled with where it trades.",
+      "properties": {
+        "symbol": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "venue": {
+          "description": "Where it trades.",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Venue",
+          "type": "string"
+        }
+      },
+      "required": [
+        "venue",
+        "symbol"
+      ],
+      "title": "Instrument",
+      "type": "object"
+    },
+    "PlaceboInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "alert": {
+          "title": "Alert",
+          "type": "boolean"
+        },
+        "claims": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claims",
+        "alert",
+        "message"
+      ],
+      "title": "PlaceboInfo",
+      "type": "object"
+    },
+    "Scoreboard": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "As Of"
+        },
+        "calibration": {
+          "items": {
+            "$ref": "#/$defs/CalibrationBin"
+          },
+          "title": "Calibration",
+          "type": "array"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/ScoreboardClaim"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "contributors": {
+          "items": {
+            "$ref": "#/$defs/Contributor"
+          },
+          "title": "Contributors",
+          "type": "array"
+        },
+        "engine_version": {
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "placebo": {
+          "$ref": "#/$defs/PlaceboInfo"
+        },
+        "rules_version": {
+          "title": "Rules Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "rules_version",
+        "engine_version",
+        "as_of",
+        "synthetic",
+        "claims",
+        "contributors",
+        "calibration",
+        "placebo",
+        "notes"
+      ],
+      "title": "Scoreboard",
+      "type": "object"
+    },
+    "ScoreboardClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "string"
+        },
+        "beat_baseline": {
+          "title": "Beat Baseline",
+          "type": "boolean"
+        },
+        "ci_hi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Hi"
+        },
+        "ci_lo": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Lo"
+        },
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "collapsed_overlapping": {
+          "title": "Collapsed Overlapping",
+          "type": "integer"
+        },
+        "effective_events": {
+          "title": "Effective Events",
+          "type": "integer"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "excluded_scheduled_overlap": {
+          "title": "Excluded Scheduled Overlap",
+          "type": "integer"
+        },
+        "expected_sign": {
+          "enum": [
+            "positive",
+            "negative"
+          ],
+          "title": "Expected Sign",
+          "type": "string"
+        },
+        "forward_events": {
+          "title": "Forward Events",
+          "type": "integer"
+        },
+        "hit_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit Rate"
+        },
+        "hit_rate_ci": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Hit Rate Ci"
+        },
+        "hits": {
+          "title": "Hits",
+          "type": "integer"
+        },
+        "instrument": {
+          "title": "Instrument",
+          "type": "string"
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean"
+        },
+        "measure": {
+          "title": "Measure",
+          "type": "string"
+        },
+        "min_events": {
+          "title": "Min Events",
+          "type": "integer"
+        },
+        "p_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P Value"
+        },
+        "placebo": {
+          "title": "Placebo",
+          "type": "boolean"
+        },
+        "q_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Q Value"
+        },
+        "registered_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Registered At"
+        },
+        "registered_by": {
+          "title": "Registered By",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "Proposed",
+            "Supported",
+            "Not supported",
+            "Inconclusive"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "claim_id",
+        "version",
+        "statement",
+        "instrument",
+        "registered_by",
+        "registered_at",
+        "event_type",
+        "expected_sign",
+        "measure",
+        "baseline",
+        "placebo",
+        "status",
+        "forward_events",
+        "effective_events",
+        "min_events",
+        "excluded_scheduled_overlap",
+        "collapsed_overlapping",
+        "mean",
+        "ci_lo",
+        "ci_hi",
+        "p_value",
+        "q_value",
+        "beat_baseline",
+        "hits",
+        "hit_rate",
+        "hit_rate_ci",
+        "synthetic"
+      ],
+      "title": "ScoreboardClaim",
+      "type": "object"
+    },
+    "SiteClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "backtest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Backtest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backtest_error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Backtest Error"
+        },
+        "chart": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Chart"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "claim": {
+          "$ref": "#/$defs/Claim"
+        },
+        "event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Event Ids",
+          "type": "array"
+        },
+        "forward_log": {
+          "items": {
+            "$ref": "#/$defs/ForwardRow"
+          },
+          "title": "Forward Log",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "Draft",
+            "Proposed",
+            "Supported",
+            "Not supported",
+            "Inconclusive"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "yaml": {
+          "title": "Yaml",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim",
+        "yaml",
+        "status",
+        "backtest",
+        "backtest_error",
+        "chart",
+        "forward_log",
+        "event_ids"
+      ],
+      "title": "SiteClaim",
+      "type": "object"
+    },
+    "SiteEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/EventClaimStat"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "entities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entities",
+          "type": "array"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "scheduled": {
+          "title": "Scheduled",
+          "type": "boolean"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "event_type",
+        "entities",
+        "date",
+        "scheduled",
+        "source",
+        "claims"
+      ],
+      "title": "SiteEvent",
+      "type": "object"
+    },
+    "SiteMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "data_as_of": {
+          "format": "date",
+          "title": "Data As Of",
+          "type": "string"
+        },
+        "data_synthetic": {
+          "title": "Data Synthetic",
+          "type": "boolean"
+        },
+        "engine_version": {
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "repo": {
+          "title": "Repo",
+          "type": "string"
+        },
+        "rules_version": {
+          "title": "Rules Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo",
+        "engine_version",
+        "rules_version",
+        "data_synthetic",
+        "data_as_of"
+      ],
+      "title": "SiteMeta",
+      "type": "object"
+    },
+    "Success": {
+      "additionalProperties": false,
+      "properties": {
+        "min_forward_events": {
+          "minimum": 8,
+          "title": "Min Forward Events",
+          "type": "integer"
+        },
+        "spillover_ci_excludes_zero": {
+          "const": true,
+          "title": "Spillover Ci Excludes Zero",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "spillover_ci_excludes_zero",
+        "min_forward_events"
+      ],
+      "title": "Success",
+      "type": "object"
+    },
+    "Window": {
+      "additionalProperties": false,
+      "description": "Event window, in trading days, relative to the headline's first verifiable time.",
+      "properties": {
+        "end": {
+          "pattern": "^\\+[1-9][0-9]*_trading_days?$",
+          "title": "End",
+          "type": "string"
+        },
+        "start": {
+          "const": "first_report",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "Window",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/SiteClaim"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/SiteEvent"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "meta": {
+      "$ref": "#/$defs/SiteMeta"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "scoreboard": {
+      "$ref": "#/$defs/Scoreboard"
+    }
+  },
+  "required": [
+    "schema_version",
+    "meta",
+    "claims",
+    "events",
+    "scoreboard"
+  ],
+  "title": "Spillover site data",
+  "type": "object"
+}

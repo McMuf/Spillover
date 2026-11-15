@@ -101,9 +101,17 @@ def test_cli_test_all_adjusts_across_claims() -> None:
     assert "clm_fomc_abs_move_spx_v1" in result.output
 
 
-def test_schema_on_disk_is_up_to_date() -> None:
+def test_schemas_on_disk_are_up_to_date() -> None:
     result = runner.invoke(
-        app, ["schema", "--check", "--out", str(ROOT / "schemas" / "claim.schema.json")]
+        app,
+        [
+            "schema",
+            "--check",
+            "--out",
+            str(ROOT / "schemas" / "claim.schema.json"),
+            "--site-out",
+            str(ROOT / "schemas" / "site.schema.json"),
+        ],
     )
     assert result.exit_code == 0, result.output
 

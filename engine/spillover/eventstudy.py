@@ -199,6 +199,56 @@ def backtest_verdict(report_mean: float, lo: float, hi: float, n_eff: int, claim
     return "Points the other way: interval excludes zero in the opposite direction"
 
 
+@dataclass(frozen=True)
+class WindowPath:
+    """Average abnormal path around events, indexed to 100 at the start of the chart."""
+
+    days: list[int]  # trading days relative to day 0
+    mean: list[float]
+    lo: list[float]  # mean minus 1.96 standard errors
+    hi: list[float]
+    n_events: int
+    event_window_end: int  # last day of the claim's event window
+    estimation_end: int  # last day of the estimation window, relative to day 0
+
+
+CHART_PRE = 40  # trading days shown before the event
+CHART_POST_EXTRA = 10  # trading days shown after the event window closes
+
+
+def mean_window_path(claim: Claim, data: MarketData, stats: list[EventStat]) -> WindowPath | None:
+    """Mean cumulative abnormal path for the evidence chart, or None if no event has full range."""
+    y = data.series(claim.instrument.symbol)
+    x = data.series(claim.factor) if claim.baseline == "factor_only" else None
+    end = claim.window.end_offset
+    post = end + CHART_POST_EXTRA
+    days = list(range(-CHART_PRE, post + 1))
+    paths: list[FloatArray] = []
+    for s in stats:
+        lo_i, hi_i = s.day0 - CHART_PRE, s.day0 + post
+        if lo_i < 0 or hi_i > len(y) - 1:
+            continue
+        actual = y[lo_i : hi_i + 1]
+        normal = np.full_like(actual, s.alpha)
+        if x is not None:
+            normal = normal + s.beta * x[lo_i : hi_i + 1]
+        paths.append(100.0 * (1.0 + np.cumsum(actual - normal)))
+    if not paths:
+        return None
+    arr = np.vstack(paths)
+    mean = arr.mean(axis=0)
+    se = arr.std(axis=0, ddof=1) / np.sqrt(len(paths)) if len(paths) > 1 else np.zeros_like(mean)
+    return WindowPath(
+        days=days,
+        mean=[float(v) for v in mean],
+        lo=[float(v) for v in mean - 1.96 * se],
+        hi=[float(v) for v in mean + 1.96 * se],
+        n_events=len(paths),
+        event_window_end=end,
+        estimation_end=-EST_GAP,
+    )
+
+
 def run_backtest(
     claim: Claim, data: MarketData, n_boot: int = DEFAULT_BOOT, seed: int = DEFAULT_SEED
 ) -> BacktestReport:

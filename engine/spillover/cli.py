@@ -25,6 +25,7 @@ from spillover.register import register_claims
 from spillover.report import format_report
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import ScoreError, grade_all, verify_outcomes
+from spillover.site_export import build_site_data, site_json_schema
 from spillover.stamp import StampError, ots_binary, stamp_new, upgrade_pending
 
 app = typer.Typer(
@@ -36,6 +37,8 @@ app = typer.Typer(
 DEFAULT_CLAIMS = Path("claims")
 DEFAULT_DATA = Path("fixtures/synthetic")
 DEFAULT_SCHEMA = Path("schemas/claim.schema.json")
+DEFAULT_SITE_SCHEMA = Path("schemas/site.schema.json")
+DEFAULT_SITE_OUT = Path("web/public/data")
 DEFAULT_PREDICTIONS = Path("predictions")
 DEFAULT_OUTCOMES = Path("outcomes")
 DEFAULT_SCOREBOARD = Path("scoreboard/scoreboard.json")
@@ -98,19 +101,51 @@ def validate(
 
 @app.command()
 def schema(
-    out: Annotated[Path, typer.Option(help="Where to write the JSON Schema.")] = DEFAULT_SCHEMA,
-    check: Annotated[bool, typer.Option(help="Fail if the file on disk is out of date.")] = False,
+    out: Annotated[
+        Path, typer.Option(help="Where to write the claim JSON Schema.")
+    ] = DEFAULT_SCHEMA,
+    site_out: Annotated[
+        Path, typer.Option(help="Where to write the site-data JSON Schema.")
+    ] = DEFAULT_SITE_SCHEMA,
+    check: Annotated[bool, typer.Option(help="Fail if a file on disk is out of date.")] = False,
 ) -> None:
-    """Generate (or check) schemas/claim.schema.json from the Pydantic model."""
-    text = json.dumps(claim_json_schema(), indent=2, sort_keys=True) + "\n"
-    if check:
-        if not out.exists() or out.read_text(encoding="utf-8") != text:
-            raise _fail(f"{out} is out of date; run `uv run spillover schema` and commit it")
-        typer.echo(f"{out} is up to date")
-        return
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(text, encoding="utf-8")
-    typer.echo(f"wrote {out}")
+    """Generate (or check) the JSON Schemas for claims and for the website's data."""
+    targets = {
+        out: json.dumps(claim_json_schema(), indent=2, sort_keys=True) + "\n",
+        site_out: json.dumps(site_json_schema(), indent=2, sort_keys=True) + "\n",
+    }
+    for path, text in targets.items():
+        if check:
+            if not path.exists() or path.read_text(encoding="utf-8") != text:
+                raise _fail(f"{path} is out of date; run `uv run spillover schema` and commit it")
+            typer.echo(f"{path} is up to date")
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+            typer.echo(f"wrote {path}")
+
+
+@app.command("export-site")
+def export_site(
+    claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
+    data: DataOpt = DEFAULT_DATA,
+    predictions: PredictionsOpt = DEFAULT_PREDICTIONS,
+    outcomes: OutcomesOpt = DEFAULT_OUTCOMES,
+    out: Annotated[Path, typer.Option(help="Output directory for site.json.")] = DEFAULT_SITE_OUT,
+    n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
+) -> None:
+    """Write the single typed JSON file the static website reads (generated, never committed)."""
+    try:
+        claims = [(load_claim(p), p.read_text(encoding="utf-8")) for p in claim_files(claims_dir)]
+        site = build_site_data(claims, load_market_data(data), predictions, outcomes, n_boot=n_boot)
+    except (ClaimError, DataError, ScoreError, LedgerError) as exc:
+        raise _fail(str(exc)) from exc
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "site.json").write_text(site.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    typer.echo(
+        f"wrote {out / 'site.json'}: {len(site.claims)} claim(s), {len(site.events)} event(s)"
+        + (" (SYNTHETIC data)" if site.meta.data_synthetic else "")
+    )
 
 
 @app.command("gen-fixtures")

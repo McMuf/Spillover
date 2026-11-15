@@ -28,7 +28,11 @@ class ClaimError(ValueError):
 
 
 class _Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    # Only affects serialization-mode schemas (the website data): fields with defaults are
+    # always written out, so the generated TypeScript types should not call them optional.
+    model_config = ConfigDict(
+        extra="forbid", frozen=True, json_schema_serialization_defaults_required=True
+    )
 
 
 class Instrument(_Strict):

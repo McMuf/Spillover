@@ -1,0 +1,52 @@
+name: stamp
+
+# Submits new predictions to OpenTimestamps and completes pending proofs once Bitcoin has
+# confirmed them. Only a salted SHA-256 digest of each prediction file leaves the runner.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledger-writes
+  cancel-in-progress: false
+
+jobs:
+  stamp:
+    if: github.repository == 'McMuf/Spillover'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: uv sync --group ots
+
+      # Never timestamp a record that has already been tampered with.
+      - name: Verify ledger hashes
+        run: uv run spillover verify-ledger
+
+      - name: Stamp new predictions
+        run: uv run --group ots spillover stamp
+
+      - name: Upgrade pending proofs
+        run: uv run --group ots spillover upgrade
+
+      - name: Commit proofs
+        run: |
+          git add predictions
+          if git diff --cached --quiet; then
+            echo "no proof changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -s -m "chore: update OpenTimestamps proofs"
+          git push

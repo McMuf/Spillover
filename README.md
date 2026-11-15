@@ -464,7 +464,7 @@ flowchart LR
 
 **What it does.** Records every forward prediction in a way that proves it was made before the outcome.
 
-**How.** Each prediction is a small JSON file containing the claim ID and version, event ID, extractor and engine versions, the predicted sign and window, and a SHA-256 hash of its canonical form. The file is committed to `predictions/`. A scheduled job then submits the commit's hash to **OpenTimestamps**, which anchors it in Bitcoin, and stores the proof next to the prediction (using a tool such as `git-ots` for commit-level stamping).
+**How.** Each prediction is a small JSON file containing the claim ID and version, event ID, extractor and engine versions, the predicted sign and window, and a SHA-256 hash of its canonical form. The file is committed to `predictions/`. A scheduled job then submits a salted digest of each prediction file to **OpenTimestamps**, which anchors it in Bitcoin, and stores the proof next to the prediction as `<name>.json.ots`. Stamping each file (rather than the commit) keeps every record independently verifiable. A new proof is *pending* until Bitcoin confirms it (usually hours); a later run upgrades it. A prediction is only written for an event whose window is still open, so the ledger cannot be backfilled with hindsight.
 
 **Why this design.**
 - *Why not just Git commit times:* commit timestamps are set by the committer and can be rewritten. A Bitcoin-anchored proof shows the record existed no later than a given block, independent of GitHub and of the maintainer.
@@ -516,12 +516,15 @@ flowchart LR
 
 | Workflow | Trigger | Permissions | Does |
 |---|---|---|---|
-| `check.yml` | `pull_request` | read-only, no secrets | Lint, type-check, test, schema-validate, run claim feasibility |
+| `check.yml` | `pull_request`, push to `main` | read-only, no secrets | Lint, type-check, test, schema-validate, verify the ledger, and block PRs that edit registered claims or hand-edit generated outputs |
+| `register.yml` | push to `main` touching `claims/` | write to `main`; checks out only trusted code | Stamp `registered_at` on newly merged claims |
 | `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Posts the results as a PR comment from uploaded artifacts |
 | `ingest.yml` | schedule on `main` | secrets for data keys | Fetch headlines and prices, extract new events, write predictions |
 | `score.yml` | schedule on `main` | write to `main` | Grade closed windows, rebuild scoreboard data |
 | `site.yml` | push to `main` | Pages deploy | Build and deploy the static site |
-| `stamp.yml` | schedule on `main` | write to `main` | Submit new commits to OpenTimestamps and store proofs |
+| `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
+
+`check.yml`, `register.yml` and `stamp.yml` exist today. `comment.yml`, `ingest.yml`, `score.yml` and `site.yml` are **planned**.
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
 
@@ -541,7 +544,7 @@ flowchart LR
 | Graph | **Cytoscape.js** | Built-in shapes and layouts that map to node types |
 | Testing | **Vitest, one Playwright smoke test** | Fast unit tests plus a minimum end-to-end guard |
 | Hosting | **GitHub Pages** | Free static hosting alongside the code |
-| Timestamps | **OpenTimestamps (git-ots)** | Free, open, Bitcoin-anchored |
+| Timestamps | **OpenTimestamps (`ots` client)** | Free, open, Bitcoin-anchored |
 
 ### Left out on purpose
 
@@ -704,7 +707,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | Milestone | Goal | Done when |
 |---|---|---|
 | **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
-| **M2: Ledger** | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
+| **M2: Ledger** *(built; not yet exercised on live data)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, PR template, CI comment bot and contributor guide live; 20 starter claims registered |
 
@@ -825,6 +828,10 @@ spillover/
 | `make site` | *(planned, M3)* Build and serve the web app locally |
 | `make test-all` | Run every claim; p-values adjusted across the set |
 | `make fmt` | Auto-format and apply safe lint fixes |
+| `uv run spillover predict` | Freeze predictions for qualifying forward events whose window is still open |
+| `uv run spillover verify-ledger` | Re-derive every prediction hash and report timestamp-proof coverage |
+| `uv run spillover check-frozen origin/main` | Fail if a change edits a registered claim or generated output |
+| `uv run --group ots spillover stamp` / `upgrade` | Submit predictions to OpenTimestamps / complete confirmed proofs |
 | `make ingest` | *(planned)* Fetch live data into the local cache (needs your keys) |
 
 ## Contributors

@@ -1,0 +1,46 @@
+name: register
+
+# When a claim merges to main, stamp its registered_at. Only trusted code on main runs here;
+# no fork code is ever checked out. Commits pushed with GITHUB_TOKEN do not re-trigger workflows.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "claims/*.yaml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledger-writes
+  cancel-in-progress: false
+
+jobs:
+  register:
+    if: github.repository == 'McMuf/Spillover'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: uv sync
+
+      - name: Stamp registered_at on new claims
+        run: uv run spillover register
+
+      - name: Commit registration
+        run: |
+          if git diff --quiet -- claims; then
+            echo "no new claims to register"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add claims
+          git commit -s -m "chore: register claims (CI stamps registered_at)"
+          git push

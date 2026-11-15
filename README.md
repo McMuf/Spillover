@@ -272,7 +272,7 @@ Why: events are shared inputs. One earnings headline can trigger several claims,
 
 ### Screen 4: Submit a claim
 
-A guided form that generates the YAML, validates it live against the schema and runs a **feasibility check**: how many historical events match, how many are independent (overlapping windows removed), and whether the claim is testable at all. If the effective sample is too small, the form says so before a contributor wastes a week.
+A guided form that generates the YAML and validates it live against the engine's own JSON Schema. A **feasibility check** (how many historical events match, how many are independent with overlapping windows removed, and whether the claim is testable at all) needs the engine, which does not run in the browser: *today the form tells you to run `make test-claim` locally; an in-browser check is planned.*
 
 Fields: statement (plain English), event type (dropdown from the taxonomy), instrument (searchable, venue required), window (presets plus custom), expected sign, success rule (presets), and a "what would prove me wrong?" line that is mandatory.
 
@@ -508,7 +508,7 @@ flowchart LR
 - *Radix primitives:* accessibility (focus management, keyboard behavior, ARIA) is easy to get wrong and expensive to retrofit.
 - *Lightweight Charts:* small, fast, finance-native and Apache-2.0 licensed. Its license requires a **visible attribution link**, which the footer includes.
 - *No client-side secrets and no backend:* nothing to leak, nothing to scale.
-- *Testing:* Vitest for components and logic, plus one Playwright smoke test that loads the built site, opens a claim and checks the legend renders. More tests are welcome; this is the minimum that catches a broken build.
+- *Testing:* Vitest for components and logic, plus Playwright browser tests: a smoke test that loads the built site, opens a claim and checks the legend renders, and an axe-core audit of every page in both themes for WCAG A/AA violations. Automated audits catch only part of what a person would, so manual review still matters. More tests are welcome.
 
 ### 10. Automation
 
@@ -524,7 +524,7 @@ flowchart LR
 | `site.yml` | push to `main` | Pages deploy | Build and deploy the static site |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
-`check.yml`, `register.yml` and `stamp.yml` exist today. `comment.yml`, `ingest.yml`, `score.yml` and `site.yml` are **planned**.
+`check.yml` (engine and web jobs), `register.yml`, `stamp.yml` and `site.yml` exist today. `comment.yml`, `ingest.yml` and `score.yml` are **planned**. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
 
@@ -542,7 +542,7 @@ flowchart LR
 | Front end | **React, TypeScript, Vite, Tailwind, Radix** | See [Web app](#9-web-app) |
 | Charts | **TradingView Lightweight Charts** | Finance-native, small, Apache-2.0 (attribution required) |
 | Graph | **Cytoscape.js** | Built-in shapes and layouts that map to node types |
-| Testing | **Vitest, one Playwright smoke test** | Fast unit tests plus a minimum end-to-end guard |
+| Testing | **Vitest, Playwright, axe-core** | Fast unit tests, a browser smoke test and an automated accessibility audit |
 | Hosting | **GitHub Pages** | Free static hosting alongside the code |
 | Timestamps | **OpenTimestamps (`ots` client)** | Free, open, Bitcoin-anchored |
 
@@ -581,8 +581,8 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 ## Quick start
 
 > [!NOTE]
-> `make setup`, `make check`, `make test-claim` and `make test-all` work today. `make site`
-> (web app, milestone M3) and `make ingest` (live data) are **planned** and exit with a message.
+> `make setup`, `make check`, `make test-claim`, `make test-all`, `make site`, `make check-web` and `make e2e` work
+> today (the web targets need [pnpm](https://pnpm.io/installation)). `make ingest` (live data) is **planned** and exits with a message.
 > The cached fixtures are **synthetic** (simulated returns), so reports on them show the
 > machinery working, not facts about real markets.
 
@@ -708,7 +708,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 |---|---|---|
 | **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** *(built; not yet exercised on live data)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
-| **M3: Web** | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
+| **M3: Web** *(built on synthetic data; deploys once Pages is enabled)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, PR template, CI comment bot and contributor guide live; 20 starter claims registered |
 
 ### Seed claims
@@ -825,7 +825,9 @@ spillover/
 | `make setup` | Install toolchain and dependencies |
 | `make check` | Lint, type-check, test, validate schemas |
 | `make test-claim CLAIM=claims/x.yaml` | Feasibility and event-study report for one claim |
-| `make site` | *(planned, M3)* Build and serve the web app locally |
+| `make site` | Export the data from the engine and serve the web app at http://localhost:5173 (needs pnpm) |
+| `make check-web` | Generate types from the schemas, type-check, run unit tests, build the site |
+| `make e2e` | Build the site and run the browser smoke and accessibility tests |
 | `make test-all` | Run every claim; p-values adjusted across the set |
 | `make fmt` | Auto-format and apply safe lint fixes |
 | `uv run spillover predict` | Freeze predictions for qualifying forward events whose window is still open |

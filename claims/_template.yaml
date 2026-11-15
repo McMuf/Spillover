@@ -8,7 +8,7 @@ id: clm_REPLACE_ME_v1
 statement: >
   After <trigger>, <instrument> <rises/falls> by more than <what the market explains> over <window>.
 
-# Must come from the event taxonomy (see docs/METHODOLOGY.md). Open an issue to propose a new type.
+# UPPER_SNAKE_CASE event type from the taxonomy, e.g. FOMC_DECISION. Open an issue to propose a new type.
 event_type: REPLACE_ME
 
 # Entities the headline must be about.
@@ -29,7 +29,7 @@ decompose: [mechanical_weight, spillover]
 # What counts as "normal". factor_only is the default naive baseline.
 baseline: factor_only
 
-# How the claim is judged. min_forward_events is a floor set by rules/scoring.md.
+# How the claim is judged. min_forward_events has a floor set by the public scoring rules.
 success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
 
 # Mandatory. What result would show you are wrong?

@@ -7,7 +7,7 @@ engine can be checked against ground truth:
 * ``XLK``: beta 1.15 to the market, no event effects (target of the placebo claim).
 * ``SYN2``: beta 0.9 to the market with a -1.2% shock on ``SYN_SHOCK`` event days (tests only).
 
-Only derived daily returns are stored, never vendor price files (see DATA.md).
+Only derived daily returns are stored, never vendor price files.
 """
 
 from __future__ import annotations

@@ -15,8 +15,8 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 # Minimum value allowed for ``success.min_forward_events``.
-# rules/scoring.md says a floor exists but does not state the number yet; 8 matches the template
-# default. Changing it is a rules change (7-day public comment window).
+# The public scoring rules say a floor exists but do not state the number yet; 8 matches the
+# template default. Changing it is a rules change (7-day public comment window).
 MIN_FORWARD_EVENTS_FLOOR = 8
 
 _END_RE = re.compile(r"^\+([1-9][0-9]*)_trading_days?$")

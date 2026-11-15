@@ -1,4 +1,4 @@
-"""Event-study engine. See docs/METHODOLOGY.md for the reasoning behind each choice.
+"""Event-study engine. The README (Architecture, section 5) gives the reasoning for each choice.
 
 Pipeline for one claim:
 

@@ -10,7 +10,7 @@
   <a href="https://github.com/McMuf/Spillover/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1--alpha-2f9e5a?style=flat-square"></a>
   <a href="https://github.com/McMuf/Spillover/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/McMuf/Spillover?style=flat-square&color=2f9e5a"></a>
   <a href="LICENSE"><img alt="Code license" src="https://img.shields.io/badge/code-Apache--2.0-2f9e5a?style=flat-square"></a>
-  <a href="DATA.md"><img alt="Data license" src="https://img.shields.io/badge/claims%20%26%20data-CC--BY--4.0-2f9e5a?style=flat-square"></a>
+  <a href="#data-licensing-and-sources"><img alt="Data license" src="https://img.shields.io/badge/claims%20%26%20data-CC--BY--4.0-2f9e5a?style=flat-square"></a>
   <img alt="Engine" src="https://img.shields.io/badge/engine-Python%203.12-16181d?style=flat-square">
   <img alt="Web" src="https://img.shields.io/badge/web-TypeScript-16181d?style=flat-square">
   <img alt="Hosting" src="https://img.shields.io/badge/runs%20on-GitHub%20Pages%20%2B%20Actions-16181d?style=flat-square">
@@ -90,7 +90,7 @@ Spillover is a **market research tool for hobbyists, students and curious people
 - **[Graph view](#8-graph-view):** Cytoscape-based map with six fixed node shapes and evidence on every edge.
 - **[Web app](#9-web-app):** A calm, finance-app-style interface with dark and light themes, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms, a PR template and CI checks that give contributors fast, specific feedback.
-- **[Docs](docs/):** Methodology, governance, contributor guide, data sources, and a README style guide.
+- **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
 
 ## Works with
 
@@ -307,7 +307,7 @@ Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` a
 
 ## Scoring rules
 
-The rules live in [`rules/scoring.md`](rules/) and are applied identically to every claim. Changes need a **7-day public comment window** and apply **only to claims registered after the change**, so nobody's claim is graded under rules they did not sign up for.
+The rules below are applied identically to every claim. Changes need a **7-day public comment window** and apply **only to claims registered after the change**, so nobody's claim is graded under rules they did not sign up for.
 
 1. **Pre-registration.** Only events that occur after `registered_at` count as forward evidence. Backtests are labeled as backtests everywhere in the UI.
 2. **Frozen predictions.** A prediction is written, hashed and committed before its window closes, and records the claim version, extractor version and engine version.
@@ -327,7 +327,7 @@ The rules live in [`rules/scoring.md`](rules/) and are applied identically to ev
 | **Not supported** | Forward events reached the minimum and the interval does not support the claim or points the other way |
 | **Inconclusive** | Not enough effective events, or the interval is too wide to say |
 
-Statistics notes live in [`docs/METHODOLOGY.md`](docs/): the market model (alpha plus beta times a factor return, estimated over roughly 120 trading days that end 10 days before the event), cumulative abnormal returns, bootstrap intervals, and why each choice was made.
+The statistics: the market model (alpha plus beta times a factor return, estimated over roughly 120 trading days that end 10 days before the event), cumulative abnormal returns, bootstrap intervals, and why each choice was made.
 
 ## Architecture
 
@@ -350,7 +350,7 @@ flowchart LR
         E2["Event extractor<br/>LLM + cache + gold set"]
         E3["Event-study engine<br/>market model, CAR,<br/>bootstrap, FDR"]
         E4["Prediction ledger<br/>hash + OpenTimestamps"]
-        E5["Scoring<br/>rules/scoring.md"]
+        E5["Scoring<br/>public rules"]
     end
 
     subgraph Store["Store (Git + files)"]
@@ -407,7 +407,7 @@ flowchart LR
 **Why this design.**
 - *Parquet plus DuckDB plus Polars:* columnar storage is compact and fast for time series, DuckDB queries it with SQL without a server, and Polars gives a fast, readable DataFrame API. This stack is also what many modern data teams use, so contributors' skills transfer.
 - *Adapters:* a new source is one file implementing a small interface, which makes it a good first contribution.
-- *No raw price redistribution:* the repo stores derived results (returns, estimates), not vendor price files, to respect data terms. See [`DATA.md`](DATA.md).
+- *No raw price redistribution:* the repo stores derived results (returns, estimates), not vendor price files, to respect data terms. See [Data, licensing and sources](#data-licensing-and-sources).
 - *Open sources first:* default to sources anyone can use without paying, so contributors can reproduce results.
 
 ### 3. Event feed
@@ -570,8 +570,8 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 
 - **What is stored:** headlines (title only), links, source names, IDs, timestamps, derived return statistics, claim files and predictions.
 - **What is not stored:** article bodies, raw vendor price files, anything a data provider's terms forbid redistributing.
-- [`DATA.md`](DATA.md) lists every source, its terms and how to supply your own key.
-- Contributors who bring a new data source must add its terms to `DATA.md` in the same PR.
+- Every data source, its terms and how to supply your own key are listed in the source table kept with the data adapters.
+- Contributors who bring a new data source must document its terms in the same PR.
 
 **Why Apache-2.0 and not MIT?** The explicit patent grant and contribution terms make it safer for companies and individuals to use and contribute. **Why DCO and not a CLA?** A one-line sign-off lowers friction for first-time contributors and keeps copyright with the author.
 
@@ -662,7 +662,7 @@ flowchart LR
 - **No edits to registered claims.** New version, new ID.
 - **No hand-edited outputs.** Predictions, outcomes and the scoreboard are generated. PRs that modify them by hand fail CI.
 - **Be specific.** "Tech drops after bad news" is rejected as untestable; the review comment will say what to tighten.
-- **Be kind.** The [Code of Conduct](CODE_OF_CONDUCT.md) applies everywhere, including challenges. Attack the claim, not the person.
+- **Be kind.** The project's Code of Conduct (the Contributor Covenant 2.1) applies everywhere, including challenges. Attack the claim, not the person.
 
 ### Good first contributions
 
@@ -687,7 +687,7 @@ Open-source projects that run CI on pull requests from forks have a classic trap
 | Workflows declare **minimal permissions** explicitly | Default tokens are broader than needed |
 | Branch protection on `main`; code owners for `rules/`, `.github/` and `engine/` | The scoring rules and CI are the trust root and need extra eyes |
 
-Security issues should be reported privately; see [`SECURITY.md`](SECURITY.md).
+Security issues should be reported privately, using GitHub's "Report a vulnerability" feature (Security tab). Do not open a public issue.
 
 ## Governance
 
@@ -696,7 +696,6 @@ Security issues should be reported privately; see [`SECURITY.md`](SECURITY.md).
 - **Triage cadence:** a weekly triage hour for new PRs and challenges, with a target of a first response within a week. A co-maintainer is a goal from the first month.
 - **Conflicts of interest:** maintainers who register claims follow the same rules as everyone else and cannot merge their own claims.
 - **Moderation:** see the Code of Conduct. Claims that target individuals, promote specific trades or pump a thinly traded asset are removed.
-- **Details** live in [`docs/GOVERNANCE.md`](docs/).
 
 ## Roadmap
 
@@ -707,7 +706,7 @@ Security issues should be reported privately; see [`SECURITY.md`](SECURITY.md).
 | **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
-| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, PR template, CI comment bot and `CONTRIBUTING.md` live; 20 starter claims registered |
+| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, PR template, CI comment bot and contributor guide live; 20 starter claims registered |
 
 ### Seed claims
 
@@ -738,7 +737,7 @@ Build order: claims **4** and **6** first, because they have plenty of events an
 | **Overlapping scheduled events** | A central-bank decision on the same day contaminates a window | Exclude or flag overlapping windows; effective-sample counting |
 | **Many claims, some lucky** | Multiple comparisons manufacture false positives | FDR correction, permanent placebo, pre-registration |
 | **Extractor mistakes** | A mislabeled headline poisons a result | Published accuracy on a gold set; "Needs review" label; extraction scored separately; "fix this label" PR lane |
-| **Data terms** | Redistributing vendor data can breach terms | Store derived values only; open sources first; bring-your-own keys; `DATA.md` |
+| **Data terms** | Redistributing vendor data can breach terms | Store derived values only; open sources first; bring-your-own keys; documented source terms |
 | **No contributors** | An empty commons looks dead | Seed ~20 starter claims including replications; pitch university clubs; weekly triage |
 | **Maintainer burnout** | One person cannot review everything | Weekly triage hour; recruit a co-maintainer; clear lanes; automation does the mechanical review |
 | **Misuse as trading advice** | Readers may treat a hobby result as a signal | "Research, not advice" on every page; neutral colors until realized; no trade buttons |
@@ -788,18 +787,12 @@ Every claim page has *Copy citation*, which gives the claim ID, version and comm
 
 - **Questions and ideas:** [GitHub Discussions](https://github.com/McMuf/Spillover/discussions)
 - **Bugs and feature requests:** [Issues](https://github.com/McMuf/Spillover/issues) (issue forms are provided)
-- **Security:** see [`SECURITY.md`](SECURITY.md)
-- **Conduct:** see [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- **Security:** use GitHub's "Report a vulnerability" (Security tab); please do not open a public issue
+- **Conduct:** challenge claims, not people. The Contributor Covenant 2.1 applies
 
 ## Developing
 
-Start with [`CONTRIBUTING.md`](CONTRIBUTING.md), then:
-
-- [`docs/METHODOLOGY.md`](docs/): the statistics, in plain language and in math.
-- [`docs/GOVERNANCE.md`](docs/): how decisions and rules changes work.
-- [`docs/README_STYLE_GUIDE.md`](docs/README_STYLE_GUIDE.md): how this README is written and formatted.
-- [`AGENTS.md`](AGENTS.md): guidance for AI coding assistants working in this repo.
-- [`CHANGELOG.md`](CHANGELOG.md): release notes.
+Everything you need is in this README: the [contribution flow](#contributing), the [scoring rules](#scoring-rules), the [architecture](#architecture) and the commands below. Run `make setup` then `make check`.
 
 ### Repository layout
 
@@ -810,22 +803,16 @@ spillover/
 ├── predictions/       # frozen, hashed predictions (append-only, generated)
 ├── outcomes/          # graded results (generated)
 ├── replications/      # replication configs and results
-├── rules/             # scoring.md, the public rules
 ├── schemas/           # JSON Schema generated from Pydantic
 ├── engine/            # Python: extractor, event study, ledger, scoring, CLI
 ├── web/               # TypeScript: React app, design tokens, components
 ├── fixtures/          # cached prices and LLM responses for offline tests
-├── docs/              # METHODOLOGY, GOVERNANCE, assets, style guide
-├── .github/           # workflows, issue forms, PR template, CODEOWNERS
+├── docs/              # assets (banner)
+├── .github/           # workflows, Dependabot, CODEOWNERS
 ├── Makefile           # setup, check, test-claim, site, ingest
-├── DATA.md
+├── pyproject.toml
 ├── LICENSE
-├── NOTICE
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md
-├── CHANGELOG.md
-└── AGENTS.md
+└── NOTICE
 ```
 
 ### Commands
@@ -848,6 +835,6 @@ spillover/
 
 ## License
 
-Code is released under the [Apache License 2.0](LICENSE). Claims and data are released under [CC-BY-4.0](DATA.md). See [`NOTICE`](NOTICE) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attributions, including the required **TradingView Lightweight Charts** attribution.
+Code is released under the [Apache License 2.0](LICENSE). Claims and data are released under [CC-BY-4.0](#data-licensing-and-sources). See [`NOTICE`](NOTICE) for attributions, including the required **TradingView Lightweight Charts** attribution.
 
 Spillover is an independent project. It is **not affiliated with, endorsed by or sponsored by** any exchange, broker, trading app, data vendor or company named in claims or documentation. Names and tickers appear only to identify the instruments being studied. **Nothing in this repository is investment advice.**

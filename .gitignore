@@ -1,4 +1,8 @@
 # Private strategy and third-party reference material. Never commit publicly.
+# All markdown except the root README stays on this machine (docs/local/ holds the copies).
+docs/local/
+*.md
+!/README.md
 docs/design/private/
 docs/launch/
 

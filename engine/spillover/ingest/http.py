@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
+from typing import Any
 
 Fetcher = Callable[[str], str]
 
@@ -24,12 +26,47 @@ def redact(text: str) -> str:
     return _SECRET.sub(lambda m: f"{m.group(1)}=***", text)
 
 
-def http_get(url: str, timeout: float = 30.0) -> str:
+MAX_BYTES = 8 * 1024 * 1024  # a price series or a feed is far smaller; this stops a hostile one
+
+
+def same_site(a: str, b: str) -> bool:
+    """Same host, or one a subdomain of the other (sec.gov and www.sec.gov)."""
+    a, b = a.lower(), b.lower()
+    return a == b or a.endswith("." + b) or b.endswith("." + a)
+
+
+class SafeRedirects(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only to https on the same site, so a key in a URL stays put."""
+
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> urllib.request.Request | None:
+        old, new = urllib.parse.urlsplit(req.full_url), urllib.parse.urlsplit(newurl)
+        if new.scheme != "https" or not same_site(old.hostname or "", new.hostname or ""):
+            raise FetchError(f"refused a redirect from {old.hostname} to {new.hostname}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def http_get(url: str, timeout: float = 30.0, opener: Any = None) -> str:
+    if urllib.parse.urlsplit(url).scheme != "https":
+        raise FetchError(f"GET {redact(url)} refused: only https is allowed")
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    opener = opener or urllib.request.build_opener(SafeRedirects)
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
-            return response.read().decode("utf-8", errors="replace")
+        with opener.open(request, timeout=timeout) as response:
+            body: bytes = response.read(MAX_BYTES + 1)
+    except FetchError:
+        raise
     except urllib.error.HTTPError as exc:
         raise FetchError(f"GET {redact(url)} failed: HTTP {exc.code}") from None
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise FetchError(f"GET {redact(url)} failed: {redact(str(exc))}") from None
+    if len(body) > MAX_BYTES:
+        raise FetchError(f"GET {redact(url)} refused: response larger than {MAX_BYTES // 2**20} MB")
+    return body.decode("utf-8", errors="replace")

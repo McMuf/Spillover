@@ -17,12 +17,17 @@ for (const scheme of ["light", "dark"] as const) {
 
     for (const [name, path] of PAGES) {
       test(`${name} has no WCAG A/AA violations`, async ({ page }) => {
+        const csp: string[] = [];
+        page.on("console", (m) => {
+          if (/content security policy|refused to (load|apply|execute|connect)/i.test(m.text())) csp.push(m.text());
+        });
         await page.goto(path);
         await expect(page.getByRole("main")).toBeVisible();
         await page.waitForTimeout(400); // let lazy chunks and the graph settle
         const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
         const summary = results.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node(s))`);
         expect(summary, summary.join("\n")).toEqual([]);
+        expect(csp, "Content-Security-Policy violations").toEqual([]);
       });
     }
 

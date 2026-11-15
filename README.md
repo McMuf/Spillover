@@ -700,7 +700,12 @@ Open-source projects that run CI on pull requests from forks have a classic trap
 | Historical LLM extractions are **committed**, so fork CI never calls an API | Deterministic tests, no key needed, no cost abuse |
 | Actions are **pinned to commit SHAs** and updated by **Dependabot** | A compromised tag cannot silently change what CI runs |
 | Workflows declare **minimal permissions** explicitly | Default tokens are broader than needed |
-| Branch protection on `main`; code owners for `rules/`, `.github/` and `engine/` | The scoring rules and CI are the trust root and need extra eyes |
+| Branch protection on `main`; code owners for `.github/` and `engine/` | The scoring rules and CI are the trust root and need extra eyes |
+| Pull requests are reviewed by a **trusted bot that reads their files as data** and never runs their code; everything taken from a PR is shown in inert code spans | A crafted claim cannot inject links, images or `@mentions` into a comment written with a write token |
+| Network fetches are **https-only**, refuse redirects to another site, cap response size, and redact API keys from every message | A key in a URL cannot be sent elsewhere, a hostile feed cannot exhaust memory, and logs never contain a key |
+| Feeds are parsed with `defusedxml`; model answers are validated against a fixed schema; only official feeds are configured | Third-party XML and untrusted headlines cannot expand into attacks or produce arbitrary output |
+| Scheduled jobs that spend money or write to `main` are **off until you set `INGEST_ENABLED`**, and receive secrets only in the single step that needs them | Merging a workflow starts nothing, and a compromised step cannot read keys meant for another |
+| The website ships a strict **Content-Security-Policy** (same-origin only, no `eval`); the claim validator is compiled at build time | A script-injection bug could not load code from elsewhere or evaluate strings, and the browser tests fail on any violation |
 
 Security issues should be reported privately, using GitHub's "Report a vulnerability" feature (Security tab). Do not open a public issue.
 

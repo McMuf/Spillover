@@ -1,7 +1,5 @@
-import Ajv2020 from "ajv/dist/2020";
-import addFormats from "ajv-formats";
 import { parse } from "yaml";
-import claimSchema from "../generated/claim.schema.json";
+import validateClaim from "../generated/validateClaim.js";
 
 export interface ClaimForm {
   id: string;
@@ -73,10 +71,6 @@ export function toYaml(f: ClaimForm): string {
     "",
   ].join("\n");
 }
-
-const ajv = new Ajv2020({ allErrors: true, strict: false });
-addFormats(ajv);
-const validateClaim = ajv.compile(claimSchema);
 
 const PLACEHOLDERS = ["REPLACE_ME", "YOUR_GITHUB_HANDLE", "TICKER_OR_ENTITY_ID"];
 

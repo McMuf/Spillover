@@ -77,6 +77,12 @@ def frozen_violations(
 
 def check_frozen(base_ref: str, repo: Path = Path(".")) -> list[str]:
     """Return a list of violations in the changes between ``base_ref`` and HEAD (empty is good)."""
+    if (
+        not base_ref
+        or base_ref.startswith("-")
+        or any(c.isspace() or ord(c) < 32 for c in base_ref)
+    ):
+        raise FrozenError(f"refusing suspicious base ref {base_ref!r}")
     diff = _git(repo, "diff", "--name-status", "--no-renames", f"{base_ref}...HEAD")
     changes = [(line.partition("\t")[0], line.partition("\t")[2]) for line in diff.splitlines()]
     return frozen_violations(

@@ -4,6 +4,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import Ajv2020 from "ajv/dist/2020.js";
+import standaloneCode from "ajv/dist/standalone/index.js";
+import addFormats from "ajv-formats";
 import { compile } from "json-schema-to-typescript";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -13,8 +16,37 @@ await mkdir(out, { recursive: true });
 const claimSchema = JSON.parse(await readFile(resolve(root, "schemas", "claim.schema.json"), "utf8"));
 const siteSchema = JSON.parse(await readFile(resolve(root, "schemas", "site.schema.json"), "utf8"));
 
-// The claim JSON Schema is also bundled for live validation in the submit form.
+// The claim JSON Schema is also bundled for reference, and compiled to a plain validator function
+// at build time. Ajv normally generates its validator with `new Function()` in the browser, which a
+// strict Content-Security-Policy forbids; compiling here means the browser never evaluates code.
 await writeFile(resolve(out, "claim.schema.json"), JSON.stringify(claimSchema, null, 2) + "\n");
+
+const ajv = new Ajv2020({ allErrors: true, strict: false, code: { source: true, esm: true } });
+addFormats(ajv);
+const validator = ajv.compile(claimSchema);
+// Ajv's standalone output pulls two helpers in with CommonJS require(), which does not exist in a
+// browser ES module. Both are tiny, so they are inlined here instead.
+let code = standaloneCode(ajv, validator);
+code = code.replaceAll(
+  'require("ajv/dist/runtime/ucs2length").default',
+  "((s) => { let n = 0; for (const _ of s) n++; return n; })",
+);
+code = code.replaceAll(
+  'require("ajv-formats/dist/formats").fullFormats["date-time"]',
+  `{ validate: (s) => typeof s === "string" && /^\\d{4}-\\d{2}-\\d{2}[Tt ]\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?([Zz]|[+-]\\d{2}:\\d{2})$/.test(s) && !Number.isNaN(Date.parse(s.replace(" ", "T"))) }`,
+);
+if (/\brequire\(|new Function|\beval\(/.test(code)) {
+  throw new Error("the generated validator still needs require() or runtime code generation");
+}
+await writeFile(resolve(out, "validateClaim.js"), code);
+await writeFile(
+  resolve(out, "validateClaim.d.ts"),
+  `export interface ValidationIssue { instancePath: string; message?: string }
+declare function validate(data: unknown): boolean;
+declare namespace validate { let errors: ValidationIssue[] | null | undefined }
+export default validate;
+`,
+);
 
 // Pydantic puts a "title" on every property, which makes json-schema-to-typescript emit one
 // alias per field. Keep titles only on the named definitions.

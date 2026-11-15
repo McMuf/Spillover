@@ -3,6 +3,10 @@ import { expect, test } from "@playwright/test";
 test("loads the site, opens a claim and the six-shape legend renders", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  // The production build ships a Content-Security-Policy; any violation is a broken feature.
+  page.on("console", (m) => {
+    if (/content security policy|refused to (load|apply|execute|connect)/i.test(m.text())) errors.push(m.text());
+  });
 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Freeze the call");

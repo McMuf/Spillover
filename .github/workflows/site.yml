@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -19,6 +17,10 @@ concurrency:
 jobs:
   build:
     if: github.repository == 'McMuf/Spillover'
+    # configure-pages reads the Pages settings, so it needs pages: write; nothing here may mint tokens.
+    permissions:
+      contents: read
+      pages: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -62,6 +64,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Only this job may publish: the build job (which runs pnpm install) cannot.
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

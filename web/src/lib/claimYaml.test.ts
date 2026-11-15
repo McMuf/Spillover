@@ -40,6 +40,15 @@ describe("claim YAML generator and validator", () => {
     expect(problems.join(" ")).toContain(needle);
   });
 
+  it("accepts RFC 3339 timestamps and rejects near-misses (the compiled date-time check)", () => {
+    const withStamp = (v: string) => toYaml(GOOD).replace("set_by_ci_on_merge", v);
+    expect(validateYaml(withStamp("2026-01-05T12:00:00Z"))).toEqual([]);
+    expect(validateYaml(withStamp('"2026-01-05T12:00:00+02:00"'))).toEqual([]);
+    for (const bad of ["yesterday", '"2026-13-45T25:61:61Z"', '"2026-01-05"', '"2026-01-05T12:00:00"']) {
+      expect(validateYaml(withStamp(bad)).join(" "), bad).toContain("registered_at");
+    }
+  });
+
   it("reports YAML that does not parse", () => {
     expect(validateYaml("id: [unclosed")[0]).toMatch(/does not parse/);
   });

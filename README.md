@@ -402,11 +402,13 @@ flowchart LR
 
 **What it does.** Pulls price and factor series into local Parquet files that the engine reads through DuckDB.
 
-**How.** Adapters per source (FRED for macro and rates, public exchange APIs where terms allow, and optional bring-your-own-key providers). Everything is cached to `fixtures/` for tests, so CI never needs a live API.
+**How.** `spillover ingest` reads `data/sources.toml` and builds a local cache in the same format as the synthetic fixtures, so every command works on real data by pointing `--data` (or `SPILLOVER_DATA`) at it. Built today: **FRED** (bring your own free key, read from `FRED_API_KEY`), **CSV files you export yourself** from any vendor, and the **Federal Reserve's public FOMC calendar** (US government work). Series are aligned on their common trading days before returns are computed, and implausible data (a one-day move over a configurable limit, which is usually an unadjusted split) is refused instead of written. Tests use fixtures and fake fetchers, so CI never needs a live API.
+
+*Not built yet:* a headline feed and the LLM event extractor, so real events come from the FOMC calendar and your own events CSV for now. Live exchange APIs are not included; whether you may use a given vendor's data this way is for you to check in their terms.
 
 **Why this design.**
 - *Parquet plus DuckDB plus Polars:* columnar storage is compact and fast for time series, DuckDB queries it with SQL without a server, and Polars gives a fast, readable DataFrame API. This stack is also what many modern data teams use, so contributors' skills transfer.
-- *Adapters:* a new source is one file implementing a small interface, which makes it a good first contribution.
+- *Adapters:* a provider returns a plain date-to-price mapping, so a new source is one small function, which makes it a good first contribution.
 - *No raw price redistribution:* the repo stores derived results (returns, estimates), not vendor price files, to respect data terms. See [Data, licensing and sources](#data-licensing-and-sources).
 - *Open sources first:* default to sources anyone can use without paying, so contributors can reproduce results.
 
@@ -582,7 +584,7 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 
 > [!NOTE]
 > `make setup`, `make check`, `make test-claim`, `make test-all`, `make site`, `make check-web` and `make e2e` work
-> today (the web targets need [pnpm](https://pnpm.io/installation)). `make ingest` (live data) is **planned** and exits with a message.
+> today (the web targets need [pnpm](https://pnpm.io/installation)). `make ingest` (live data) works once you create `data/sources.toml`.
 > The cached fixtures are **synthetic** (simulated returns), so reports on them show the
 > machinery working, not facts about real markets.
 
@@ -605,10 +607,18 @@ The repo ships with cached **fixtures**, so everything runs offline.
 3. Edit it, then check feasibility: `make test-claim CLAIM=claims/my_first_claim.yaml`
 4. Read the printed report: matching events, effective sample, effect size and interval.
 
-### With live data (planned)
+### With live data (optional)
 
-Live ingestion is not built yet. When it is, it will read your own keys from a local `.env`
-(never committed) and fill the local cache.
+```bash
+cp data/sources.example.toml data/sources.toml   # edit it: which series and events to ingest
+export FRED_API_KEY=...                           # your own free key; never stored or committed
+make ingest                                       # writes the cache to data/cache
+uv run spillover test-claim claims/clm_fomc_abs_move_spx_v1.yaml --data data/cache
+```
+
+The cache holds **derived daily returns only** and lives under `data/`, which is git-ignored. Read each
+provider's terms before using their data; some FRED series carry their own copyright notices. Reports on
+real data drop the "SYNTHETIC" label, so check which data directory a command used.
 
 ## Contributing
 
@@ -812,6 +822,7 @@ spillover/
 ├── fixtures/          # cached prices and LLM responses for offline tests
 ├── docs/              # assets (banner)
 ├── .github/           # workflows, Dependabot, CODEOWNERS
+├── data/              # sources.example.toml (the rest is a git-ignored local cache)
 ├── Makefile           # setup, check, test-claim, site, ingest
 ├── pyproject.toml
 ├── LICENSE
@@ -837,7 +848,7 @@ spillover/
 | `uv run spillover verify-ledger` | Re-derive every prediction hash and report timestamp-proof coverage |
 | `uv run spillover check-frozen origin/main` | Fail if a change edits a registered claim or generated output |
 | `uv run --group ots spillover stamp` / `upgrade` | Submit predictions to OpenTimestamps / complete confirmed proofs |
-| `make ingest` | *(planned)* Fetch live data into the local cache (needs your keys) |
+| `make ingest` | Fetch prices and events from your `data/sources.toml` into `data/cache` (needs your own keys) |
 
 ## Contributors
 

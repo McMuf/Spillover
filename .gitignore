@@ -10,6 +10,7 @@ docs/launch/
 .env
 fixtures/live/
 *.parquet.tmp
+*.ots.bak
 .venv/
 __pycache__/
 .pytest_cache/

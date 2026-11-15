@@ -7,7 +7,7 @@ The JSON Schema in ``schemas/claim.schema.json`` is generated from these models
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 
@@ -111,6 +111,15 @@ class Claim(_Strict):
     @property
     def version(self) -> int:
         return int(self.id.rsplit("_v", 1)[1])
+
+    @property
+    def registered_at_utc(self) -> datetime | None:
+        """Registration time in UTC, or None while the claim is still a draft."""
+        if not isinstance(self.registered_at, datetime):
+            return None
+        if self.registered_at.tzinfo is None:
+            return self.registered_at.replace(tzinfo=UTC)
+        return self.registered_at.astimezone(UTC)
 
 
 def claim_json_schema() -> dict[str, Any]:

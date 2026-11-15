@@ -1,8 +1,9 @@
-"""Command line: ``spillover validate | schema | test-claim | test-all | placebo-check``."""
+"""Command line for the Spillover engine (``spillover --help`` lists every command)."""
 
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -16,9 +17,13 @@ from spillover.eventstudy import (
     run_backtest,
 )
 from spillover.fixtures_gen import generate
+from spillover.frozen import FrozenError, check_frozen
+from spillover.ledger import LedgerError, predict, verify_ledger
 from spillover.models import ClaimError, claim_files, claim_json_schema, load_claim
 from spillover.placebo import placebo_rejection_rate
+from spillover.register import register_claims
 from spillover.report import format_report
+from spillover.stamp import StampError, ots_binary, stamp_new, upgrade_pending
 
 app = typer.Typer(
     add_completion=False,
@@ -29,6 +34,24 @@ app = typer.Typer(
 DEFAULT_CLAIMS = Path("claims")
 DEFAULT_DATA = Path("fixtures/synthetic")
 DEFAULT_SCHEMA = Path("schemas/claim.schema.json")
+DEFAULT_PREDICTIONS = Path("predictions")
+
+PredictionsOpt = Annotated[
+    Path, typer.Option("--predictions", help="Directory holding the prediction ledger.")
+]
+NowOpt = Annotated[
+    str | None, typer.Option("--now", help="Override the current time (ISO 8601, for tests).")
+]
+
+
+def _now(value: str | None) -> datetime:
+    if value is None:
+        return datetime.now(UTC)
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise typer.BadParameter("--now needs a timezone, e.g. 2026-01-02T12:00:00Z")
+    return parsed
+
 
 DataOpt = Annotated[
     Path, typer.Option("--data", help="Directory with prices.parquet and events.parquet.")
@@ -160,6 +183,97 @@ def placebo_check(
     )
     if rate > limit:
         raise _fail("PLACEBO FAILED: the engine finds effects on random dates; treat it as broken")
+
+
+@app.command()
+def register(
+    claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
+    now: NowOpt = None,
+) -> None:
+    """Stamp registered_at on draft claims (run by CI when a claim PR merges)."""
+    try:
+        changed = register_claims(claims_dir, _now(now))
+    except ClaimError as exc:
+        raise _fail(str(exc)) from exc
+    for path in changed:
+        typer.echo(f"registered {path}")
+    typer.echo(f"{len(changed)} claim(s) registered")
+
+
+@app.command("predict")
+def predict_cmd(
+    claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
+    data: DataOpt = DEFAULT_DATA,
+    predictions: PredictionsOpt = DEFAULT_PREDICTIONS,
+    now: NowOpt = None,
+) -> None:
+    """Freeze a prediction for each qualifying forward event whose window is still open."""
+    try:
+        claims = [load_claim(p) for p in claim_files(claims_dir)]
+        summary = predict(claims, load_market_data(data), predictions, _now(now))
+    except (ClaimError, DataError, LedgerError) as exc:
+        raise _fail(str(exc)) from exc
+    for path in summary.written:
+        typer.echo(f"froze {path}")
+    typer.echo(
+        f"{len(summary.written)} prediction(s) written; skipped: "
+        f"{len(summary.skipped_draft_claims)} draft claim(s), "
+        f"{summary.skipped_before_registration} event(s) before registration, "
+        f"{summary.skipped_window_closed} event(s) with a closed window, "
+        f"{summary.skipped_existing} already frozen"
+    )
+
+
+@app.command("verify-ledger")
+def verify_ledger_cmd(predictions: PredictionsOpt = DEFAULT_PREDICTIONS) -> None:
+    """Re-derive every prediction hash and report timestamp-proof coverage."""
+    results = verify_ledger(predictions)
+    bad = [r for r in results if r.problems]
+    for r in bad:
+        for problem in r.problems:
+            typer.echo(f"{r.path}: {problem}", err=True)
+    proofs = sum(1 for r in results if r.proof == "present")
+    typer.echo(f"{len(results)} prediction(s) checked, {proofs} with a timestamp proof")
+    if bad:
+        raise _fail(f"{len(bad)} prediction(s) failed verification")
+
+
+@app.command("check-frozen")
+def check_frozen_cmd(
+    base: Annotated[str, typer.Argument(help="Base ref the PR targets, e.g. origin/main.")],
+) -> None:
+    """Fail if a PR edits a registered claim or hand-edits generated outputs."""
+    try:
+        problems = check_frozen(base)
+    except FrozenError as exc:
+        raise _fail(str(exc)) from exc
+    for problem in problems:
+        typer.echo(problem, err=True)
+    if problems:
+        raise _fail(f"{len(problems)} frozen-file violation(s)")
+    typer.echo("no frozen-file violations")
+
+
+@app.command()
+def stamp(predictions: PredictionsOpt = DEFAULT_PREDICTIONS) -> None:
+    """Submit new predictions to OpenTimestamps (needs `uv sync --group ots`)."""
+    try:
+        created = stamp_new(predictions, ots=ots_binary())
+    except StampError as exc:
+        raise _fail(str(exc)) from exc
+    for proof in created:
+        typer.echo(f"stamped {proof}")
+    typer.echo(f"{len(created)} new proof(s) (pending until Bitcoin confirms)")
+
+
+@app.command()
+def upgrade(predictions: PredictionsOpt = DEFAULT_PREDICTIONS) -> None:
+    """Complete pending OpenTimestamps proofs once Bitcoin has confirmed them."""
+    try:
+        summary = upgrade_pending(predictions, ots=ots_binary())
+    except StampError as exc:
+        raise _fail(str(exc)) from exc
+    typer.echo(f"{len(summary.confirmed)} confirmed, {len(summary.pending)} still pending")
 
 
 if __name__ == "__main__":  # pragma: no cover

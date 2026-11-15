@@ -24,6 +24,10 @@ dev = [
     "pyright>=1.1.370",
     "types-pyyaml>=6.0",
 ]
+# Only the scheduled stamping job needs the OpenTimestamps client: `uv sync --group ots`.
+ots = [
+    "opentimestamps-client>=0.7",
+]
 
 [project.scripts]
 spillover = "spillover.cli:app"

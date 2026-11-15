@@ -26,6 +26,7 @@ check:
 	$(UV) run pytest
 	$(UV) run spillover validate
 	$(UV) run spillover schema --check
+	$(UV) run spillover verify-ledger
 
 fmt:
 	$(UV) run ruff format .

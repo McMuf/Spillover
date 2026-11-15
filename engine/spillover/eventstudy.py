@@ -18,6 +18,7 @@ from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
+import polars as pl
 import statsmodels.api as sm
 from statsmodels.stats.multitest import multipletests
 
@@ -43,6 +44,14 @@ class EventStat:
     value: float  # the statistic being tested (the CAR, or |CAR| minus its typical size)
     alpha: float
     beta: float
+
+
+def matching_events(claim: Claim, data: MarketData) -> pl.DataFrame:
+    """Events of the claim's type about its trigger entities. An event counts once."""
+    ev = data.events
+    return ev.filter(
+        (ev["event_type"] == claim.event_type) & ev["entity"].is_in(claim.trigger_entities)
+    ).unique(subset="event_id", keep="first", maintain_order=True)
 
 
 def has_history(n_days: int, day0: int, end_offset: int) -> bool:
@@ -205,9 +214,7 @@ def run_backtest(
     n_days = len(data.dates)
 
     ev = data.events
-    matched = ev.filter(
-        (ev["event_type"] == claim.event_type) & ev["entity"].is_in(claim.trigger_entities)
-    ).unique(subset="event_id", keep="first", maintain_order=True)
+    matched = matching_events(claim, data)
 
     # Scheduled events of *other* types (central-bank decisions etc.) contaminate a window.
     sched = ev.filter(ev["scheduled"] & (ev["event_type"] != claim.event_type))

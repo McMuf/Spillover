@@ -322,10 +322,10 @@ The rules below are applied identically to every claim. Changes need a **7-day p
 
 | Status | Meaning |
 |---|---|
-| **Proposed** | Registered, collecting forward events |
+| **Proposed** | Registered, with fewer effective forward events than the claim's minimum (still collecting) |
 | **Supported** | Forward events reached the claim's minimum, the interval excludes zero in the stated direction, and the claim beat the naive baseline after multiple-comparison adjustment |
-| **Not supported** | Forward events reached the minimum and the interval does not support the claim or points the other way |
-| **Inconclusive** | Not enough effective events, or the interval is too wide to say |
+| **Not supported** | Forward events reached the minimum and the interval excludes zero in the **opposite** direction |
+| **Inconclusive** | Forward events reached the minimum but the interval includes zero, or the result did not survive the multiple-comparison adjustment |
 
 The statistics: the market model (alpha plus beta times a factor return, estimated over roughly 120 trading days that end 10 days before the event), cumulative abnormal returns, bootstrap intervals, and why each choice was made.
 
@@ -476,7 +476,7 @@ flowchart LR
 
 **What it does.** After a window closes, joins each prediction to realized data, grades it, and updates claim statuses and the scoreboard.
 
-**How.** A pure function from (prediction, outcome, rules version) to a score record, written to `outcomes/`. Aggregation reads only those records. The rules file version is stored in every score record.
+**How.** A pure function from (prediction, outcome, rules version) to a score record, written to `outcomes/`. Aggregation reads only those records. The rules version is stored in every score record. A prediction written after its window closed is refused, and a prediction that fails hash verification is never graded. Corrections are new records that point at the old one; the old record stays. Scoring rules 4 to 6 are applied when aggregating: scheduled-event overlaps are excluded, overlapping windows are collapsed, and p-values are adjusted across claims. Where a claim states a confidence, the scoreboard compares it with the realized hit rate (calibration); claims that state none are left out of that plot. A placebo claim that shows a significant result raises a visible alert. *Built and tested on fixtures; not yet run on live data, because live ingestion is not built.*
 
 **Why this design.**
 - *Pure functions:* trivially testable, and anyone can recompute the scoreboard from the repo and get the same numbers.
@@ -829,6 +829,9 @@ spillover/
 | `make test-all` | Run every claim; p-values adjusted across the set |
 | `make fmt` | Auto-format and apply safe lint fixes |
 | `uv run spillover predict` | Freeze predictions for qualifying forward events whose window is still open |
+| `uv run spillover grade` | Grade closed windows into append-only `outcomes/` records (refuses synthetic data unless told otherwise) |
+| `uv run spillover scoreboard` | Build the scoreboard data (per claim, per contributor, calibration, placebo alert) from outcome records |
+| `uv run spillover verify-outcomes` | Re-derive every outcome hash and check it links to an intact prediction |
 | `uv run spillover verify-ledger` | Re-derive every prediction hash and report timestamp-proof coverage |
 | `uv run spillover check-frozen origin/main` | Fail if a change edits a registered claim or generated output |
 | `uv run --group ots spillover stamp` / `upgrade` | Submit predictions to OpenTimestamps / complete confirmed proofs |

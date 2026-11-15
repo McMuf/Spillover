@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "generator": "spillover.fixtures_gen",
+  "seed": 20260101,
+  "n_days": 1300,
+  "calendar": "Monday to Friday, no holidays",
+  "note": "Simulated returns for offline tests. Not real market data."
+}

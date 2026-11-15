@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "Instrument": {
+      "additionalProperties": false,
+      "description": "A thing with a price, always labeled with where it trades.",
+      "properties": {
+        "symbol": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+$",
+          "title": "Symbol",
+          "type": "string"
+        },
+        "venue": {
+          "description": "Where it trades.",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Venue",
+          "type": "string"
+        }
+      },
+      "required": [
+        "venue",
+        "symbol"
+      ],
+      "title": "Instrument",
+      "type": "object"
+    },
+    "Success": {
+      "additionalProperties": false,
+      "properties": {
+        "min_forward_events": {
+          "minimum": 8,
+          "title": "Min Forward Events",
+          "type": "integer"
+        },
+        "spillover_ci_excludes_zero": {
+          "const": true,
+          "title": "Spillover Ci Excludes Zero",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "spillover_ci_excludes_zero",
+        "min_forward_events"
+      ],
+      "title": "Success",
+      "type": "object"
+    },
+    "Window": {
+      "additionalProperties": false,
+      "description": "Event window, in trading days, relative to the headline's first verifiable time.",
+      "properties": {
+        "end": {
+          "pattern": "^\\+[1-9][0-9]*_trading_days?$",
+          "title": "End",
+          "type": "string"
+        },
+        "start": {
+          "const": "first_report",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "Window",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "baseline": {
+      "default": "factor_only",
+      "enum": [
+        "factor_only",
+        "constant_mean"
+      ],
+      "title": "Baseline",
+      "type": "string"
+    },
+    "decompose": {
+      "items": {
+        "enum": [
+          "mechanical_weight",
+          "spillover"
+        ],
+        "type": "string"
+      },
+      "title": "Decompose",
+      "type": "array"
+    },
+    "event_type": {
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "title": "Event Type",
+      "type": "string"
+    },
+    "expected_sign": {
+      "enum": [
+        "positive",
+        "negative"
+      ],
+      "title": "Expected Sign",
+      "type": "string"
+    },
+    "factor": {
+      "default": "MKT",
+      "minLength": 1,
+      "title": "Factor",
+      "type": "string"
+    },
+    "falsifier": {
+      "minLength": 10,
+      "title": "Falsifier",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^clm_[a-z0-9]+(?:_[a-z0-9]+)*_v[0-9]+$",
+      "title": "Id",
+      "type": "string"
+    },
+    "instrument": {
+      "$ref": "#/$defs/Instrument"
+    },
+    "measure": {
+      "default": "abnormal_return",
+      "enum": [
+        "abnormal_return",
+        "abs_excess_return"
+      ],
+      "title": "Measure",
+      "type": "string"
+    },
+    "registered_at": {
+      "anyOf": [
+        {
+          "const": "set_by_ci_on_merge",
+          "type": "string"
+        },
+        {
+          "format": "date-time",
+          "type": "string"
+        }
+      ],
+      "title": "Registered At"
+    },
+    "registered_by": {
+      "minLength": 1,
+      "title": "Registered By",
+      "type": "string"
+    },
+    "statement": {
+      "minLength": 10,
+      "title": "Statement",
+      "type": "string"
+    },
+    "success": {
+      "$ref": "#/$defs/Success"
+    },
+    "trigger_entities": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Trigger Entities",
+      "type": "array"
+    },
+    "window": {
+      "$ref": "#/$defs/Window"
+    }
+  },
+  "required": [
+    "id",
+    "statement",
+    "event_type",
+    "trigger_entities",
+    "instrument",
+    "window",
+    "expected_sign",
+    "success",
+    "falsifier",
+    "registered_by",
+    "registered_at"
+  ],
+  "title": "Spillover claim",
+  "type": "object"
+}

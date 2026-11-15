@@ -1,0 +1,25 @@
+# Seed claim 6 (placebo): random dates must show nothing. If this ever "works", the engine is broken.
+id: clm_placebo_random_dates_v1
+
+statement: >
+  On randomly chosen dates, the XLK sector ETF earns an abnormal return above what the market
+  explains over the day and the next trading day.
+
+event_type: RANDOM_DATE
+trigger_entities: [NONE]
+
+instrument: {venue: us_equity, symbol: XLK}
+
+window: {start: first_report, end: +1_trading_day}
+expected_sign: positive
+
+baseline: factor_only
+
+success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
+
+falsifier: >
+  The interval for the mean abnormal return includes zero, which is the expected outcome for a
+  placebo. A significant result means the pipeline has a bug.
+
+registered_by: McMuf
+registered_at: set_by_ci_on_merge

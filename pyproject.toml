@@ -1,0 +1,62 @@
+[project]
+name = "spillover"
+version = "0.1.0a0"
+description = "An open, community-run ledger that tests how news spills over into markets."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "polars>=1.0",
+    "duckdb>=1.0",
+    "pyarrow>=16.0",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "statsmodels>=0.14",
+    "typer>=0.12",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "pyright>=1.1.370",
+    "types-pyyaml>=6.0",
+]
+
+[project.scripts]
+spillover = "spillover.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["engine/spillover"]
+
+[tool.pytest.ini_options]
+testpaths = ["engine/tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["engine"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pyright]
+include = ["engine"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+# Third-party libraries here (polars, statsmodels, scipy, duckdb) are only partly typed.
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportUnknownParameterType = false
+reportUnknownLambdaType = false

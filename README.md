@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/McMuf/Spillover">
-    <img src="docs/assets/banner-v2.svg" alt="Spillover: write the claim, freeze the call, let the market grade it" width="100%">
+    <img src="docs/assets/banner-v3.svg" alt="Spillover: write the claim, freeze the call, let the market grade it" width="100%">
   </a>
 </p>
 

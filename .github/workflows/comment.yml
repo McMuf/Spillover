@@ -1,0 +1,52 @@
+name: comment
+
+# Posts the Spillover review comment on pull requests, including ones from forks.
+#
+# Trust boundary: this runs in the context of the BASE repository's default branch (that is what
+# `workflow_run` does), so it has a write token, and therefore it must never run anything from the
+# pull request. It checks out `main`, and reads the PR's changed files through the GitHub API as
+# plain text for trusted code to validate. No fork code is checked out, installed or executed.
+# Never switch this to `pull_request_target` with a fork checkout.
+on:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: comment-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request' && github.repository == 'McMuf/Spillover'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # No `ref:`: this is the default branch, never the pull request.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install trusted tooling from main
+        run: uv sync
+
+      - name: Review the pull request and comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Passed through the environment, never interpolated into the script.
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+        run: |
+          uv run spillover pr-comment \
+            --repo "$GITHUB_REPOSITORY" \
+            --head-sha "$HEAD_SHA" \
+            --head-repo "$HEAD_REPO"

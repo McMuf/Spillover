@@ -89,7 +89,7 @@ Spillover is a **market research tool for hobbyists, students and curious people
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
 - **[Graph view](#8-graph-view):** Cytoscape-based map with six fixed node shapes and evidence on every edge.
 - **[Web app](#9-web-app):** A calm, finance-app-style interface with dark and light themes, built in TypeScript.
-- **[Contribution tooling](#contributing):** `make` targets, issue forms, a PR template and CI checks that give contributors fast, specific feedback.
+- **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
 - **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
 
 ## Works with
@@ -520,13 +520,13 @@ flowchart LR
 |---|---|---|---|
 | `check.yml` | `pull_request`, push to `main` | read-only, no secrets | Lint, type-check, test, schema-validate, verify the ledger, and block PRs that edit registered claims or hand-edit generated outputs |
 | `register.yml` | push to `main` touching `claims/` | write to `main`; checks out only trusted code | Stamp `registered_at` on newly merged claims |
-| `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Posts the results as a PR comment from uploaded artifacts |
+| `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Reads the PR's changed files through the GitHub API as plain text, validates them with trusted code from `main`, and posts or updates one comment. Everything taken from the PR is shown inertly (code spans, length-limited) and the bot only edits its own comment |
 | `ingest.yml` | schedule on `main` | secrets for data keys | Fetch headlines and prices, extract new events, write predictions |
 | `score.yml` | schedule on `main` | write to `main` | Grade closed windows, rebuild scoreboard data |
 | `site.yml` | push to `main` | Pages deploy | Build and deploy the static site |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
-`check.yml` (engine and web jobs), `register.yml`, `stamp.yml` and `site.yml` exist today. `comment.yml`, `ingest.yml` and `score.yml` are **planned**. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
+`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml` and `site.yml` exist today. `ingest.yml` and `score.yml` are **planned**. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
 
@@ -655,7 +655,7 @@ flowchart LR
 5. **`make check`** runs lint, types, tests and schema validation. **`make test-claim CLAIM=…`** runs the feasibility check.
 6. **Commit with sign-off:** `git commit -s -m "claim: Korean memory moves lead US ADRs"`.
 7. **Open a PR.** The template asks you to confirm the checklist below.
-8. **CI and bot comment** report the schema result, the number of matching historical events, the effective sample size and a preview of the evidence chart.
+8. **CI and bot comment** report the schema result, any frozen-file violations, a reviewer checklist and, when CI has matching data, a backtest summary (matching events, effective sample, estimate and interval). CI never holds live data or keys, so for most real claims the comment tells you to run `make test-claim` locally. An evidence-chart preview is planned.
 9. **Review** focuses on whether the claim is **clear and testable**, never on whether it is a "good idea." Disagreement with a claim belongs in the Challenge lane after it is registered.
 10. **Merge.** CI stamps `registered_at`. Forward events now count.
 
@@ -719,7 +719,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** *(built; not yet exercised on live data)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** *(built on synthetic data; deploys once Pages is enabled)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
-| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, PR template, CI comment bot and contributor guide live; 20 starter claims registered |
+| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot and guide are built; the 20 starter claims are not* |
 
 ### Seed claims
 

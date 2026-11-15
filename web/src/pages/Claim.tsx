@@ -198,10 +198,8 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
 
 function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
   const repo = site.meta.repo;
-  const q = new URLSearchParams({
-    title: `Challenge: ${item.claim.id}`,
-    body: `Claim: ${item.claim.id}\n\nWhat is wrong, and what evidence shows it?\n\n(Challenges attack the claim, not the person.)`,
-  });
+  // Opens the "Challenge a claim" issue form with the claim id filled in.
+  const q = new URLSearchParams({ template: "challenge.yml", title: `Challenge: ${item.claim.id}`, claim: item.claim.id });
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted">

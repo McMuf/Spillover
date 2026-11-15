@@ -1,0 +1,45 @@
+name: Claim idea or new event type
+description: Propose a testable market claim, or a new event type for the taxonomy.
+title: "Claim idea: "
+labels: ["claim"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A claim is a falsifiable sentence: **trigger, instrument, window, direction**. Spillover is a
+        research tool, not a source of trade signals. Ideas that promote a specific trade or a thinly
+        traded asset are removed. You can also skip this form and open a pull request with a claim file.
+  - type: textarea
+    id: statement
+    attributes:
+      label: The claim, in one sentence
+      description: "After <trigger>, <instrument> rises/falls by more than the market explains over <window>."
+    validations:
+      required: true
+  - type: input
+    id: event-type
+    attributes:
+      label: Event type
+      description: An UPPER_SNAKE_CASE name, e.g. FOMC_DECISION. If none fits, say what the new type is.
+    validations:
+      required: true
+  - type: input
+    id: instrument
+    attributes:
+      label: Instrument and venue
+      description: A symbol always comes with where it trades, e.g. "XLK on us_equity".
+    validations:
+      required: true
+  - type: textarea
+    id: falsifier
+    attributes:
+      label: What would prove you wrong?
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirm
+      options:
+        - label: I understand this is research, not investment advice.
+          required: true

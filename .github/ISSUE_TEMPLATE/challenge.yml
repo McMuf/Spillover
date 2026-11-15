@@ -1,0 +1,31 @@
+name: Challenge a claim
+description: Argue that a registered claim is wrong, with evidence. Attack the claim, not the person.
+title: "Challenge: "
+labels: ["challenge"]
+body:
+  - type: input
+    id: claim
+    attributes:
+      label: Claim id
+      description: e.g. clm_fomc_abs_move_spx_v1
+    validations:
+      required: true
+  - type: textarea
+    id: argument
+    attributes:
+      label: What is wrong?
+      description: A flaw in the definition, the baseline, the sample, or the data. Be specific.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Links, a replication with different data or method, or a placebo that reproduces the effect.
+  - type: checkboxes
+    id: conduct
+    attributes:
+      label: Confirm
+      options:
+        - label: I am challenging the claim, not the person who wrote it.
+          required: true

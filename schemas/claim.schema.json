@@ -81,6 +81,20 @@
       "title": "Baseline",
       "type": "string"
     },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 0.99,
+          "minimum": 0.5,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
     "decompose": {
       "items": {
         "enum": [

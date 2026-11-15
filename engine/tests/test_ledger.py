@@ -1,17 +1,15 @@
 import json
-import shutil
 import subprocess
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-import polars as pl
 import pytest
 import yaml
 from typer.testing import CliRunner
 
 from spillover.cli import app
-from spillover.data import MarketData, load_market_data
+from spillover.data import MarketData
 from spillover.frozen import check_frozen
 from spillover.ledger import (
     LedgerError,
@@ -26,7 +24,6 @@ from spillover.models import Claim, load_claim
 from spillover.register import register_claims
 from spillover.stamp import proof_path, stamp_new, upgrade_pending
 
-from .conftest import FIXTURES
 from .test_models import write
 
 runner = CliRunner()
@@ -43,29 +40,6 @@ def shock_claim(tmp_path: Path, registered_at: Any = "2025-06-01T00:00:00Z") -> 
         registered_at=registered_at,
     )
     return load_claim(path)
-
-
-@pytest.fixture
-def data_with_future_events(tmp_path: Path) -> MarketData:
-    """Fixture data plus three SYN_SHOCK events: one before registration is not needed (the
-    fixtures already have those), one after the data ends, one on the last data day."""
-    root = tmp_path / "data"
-    shutil.copytree(FIXTURES, root)
-    events = pl.read_parquet(root / "events.parquet")
-    last = load_market_data(root).as_of
-    extra = pl.DataFrame(
-        {
-            "event_id": ["shock_future", "shock_last_day"],
-            "event_type": ["SYN_SHOCK", "SYN_SHOCK"],
-            "entity": ["SYNCO", "SYNCO"],
-            "date": [date(2026, 1, 8), last],
-            "scheduled": [False, False],
-            "source": ["test", "test"],
-        },
-        schema=events.schema,
-    )
-    pl.concat([events, extra]).write_parquet(root / "events.parquet")
-    return load_market_data(root)
 
 
 # --- hashing and the file format ---------------------------------------------------------------

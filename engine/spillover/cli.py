@@ -23,6 +23,8 @@ from spillover.models import ClaimError, claim_files, claim_json_schema, load_cl
 from spillover.placebo import placebo_rejection_rate
 from spillover.register import register_claims
 from spillover.report import format_report
+from spillover.scoreboard import build_scoreboard
+from spillover.scoring import ScoreError, grade_all, verify_outcomes
 from spillover.stamp import StampError, ots_binary, stamp_new, upgrade_pending
 
 app = typer.Typer(
@@ -35,9 +37,14 @@ DEFAULT_CLAIMS = Path("claims")
 DEFAULT_DATA = Path("fixtures/synthetic")
 DEFAULT_SCHEMA = Path("schemas/claim.schema.json")
 DEFAULT_PREDICTIONS = Path("predictions")
+DEFAULT_OUTCOMES = Path("outcomes")
+DEFAULT_SCOREBOARD = Path("scoreboard/scoreboard.json")
 
 PredictionsOpt = Annotated[
     Path, typer.Option("--predictions", help="Directory holding the prediction ledger.")
+]
+OutcomesOpt = Annotated[
+    Path, typer.Option("--outcomes", help="Directory holding graded outcome records.")
 ]
 NowOpt = Annotated[
     str | None, typer.Option("--now", help="Override the current time (ISO 8601, for tests).")
@@ -252,6 +259,79 @@ def check_frozen_cmd(
     if problems:
         raise _fail(f"{len(problems)} frozen-file violation(s)")
     typer.echo("no frozen-file violations")
+
+
+@app.command()
+def grade(
+    data: DataOpt = DEFAULT_DATA,
+    predictions: PredictionsOpt = DEFAULT_PREDICTIONS,
+    outcomes: OutcomesOpt = DEFAULT_OUTCOMES,
+    allow_synthetic: Annotated[
+        bool,
+        typer.Option("--allow-synthetic", help="Grade against SYNTHETIC fixtures (tests only)."),
+    ] = False,
+    now: NowOpt = None,
+) -> None:
+    """Grade predictions whose window has closed into append-only outcome records."""
+    try:
+        market = load_market_data(data)
+        if market.synthetic and not allow_synthetic:
+            raise _fail(
+                f"{data} holds SYNTHETIC data; outcomes graded on it would look like real scores. "
+                "Pass --allow-synthetic only for tests."
+            )
+        summary = grade_all(predictions, outcomes, market, _now(now))
+    except (DataError, ScoreError, LedgerError) as exc:
+        raise _fail(str(exc)) from exc
+    for path in summary.graded:
+        typer.echo(f"graded {path}")
+    for problem in summary.refused:
+        typer.echo(f"refused: {problem}", err=True)
+    typer.echo(
+        f"{len(summary.graded)} graded, {summary.still_open} window(s) still open, "
+        f"{summary.already_graded} already graded, {len(summary.refused)} refused"
+    )
+    if summary.refused:
+        raise typer.Exit(code=1)
+
+
+@app.command("verify-outcomes")
+def verify_outcomes_cmd(
+    outcomes: OutcomesOpt = DEFAULT_OUTCOMES, predictions: PredictionsOpt = DEFAULT_PREDICTIONS
+) -> None:
+    """Re-derive every outcome hash and check it links to an intact prediction."""
+    results = verify_outcomes(outcomes, predictions)
+    bad = [r for r in results if r.problems]
+    for r in bad:
+        for problem in r.problems:
+            typer.echo(f"{r.path}: {problem}", err=True)
+    typer.echo(f"{len(results)} outcome(s) checked")
+    if bad:
+        raise _fail(f"{len(bad)} outcome(s) failed verification")
+
+
+@app.command()
+def scoreboard(
+    claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
+    outcomes: OutcomesOpt = DEFAULT_OUTCOMES,
+    out: Annotated[
+        Path, typer.Option(help="Where to write the scoreboard JSON.")
+    ] = DEFAULT_SCOREBOARD,
+    n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
+) -> None:
+    """Build the scoreboard data from claims and outcome records (generated, never hand-edited)."""
+    try:
+        claims = [load_claim(p) for p in claim_files(claims_dir)]
+        board = build_scoreboard(claims, outcomes, n_boot=n_boot)
+    except (ClaimError, ScoreError) as exc:
+        raise _fail(str(exc)) from exc
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(
+        json.dumps(board, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8"
+    )
+    typer.echo(
+        f"wrote {out}: {len(board['claims'])} claim(s), {len(board['contributors'])} contributor(s)"
+    )
 
 
 @app.command()

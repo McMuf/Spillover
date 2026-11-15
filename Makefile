@@ -27,6 +27,7 @@ check:
 	$(UV) run spillover validate
 	$(UV) run spillover schema --check
 	$(UV) run spillover verify-ledger
+	$(UV) run spillover verify-outcomes
 
 fmt:
 	$(UV) run ruff format .

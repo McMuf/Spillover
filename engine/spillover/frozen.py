@@ -11,7 +11,7 @@ from pathlib import Path, PurePosixPath
 
 from spillover.register import has_placeholder
 
-GENERATED_DIRS = ("events", "predictions", "outcomes")
+GENERATED_DIRS = ("events", "predictions", "outcomes", "scoreboard")
 
 
 class FrozenError(RuntimeError):

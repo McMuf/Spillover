@@ -81,6 +81,9 @@ class Claim(_Strict):
     # "abs_excess_return" tests whether |CAR| exceeds its typical size in the estimation window
     # (used for volatility claims such as FOMC days).
     measure: Literal["abnormal_return", "abs_excess_return"] = "abnormal_return"
+    # Optional stated probability that the sign is as expected on any one event. Only claims that
+    # state a confidence enter the calibration plot.
+    confidence: Annotated[float, Field(ge=0.5, le=0.99)] | None = None
     success: Success
     falsifier: Annotated[str, Field(min_length=10)]
     registered_by: Annotated[str, Field(min_length=1)]

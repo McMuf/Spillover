@@ -54,7 +54,9 @@ class Prediction(BaseModel):
     predicted_sign: Literal["positive", "negative"]
     window: Window
     baseline: str
+    factor: str
     measure: str
+    confidence: Annotated[float, Field(ge=0.5, le=0.99)] | None = None
     extractor_version: str
     engine_version: str
     rules_version: str
@@ -62,14 +64,19 @@ class Prediction(BaseModel):
     sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
 
-def canonical_body(prediction: Prediction) -> bytes:
+def canonical_body(record: BaseModel) -> bytes:
     """Canonical bytes that are hashed: every field except the hash, sorted keys, no spaces."""
-    body = prediction.model_dump(mode="json", exclude={"sha256"})
+    body = record.model_dump(mode="json", exclude={"sha256"})
     return json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
 
 
+def hash_record(record: BaseModel) -> str:
+    """SHA-256 of a ledger or outcome record's canonical form (shared by both record types)."""
+    return hashlib.sha256(canonical_body(record)).hexdigest()
+
+
 def compute_hash(prediction: Prediction) -> str:
-    return hashlib.sha256(canonical_body(prediction)).hexdigest()
+    return hash_record(prediction)
 
 
 def build_prediction(
@@ -87,7 +94,9 @@ def build_prediction(
         "predicted_sign": claim.expected_sign,
         "window": claim.window,
         "baseline": claim.baseline,
+        "factor": claim.factor,
         "measure": claim.measure,
+        "confidence": claim.confidence,
         "extractor_version": EXTRACTOR_VERSION,
         "engine_version": engine_version(),
         "rules_version": RULES_VERSION,

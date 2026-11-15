@@ -1,0 +1,39 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
+
+// Automated WCAG 2.x A/AA audit of every page, in both themes. Automated checks catch roughly a
+// third of accessibility problems, so this is a floor, not a substitute for manual review.
+const PAGES = [
+  ["claims", "/#/"],
+  ["claim overview", "/#/claims/clm_fomc_abs_move_spx_v1"],
+  ["event", "/#/events/fomc_2025-12-17"],
+  ["scoreboard", "/#/scoreboard"],
+  ["submit", "/#/submit"],
+] as const;
+
+for (const scheme of ["light", "dark"] as const) {
+  test.describe(`${scheme} theme`, () => {
+    test.use({ colorScheme: scheme });
+
+    for (const [name, path] of PAGES) {
+      test(`${name} has no WCAG A/AA violations`, async ({ page }) => {
+        await page.goto(path);
+        await expect(page.getByRole("main")).toBeVisible();
+        await page.waitForTimeout(400); // let lazy chunks and the graph settle
+        const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+        const summary = results.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node(s))`);
+        expect(summary, summary.join("\n")).toEqual([]);
+      });
+    }
+
+    test("claim evidence tab (chart) has no violations", async ({ page }) => {
+      await page.goto("/#/claims/clm_fomc_abs_move_spx_v1");
+      await page.getByRole("tab", { name: "Evidence" }).click();
+      await expect(page.getByTestId("event-window-chart")).toBeVisible();
+      await page.waitForTimeout(400);
+      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      const summary = results.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node(s))`);
+      expect(summary, summary.join("\n")).toEqual([]);
+    });
+  });
+}

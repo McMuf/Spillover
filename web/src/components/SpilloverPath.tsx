@@ -79,6 +79,19 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
               </p>
             </div>
           </div>
+          {p.market.basket.length > 0 && (
+            <div className="mt-3">
+              <p className="mb-1.5 text-xs text-muted">Equal-weighted basket of {p.market.basket.length}:</p>
+              <ul className="flex flex-wrap gap-1.5" aria-label="Basket members">
+                {p.market.basket.map((m) => (
+                  <li key={m} className="flex items-center gap-1 rounded-full bg-surface-alt py-0.5 pl-0.5 pr-2 text-xs font-semibold">
+                    <Logo symbol={m} size={16} />
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {p.effect ? (
             <div className="mt-3 border-t border-line pt-3">
               <p className={`text-2xl font-extrabold tabular-nums ${dirText(item.backtest?.mean)}`}>{p.effect.estimate}</p>
@@ -98,10 +111,16 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
             <NodeShape type="factor" size={14} /> Measured against <span className="font-mono font-normal normal-case tracking-normal">· FAC</span>
           </dt>
           <dd className="text-sm">
-            {p.control ? (
+            {p.controls.length > 0 ? (
               <>
-                <strong>{p.control.name}</strong> ({p.control.symbol}). Its moves are subtracted, so only the part the overall
-                market does not explain counts.
+                {p.controls.map((f, i) => (
+                  <span key={f.symbol}>
+                    {i > 0 && (i === p.controls.length - 1 ? " and " : ", ")}
+                    <strong>{f.name}</strong> ({f.symbol})
+                  </span>
+                ))}
+                . {p.controls.length > 1 ? "Their" : "Its"} moves are subtracted, so only the part {p.controls.length > 1 ? "they do" : "the overall market does"} not
+                explain counts.
               </>
             ) : (
               <>{name.charAt(0).toUpperCase() + name.slice(1)}&apos;s own normal day-to-day movement. There is no separate market to subtract.</>

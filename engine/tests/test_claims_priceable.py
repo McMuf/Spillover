@@ -21,9 +21,7 @@ def test_every_live_claim_can_be_priced_by_the_ci_config() -> None:
         claim = load_claim(path)
         if claim.id in SUPERSEDED:
             continue
-        needed = {claim.instrument.symbol}
-        if claim.baseline == "factor_only":
-            needed.add(claim.factor)
+        needed = set(claim.instrument.members) | set(claim.factor_names)
         missing = needed - available
         if missing:
             problems.append(

@@ -83,12 +83,15 @@ class Changes(_Strict):
     window_end: Annotated[str | None, Field(pattern=r"^\+[1-9][0-9]*_trading_days?$")] = None
     baseline: Literal["factor_only", "constant_mean"] | None = None
     factor: Annotated[str | None, Field(min_length=1)] = None
+    factors: Annotated[list[str] | None, Field(min_length=1, max_length=3)] = None
     measure: Literal["abnormal_return", "abs_excess_return"] | None = None
 
     @model_validator(mode="after")
     def _something_changes(self) -> Self:
         if all(v is None for v in self.model_dump().values()):
             raise ValueError("a replication must change at least one thing")
+        if self.factor is not None and self.factors is not None:
+            raise ValueError("change either factor or factors, not both")
         return self
 
 
@@ -195,10 +198,16 @@ def apply_changes(claim: Claim, changes: Changes) -> Claim:
         data["instrument"] = changes.instrument.model_dump()
     if changes.window_end is not None:
         data["window"] = {"start": "first_report", "end": changes.window_end}
-    for field in ("baseline", "factor", "measure"):
+    for field in ("baseline", "measure"):
         value = getattr(changes, field)
         if value is not None:
             data[field] = value
+    # One factor or several: setting one form clears the other, so the result is unambiguous.
+    if changes.factor is not None:
+        data["factor"], data["factors"] = changes.factor, None
+    if changes.factors is not None:
+        data["factors"] = list(changes.factors)
+        data.pop("factor", None)
     try:
         return Claim.model_validate(data)
     except ValidationError as exc:
@@ -213,4 +222,6 @@ def describe_changes(changes: Changes) -> dict[str, str]:
         value = getattr(changes, field)
         if value is not None:
             out[field] = str(value)
+    if changes.factors is not None:
+        out["factors"] = "+".join(changes.factors)
     return out

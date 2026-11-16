@@ -19,6 +19,7 @@ import { findClaim } from "../lib/data";
 import { embedSnippet } from "../lib/embed";
 import { citation, claimVersion, direction, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
+import { factorNames } from "../lib/paths";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
 
 // The charting library is large, so it loads only when the Evidence tab is opened.
@@ -103,7 +104,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
           <Row label="Window">{b ? windowLabel(b.window_days) : c.window.end}</Row>
           <Row label="Baseline">
             {c.baseline.replace("_", " ")}
-            {c.baseline === "factor_only" ? ` (${c.factor})` : ""}
+            {c.baseline === "factor_only" ? ` (${factorNames(c).join(" + ")})` : ""}
           </Row>
           <Row label="Measure">{c.measure.replace(/_/g, " ")}</Row>
           {b ? (
@@ -184,19 +185,17 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
     {
       symbol: c.instrument.symbol,
       tag: venueLabel(c.instrument.venue),
-      idea: `${instrumentName(c.instrument.symbol)} is the market this claim is about. The line shows its average path around past events; the dashed line is the event day.`,
+      idea: c.instrument.basket
+        ? `An equal-weighted basket of ${c.instrument.basket.join(", ")}: its daily return is the average of theirs. The line shows its average path around past events; the dashed line is the event day.`
+        : `${instrumentName(c.instrument.symbol)} is the market this claim is about. The line shows its average path around past events; the dashed line is the event day.`,
       main: true,
     },
-    ...(c.baseline === "factor_only" && c.factor
-      ? [
-          {
-            symbol: c.factor,
-            tag: "control",
-            idea: `${instrumentName(c.factor)} is subtracted out, so the result shows only what the overall market does not explain.`,
-            main: false,
-          },
-        ]
-      : []),
+    ...factorNames(c).map((f) => ({
+      symbol: f,
+      tag: "control",
+      idea: `${instrumentName(f)} is subtracted out, so the result shows only what ${factorNames(c).length > 1 ? "these controls do" : "the overall market does"} not explain.`,
+      main: false,
+    })),
   ];
   return (
     <div className="space-y-4">

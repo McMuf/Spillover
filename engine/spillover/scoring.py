@@ -131,9 +131,10 @@ def grade_prediction(pred: Prediction, data: MarketData, now: datetime) -> Outco
     measure: Measure = (
         "abs_excess_return" if pred.measure == "abs_excess_return" else "abnormal_return"
     )
-    y = data.series(pred.instrument.symbol)
-    x = data.series(pred.factor) if baseline == "factor_only" else None
-    car, value, _alpha, _beta = compute_stat(y, x, day0, end_offset, baseline, measure)
+    y = data.instrument_series(pred.instrument.symbol, pred.instrument.basket)
+    # Several factors are stored as one string joined with "+" (symbols cannot contain "+").
+    x = data.factor_matrix(pred.factor.split("+")) if baseline == "factor_only" else None
+    car, value, _alpha, _betas = compute_stat(y, x, day0, end_offset, baseline, measure)
 
     ev = data.events
     sched = ev.filter(ev["scheduled"] & (ev["event_type"] != pred.event_type))

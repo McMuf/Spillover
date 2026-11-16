@@ -64,9 +64,20 @@ class Prediction(BaseModel):
     sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
 
+def _record_dict(record: BaseModel, **kwargs: Any) -> dict[str, Any]:
+    """A record as plain JSON data. Optional fields added after the format was published (an
+    instrument's ``basket``) are left out when unused, so older records keep their exact bytes
+    and their hashes."""
+    body = record.model_dump(mode="json", **kwargs)
+    inst = body.get("instrument")
+    if isinstance(inst, dict) and inst.get("basket") is None:
+        inst.pop("basket", None)
+    return body
+
+
 def canonical_body(record: BaseModel) -> bytes:
     """Canonical bytes that are hashed: every field except the hash, sorted keys, no spaces."""
-    body = record.model_dump(mode="json", exclude={"sha256"})
+    body = _record_dict(record, exclude={"sha256"})
     return json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
 
 
@@ -98,7 +109,7 @@ def build_prediction(
         "predicted_sign": claim.expected_sign,
         "window": claim.window,
         "baseline": claim.baseline,
-        "factor": claim.factor,
+        "factor": claim.factor_label,
         "measure": claim.measure,
         "confidence": claim.confidence,
         "extractor_version": extractor,
@@ -119,7 +130,7 @@ def write_prediction(root: Path, prediction: Prediction) -> Path:
     """Write a new record. Refuses to overwrite: history is append-only."""
     path = prediction_path(root, prediction)
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(prediction.model_dump(mode="json"), indent=2, sort_keys=True) + "\n"
+    text = json.dumps(_record_dict(prediction), indent=2, sort_keys=True) + "\n"
     try:
         with path.open("x", encoding="utf-8") as fh:
             fh.write(text)

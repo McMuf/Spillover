@@ -181,7 +181,14 @@ registered_at: set_by_ci_on_merge
 
 Reading it aloud: *"When a Magnificent 7 company's free cash flow turns negative, the MAGS basket falls over the next trading day by more than that company's index weight alone would cause. I will call this supported if the spillover part's interval excludes zero after at least eight forward events."*
 
-The `decompose` field matters. If one member is 20% of an index and drops 5%, the index mechanically falls about 1% with no spillover at all. Spillover separates **mechanical weight** from **spillover**, so a claim cannot get credit for arithmetic.
+The `decompose` field matters. If one member is 20% of an index and drops 5%, the index mechanically falls about 1% with no spillover at all. Spillover separates **mechanical weight** from **spillover**, so a claim cannot get credit for arithmetic. *Not implemented yet: it needs index-weight data, and the engine refuses a claim that sets it rather than guess.*
+
+Two optional fields widen what a claim can test:
+
+- **Baskets.** `instrument: {venue: us_equity, symbol: AI_SUPPLIERS, basket: [NVDA, AVGO, MU, ANET]}` tests an equal-weighted basket (2 to 50 members, rebalanced daily): its daily return is the average of its members' returns.
+- **Several factors.** `factors: [BTC, ETH]` (up to 3) replaces the single `factor`, so the baseline becomes `alpha + beta₁ × BTC + beta₂ × ETH`. Use it when one market factor would leave obvious common moves in the result, as with crypto tokens that track both BTC and ETH.
+
+Neither field appears in a frozen prediction unless the claim uses it, so records written before these fields existed keep their exact bytes and hashes.
 
 ## The node language
 
@@ -454,7 +461,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 
 **How.**
 1. Pick the event time and the claim's window.
-2. Fit a **market model** over an estimation window of about 120 trading days ending 10 days before the event: `return = alpha + beta × factor_return`.
+2. Fit a **market model** over an estimation window of about 120 trading days ending 10 days before the event: `return = alpha + beta × factor_return`, or with up to three factors, `alpha + beta₁ × f₁ + beta₂ × f₂ + beta₃ × f₃`. A basket's return is the equal-weighted mean of its members.
 3. Predict the normal return inside the event window and subtract it from the actual return to get the **abnormal return**; sum over the window for the **cumulative abnormal return (CAR)**.
 4. Aggregate across events, counting only **effective independent** events.
 5. Produce a **bootstrap interval** for the mean abnormal return.
@@ -738,11 +745,11 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 
 | # | Claim | Role | Notes |
 |---|---|---|---|
-| 1 | Hyperscaler capex raise leads a supplier basket higher over day 0 to +5 | Core | Rough event count, to be verified |
+| 1 | Hyperscaler capex raise leads a supplier basket higher over day 0 to +5 | Core | Rough event count, to be verified. The engine supports the basket; events come from headlines, so this waits on live ingestion |
 | 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag |
 | 3 | Mag-7 negative free-cash-flow headline hits MAGS beyond the company's weight | Thin | Few events; tests the weight decomposition |
 | 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
-| 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified |
+| 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified. The engine supports the two-factor baseline; needs crypto prices and an unlock calendar |
 | 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v2` (Nasdaq vs the S&P 500); `_v1` is superseded |
 
 Build order: claims **4** and **6** first, because they have plenty of events and validate the engine before anything interesting is tested on it. Event counts for claims 1, 2, 3 and 5 are rough estimates and must be counted from data before launch.
@@ -765,7 +772,7 @@ Build order: claims **4** and **6** first, because they have plenty of events an
 | **Data terms** | Redistributing vendor data can breach terms | Store derived values only; open sources first; bring-your-own keys; documented source terms |
 | **No contributors** | An empty commons looks dead | Seed ~20 starter claims including replications; pitch university clubs; weekly triage |
 | **Maintainer burnout** | One person cannot review everything | Weekly triage hour; recruit a co-maintainer; clear lanes; automation does the mechanical review |
-| **Misuse as trading advice** | Readers may treat a hobby result as a signal | "Research, not advice" on every page; neutral colors until realized; no trade buttons |
+| **Misuse as trading advice** | Readers may treat a hobby result as a signal | "Research, not advice" on every page; every backtest number is labeled as a backtest; no trade buttons |
 | **Pump-and-dump abuse** | A claim about a tiny asset could be used to promote it | Liquidity and market-cap floors for instruments; moderation rule |
 | **Timestamp disputes** | Git times can be rewritten | OpenTimestamps proofs |
 | **Stack indicative only** | Hiring signals change | Choices are justified by project needs, not by trend |

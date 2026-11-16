@@ -72,7 +72,7 @@ describe("EvidenceMeter", () => {
 
 describe("InstrumentChip", () => {
   it("always shows symbol and venue together", () => {
-    render(<InstrumentChip instrument={{ venue: "crypto_perp", symbol: "BTC" }} />);
+    render(<InstrumentChip instrument={{ venue: "crypto_perp", symbol: "BTC", basket: null }} />);
     expect(screen.getByText("BTC")).toBeInTheDocument();
     expect(screen.getByText(/crypto perp/)).toBeInTheDocument();
   });

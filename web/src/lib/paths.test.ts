@@ -8,7 +8,7 @@ describe("claim path", () => {
     const p = claimPath(c, makeSite([c]));
     expect(p.triggers.map((t) => t.id)).toEqual(["ABC"]);
     expect(p.market.symbol).toBe("ABC");
-    expect(p.control?.symbol).toBe("MKT");
+    expect(p.controls.map((f) => f.symbol)).toEqual(["MKT"]);
     expect(p.rules.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -31,7 +31,7 @@ describe("claim path", () => {
   it("has no control step for claims measured against their own normal movement", () => {
     const c = makeClaim();
     c.claim.baseline = "constant_mean";
-    expect(claimPath(c, makeSite([c])).control).toBeNull();
+    expect(claimPath(c, makeSite([c])).controls).toEqual([]);
   });
 
   it("marks graded predictions hit or miss, and only those", () => {
@@ -46,11 +46,22 @@ describe("claim path", () => {
   });
 });
 
+describe("baskets and several factors", () => {
+  it("lists every factor that is subtracted and every basket member", () => {
+    const c = makeClaim();
+    c.claim.factors = ["BTC", "ETH"];
+    c.claim.instrument = { venue: "crypto", symbol: "UNLOCKS", basket: ["ARB", "OP", "SUI"] };
+    const p = claimPath(c, makeSite([c]));
+    expect(p.controls.map((f) => f.symbol)).toEqual(["BTC", "ETH"]);
+    expect(p.market.basket).toEqual(["ARB", "OP", "SUI"]);
+  });
+});
+
 describe("spillover matrix", () => {
   it("puts each claim in its event-type × market cell and leaves untested pairs empty", () => {
     const a = makeClaim("clm_a_v1");
     const b = makeClaim("clm_b_v1");
-    b.claim.instrument = { venue: "us_equity", symbol: "XYZ" };
+    b.claim.instrument = { venue: "us_equity", symbol: "XYZ", basket: null };
     b.claim.event_type = "OTHER_EVENT";
     const m = spilloverMatrix([a, b]);
     expect(m.cols.map((c) => c.symbol)).toEqual(["ABC", "XYZ"]);

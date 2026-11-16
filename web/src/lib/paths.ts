@@ -11,16 +11,23 @@ import { categoryOf, eventTitle } from "./plain";
 export interface ClaimPath {
   triggers: { id: string; name: string }[];
   event: { type: string; title: string; topic: string; count: number; latest: { id: string; date: string } | null };
-  market: { symbol: string; name: string; venue: string };
+  market: { symbol: string; name: string; venue: string; basket: string[] };
   /** The spillover itself. Carries all five facts: estimate, interval, sample size, window, as-of. */
   effect: { estimate: string; interval: string; n: number; window: string; days: number; asOf: string; summary: string; lowSample: boolean } | null;
-  control: { symbol: string; name: string } | null;
+  /** What is subtracted out: one or more factor series (empty when compared with its own normal movement). */
+  controls: { symbol: string; name: string }[];
   rules: string[];
   predictions: {
     needed: number;
     total: number;
     recent: { eventId: string; date: string; outcome: "hit" | "miss" | "open" }[];
   };
+}
+
+/** The factor series a claim subtracts out, in order. Mirrors the engine's Claim.factor_names. */
+export function factorNames(c: SiteClaim["claim"]): string[] {
+  if (c.baseline !== "factor_only") return [];
+  return c.factors && c.factors.length > 0 ? [...c.factors] : [c.factor];
 }
 
 /** The five things every number on a relationship must show, in one line. */
@@ -52,7 +59,12 @@ export function claimPath(item: SiteClaim, site: SiteData): ClaimPath {
       count: item.event_ids.length,
       latest: latest ? { id: latest.event_id, date: latest.date } : null,
     },
-    market: { symbol: c.instrument.symbol, name: instrumentName(c.instrument.symbol), venue: venueLabel(c.instrument.venue) },
+    market: {
+      symbol: c.instrument.symbol,
+      name: instrumentName(c.instrument.symbol),
+      venue: venueLabel(c.instrument.venue),
+      basket: c.instrument.basket ?? [],
+    },
     effect: b
       ? {
           estimate: pct(b.mean),
@@ -65,7 +77,7 @@ export function claimPath(item: SiteClaim, site: SiteData): ClaimPath {
           lowSample: b.n_effective < c.success.min_forward_events,
         }
       : null,
-    control: c.baseline === "factor_only" && c.factor ? { symbol: c.factor, name: instrumentName(c.factor) } : null,
+    controls: factorNames(c).map((f) => ({ symbol: f, name: instrumentName(f) })),
     rules,
     predictions: {
       needed: c.success.min_forward_events,

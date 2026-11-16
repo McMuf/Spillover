@@ -24,12 +24,12 @@ describe("plain-English helpers", () => {
   });
 
   it("writes short headlines a non-specialist can read", () => {
-    const fomc = withClaim({ event_type: "FOMC_DECISION", measure: "abs_excess_return", instrument: { venue: "us_index", symbol: "SPX" } });
+    const fomc = withClaim({ event_type: "FOMC_DECISION", measure: "abs_excess_return", instrument: { venue: "us_index", symbol: "SPX", basket: null } });
     expect(shortHeadline(fomc)).toBe("Fed rate decisions make the S&P 500 swing more than usual");
     expect(highlightTerms(fomc)).toEqual(expect.arrayContaining(["S&P 500", "Fed"]));
-    const placebo = withClaim({ event_type: "RANDOM_DATE", instrument: { venue: "us_index", symbol: "NASDAQ" } });
+    const placebo = withClaim({ event_type: "RANDOM_DATE", instrument: { venue: "us_index", symbol: "NASDAQ", basket: null } });
     expect(shortHeadline(placebo)).toBe("Placebo: does the Nasdaq move on random days?");
-    const down = withClaim({ event_type: "EARNINGS_MISS", expected_sign: "negative", instrument: { venue: "us_equity", symbol: "NVDA" } });
+    const down = withClaim({ event_type: "EARNINGS_MISS", expected_sign: "negative", instrument: { venue: "us_equity", symbol: "NVDA", basket: null } });
     expect(shortHeadline(down)).toBe("Nvidia lags the market after earnings misses");
   });
 

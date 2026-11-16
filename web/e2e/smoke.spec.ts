@@ -70,11 +70,11 @@ test("submit form validates live and the scoreboard states what is missing", asy
   );
 
   await page.goto("/#/scoreboard");
-  // The seed claims are registered, so they are listed, with nothing graded yet.
+  // The registered seed claims (FOMC control, placebo v1 and its v2 successor) are listed, with nothing graded yet.
   const table = page.getByRole("table", { name: "Scoreboard by claim" });
   await expect(table).toBeVisible();
-  await expect(table.getByRole("row")).toHaveCount(3); // header + two claims
-  await expect(table.getByText("Proposed")).toHaveCount(2);
-  await expect(table.getByText("0 of 8")).toHaveCount(2);
+  await expect(table.getByRole("row")).toHaveCount(4); // header + three claims
+  await expect(table.getByText("Proposed")).toHaveCount(3);
+  await expect(table.getByText("0 of 8")).toHaveCount(3);
   await expect(page.getByText("No placebo claim has shown a significant result.")).toBeVisible();
 });

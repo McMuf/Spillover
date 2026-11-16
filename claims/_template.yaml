@@ -16,6 +16,8 @@ trigger_entities: [TICKER_OR_ENTITY_ID]
 
 # Always include the venue. "GOOGL on Nasdaq" and "GOOGL perp" are different instruments.
 instrument: {venue: us_equity, symbol: TICKER}
+# Or an equal-weighted basket (2 to 50 members). The symbol is then just the basket's name:
+# instrument: {venue: us_equity, symbol: AI_SUPPLIERS, basket: [NVDA, AVGO, MU, ANET]}
 
 # When the window starts and ends relative to the headline's first verifiable time.
 window: {start: first_report, end: +1_trading_day}
@@ -23,11 +25,17 @@ window: {start: first_report, end: +1_trading_day}
 # positive | negative
 expected_sign: negative
 
-# Optional. Use when the instrument is a basket that contains the trigger entity.
-decompose: [mechanical_weight, spillover]
+# Optional, and not available yet: splitting an index move into the trigger company's own weight
+# and real spillover needs index-weight data. Leave it commented out until that lands.
+# decompose: [mechanical_weight, spillover]
 
-# What counts as "normal". factor_only is the default naive baseline.
+# What counts as "normal". factor_only (the default) subtracts what a factor series explains;
+# constant_mean compares with the instrument's own average (for an index that IS the market).
 baseline: factor_only
+
+# The factor to subtract (default MKT, the broad market). For up to 3 factors, use factors instead:
+# factor: MKT
+# factors: [BTC, ETH]
 
 # How the claim is judged. min_forward_events has a floor set by the public scoring rules.
 success: {spillover_ci_excludes_zero: true, min_forward_events: 8}

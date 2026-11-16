@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -39,6 +40,18 @@ class MarketData:
             raise DataError(
                 f"no return series for {symbol!r} in {self.root} (available: {known})"
             ) from None
+
+    def instrument_series(self, symbol: str, basket: Sequence[str] | None = None) -> FloatArray:
+        """Daily returns of an instrument; for a basket, the equal-weighted mean of its members."""
+        if not basket:
+            return self.series(symbol)
+        return np.vstack([self.series(m) for m in basket]).mean(axis=0)
+
+    def factor_matrix(self, names: Sequence[str]) -> FloatArray:
+        """Factor returns as a (days x factors) matrix, one column per factor."""
+        if not names:
+            raise DataError("a factor baseline needs at least one factor series")
+        return np.column_stack([self.series(n) for n in names])
 
     def day_index(self, when: date) -> int | None:
         """Index of the first trading day on or after ``when`` (None if past the data)."""

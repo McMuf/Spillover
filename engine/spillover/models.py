@@ -19,6 +19,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 # template default. Changing it is a rules change (7-day public comment window).
 MIN_FORWARD_EVENTS_FLOOR = 8
 
+_SYMBOL = r"^[A-Za-z0-9._-]+$"  # no "+": several factors are written "BTC+ETH" in the ledger
+MAX_FACTORS = 3
 _END_RE = re.compile(r"^\+([1-9][0-9]*)_trading_days?$")
 _PLACEHOLDER = "REPLACE_ME"
 
@@ -39,7 +41,28 @@ class Instrument(_Strict):
     """A thing with a price, always labeled with where it trades."""
 
     venue: Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]*$", description="Where it trades.")]
-    symbol: Annotated[str, Field(min_length=1, max_length=32, pattern=r"^[A-Za-z0-9._-]+$")]
+    symbol: Annotated[str, Field(min_length=1, max_length=32, pattern=_SYMBOL)]
+    # An equal-weighted basket. When set, the instrument's daily return is the average of these
+    # members' daily returns (rebalanced daily) and ``symbol`` is just the basket's name.
+    basket: (
+        Annotated[
+            list[Annotated[str, Field(min_length=1, max_length=32, pattern=_SYMBOL)]],
+            Field(min_length=2, max_length=50),
+        ]
+        | None
+    ) = None
+
+    @field_validator("basket")
+    @classmethod
+    def _distinct_members(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("basket lists the same symbol twice")
+        return value
+
+    @property
+    def members(self) -> list[str]:
+        """The symbols whose prices this instrument needs."""
+        return list(self.basket) if self.basket else [self.symbol]
 
 
 class Window(_Strict):
@@ -80,7 +103,16 @@ class Claim(_Strict):
     # index-level claims where the instrument *is* the market.
     baseline: Literal["factor_only", "constant_mean"] = "factor_only"
     # Name of the factor series the baseline controls for.
-    factor: Annotated[str, Field(min_length=1)] = "MKT"
+    factor: Annotated[str, Field(min_length=1, max_length=32, pattern=_SYMBOL)] = "MKT"
+    # Several factors at once (for example [BTC, ETH] for a crypto claim). When set, it replaces
+    # ``factor`` and the baseline is alpha + beta_1 * f_1 + ... fitted on the estimation window.
+    factors: (
+        Annotated[
+            list[Annotated[str, Field(min_length=1, max_length=32, pattern=_SYMBOL)]],
+            Field(min_length=1, max_length=MAX_FACTORS),
+        ]
+        | None
+    ) = None
     # "abnormal_return" tests the mean cumulative abnormal return over the window.
     # "abs_excess_return" tests whether |CAR| exceeds its typical size in the estimation window
     # (used for volatility claims such as FOMC days).
@@ -113,7 +145,30 @@ class Claim(_Strict):
             raise ValueError("decompose: 'mechanical_weight' needs 'spillover' alongside it")
         if self.baseline == "constant_mean" and self.decompose:
             raise ValueError("decompose requires a factor baseline (baseline: factor_only)")
+        if self.factors is not None:
+            if self.baseline == "constant_mean":
+                raise ValueError("factors needs a factor baseline (baseline: factor_only)")
+            if len(set(self.factors)) != len(self.factors):
+                raise ValueError("factors lists the same series twice")
+            if "factor" in self.model_fields_set and self.factor != "MKT":
+                raise ValueError("use either factor or factors, not both")
+            if set(self.factors) & set(self.instrument.members):
+                raise ValueError("a factor cannot also be the instrument (or one of its basket)")
+        elif self.baseline == "factor_only" and self.factor in self.instrument.members:
+            raise ValueError("the factor cannot also be the instrument (or one of its basket)")
         return self
+
+    @property
+    def factor_names(self) -> list[str]:
+        """The factor series the baseline uses, in order (empty for constant_mean)."""
+        if self.baseline != "factor_only":
+            return []
+        return list(self.factors) if self.factors else [self.factor]
+
+    @property
+    def factor_label(self) -> str:
+        """Factors as one string, "BTC+ETH", as stored in ledger records."""
+        return "+".join(self.factor_names) if self.factor_names else self.factor
 
     @property
     def version(self) -> int:

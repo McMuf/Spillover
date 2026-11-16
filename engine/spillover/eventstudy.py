@@ -43,7 +43,7 @@ class EventStat:
     car: float  # cumulative abnormal return over the window
     value: float  # the statistic being tested (the CAR, or |CAR| minus its typical size)
     alpha: float
-    beta: float
+    betas: tuple[float, ...]  # one per factor, in the claim's factor order (empty: constant_mean)
 
 
 def matching_events(claim: Claim, data: MarketData) -> pl.DataFrame:
@@ -59,6 +59,13 @@ def has_history(n_days: int, day0: int, end_offset: int) -> bool:
     return day0 - EST_GAP - EST_LEN + 1 >= 0 and day0 + end_offset < n_days
 
 
+def _as_matrix(x: FloatArray | None) -> FloatArray | None:
+    """Factors as (days x k); a single 1-D series becomes one column."""
+    if x is None:
+        return None
+    return x.reshape(-1, 1) if x.ndim == 1 else x
+
+
 def compute_stat(
     y: FloatArray,
     x: FloatArray | None,
@@ -66,27 +73,35 @@ def compute_stat(
     end_offset: int,
     baseline: Baseline,
     measure: Measure,
-) -> tuple[float, float, float, float]:
-    """Return (car, value, alpha, beta) for one event. Caller must check ``has_history``."""
+) -> tuple[float, float, float, tuple[float, ...]]:
+    """Return (car, value, alpha, betas) for one event. Caller must check ``has_history``.
+
+    ``x`` is one factor series (1-D) or several (days x k). With several factors the baseline is
+    alpha + beta_1 * f_1 + ... + beta_k * f_k, fitted by OLS on the estimation window.
+    """
     est_end = day0 - EST_GAP
     est = slice(est_end - EST_LEN + 1, est_end + 1)
     win = slice(day0, day0 + end_offset + 1)
+    xm = _as_matrix(x)
 
     if baseline == "factor_only":
-        if x is None:
+        if xm is None:
             raise DataError("baseline 'factor_only' needs a factor series")
-        fit = sm.OLS(y[est], sm.add_constant(x[est])).fit()
-        alpha, beta = float(fit.params[0]), float(fit.params[1])
+        fit = sm.OLS(y[est], sm.add_constant(xm[est], has_constant="add")).fit()
+        alpha = float(fit.params[0])
+        betas = tuple(float(b) for b in fit.params[1:])
     else:
-        alpha, beta = float(np.mean(y[est])), 0.0
+        alpha, betas = float(np.mean(y[est])), ()
 
     def normal(slc: slice) -> FloatArray:
         base = np.full_like(y[slc], alpha)
-        return base if x is None else base + beta * x[slc]
+        if xm is None or not betas:
+            return base
+        return base + xm[slc] @ np.asarray(betas, dtype=np.float64)
 
     car = float(np.sum(y[win] - normal(win)))
     if measure == "abnormal_return":
-        return car, car, alpha, beta
+        return car, car, alpha, betas
 
     # abs_excess_return: compare |CAR| with the typical |CAR| of same-length windows in the
     # estimation period (rolling sums of the estimation residuals).
@@ -94,7 +109,7 @@ def compute_stat(
     length = end_offset + 1
     rolling = np.convolve(resid, np.ones(length), mode="valid")
     typical = float(np.mean(np.abs(rolling)))
-    return car, abs(car) - typical, alpha, beta
+    return car, abs(car) - typical, alpha, betas
 
 
 def collapse_overlaps(day0s: list[int], n_days_window: int) -> list[int]:
@@ -218,8 +233,8 @@ CHART_POST_EXTRA = 10  # trading days shown after the event window closes
 
 def mean_window_path(claim: Claim, data: MarketData, stats: list[EventStat]) -> WindowPath | None:
     """Mean cumulative abnormal path for the evidence chart, or None if no event has full range."""
-    y = data.series(claim.instrument.symbol)
-    x = data.series(claim.factor) if claim.baseline == "factor_only" else None
+    y = data.instrument_series(claim.instrument.symbol, claim.instrument.basket)
+    x = data.factor_matrix(claim.factor_names) if claim.baseline == "factor_only" else None
     end = claim.window.end_offset
     post = end + CHART_POST_EXTRA
     days = list(range(-CHART_PRE, post + 1))
@@ -230,8 +245,8 @@ def mean_window_path(claim: Claim, data: MarketData, stats: list[EventStat]) -> 
             continue
         actual = y[lo_i : hi_i + 1]
         normal = np.full_like(actual, s.alpha)
-        if x is not None:
-            normal = normal + s.beta * x[lo_i : hi_i + 1]
+        if x is not None and s.betas:
+            normal = normal + x[lo_i : hi_i + 1] @ np.asarray(s.betas, dtype=np.float64)
         paths.append(100.0 * (1.0 + np.cumsum(actual - normal)))
     if not paths:
         return None
@@ -258,8 +273,8 @@ def run_backtest(
             "it needs index-weight data. Remove 'decompose' or wait for that milestone."
         )
 
-    y = data.series(claim.instrument.symbol)
-    x = data.series(claim.factor) if claim.baseline == "factor_only" else None
+    y = data.instrument_series(claim.instrument.symbol, claim.instrument.basket)
+    x = data.factor_matrix(claim.factor_names) if claim.baseline == "factor_only" else None
     end_offset = claim.window.end_offset
     n_days = len(data.dates)
 
@@ -291,8 +306,8 @@ def run_backtest(
     stats: list[EventStat] = []
     for t0 in kept:
         event_id, when = candidates[t0]
-        car, value, alpha, beta = compute_stat(y, x, t0, end_offset, claim.baseline, claim.measure)
-        stats.append(EventStat(event_id, when, t0, car, value, alpha, beta))
+        car, value, alpha, betas = compute_stat(y, x, t0, end_offset, claim.baseline, claim.measure)
+        stats.append(EventStat(event_id, when, t0, car, value, alpha, betas))
 
     values = np.array([s.value for s in stats], dtype=np.float64)
     boot = bootstrap_mean(values, n_boot=n_boot, seed=seed)

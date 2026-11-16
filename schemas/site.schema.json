@@ -393,9 +393,31 @@
         },
         "factor": {
           "default": "MKT",
+          "maxLength": 32,
           "minLength": 1,
+          "pattern": "^[A-Za-z0-9._-]+$",
           "title": "Factor",
           "type": "string"
+        },
+        "factors": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 32,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9._-]+$",
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Factors"
         },
         "falsifier": {
           "minLength": 10,
@@ -468,6 +490,7 @@
         "decompose",
         "baseline",
         "factor",
+        "factors",
         "measure",
         "confidence",
         "success",
@@ -747,6 +770,26 @@
       "additionalProperties": false,
       "description": "A thing with a price, always labeled with where it trades.",
       "properties": {
+        "basket": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 32,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9._-]+$",
+                "type": "string"
+              },
+              "maxItems": 50,
+              "minItems": 2,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Basket"
+        },
         "symbol": {
           "maxLength": 32,
           "minLength": 1,
@@ -763,7 +806,8 @@
       },
       "required": [
         "venue",
-        "symbol"
+        "symbol",
+        "basket"
       ],
       "title": "Instrument",
       "type": "object"

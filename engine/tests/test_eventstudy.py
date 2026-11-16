@@ -66,8 +66,8 @@ def test_market_model_recovers_alpha_and_beta() -> None:
     y = 0.0002 + 1.3 * x + rng.normal(0, 0.002, n)
     day0 = 300
     y[day0] += 0.05  # an obvious abnormal return on the event day
-    car, value, alpha, beta = compute_stat(y, x, day0, 0, "factor_only", "abnormal_return")
-    assert beta == pytest.approx(1.3, abs=0.1)
+    car, value, alpha, betas = compute_stat(y, x, day0, 0, "factor_only", "abnormal_return")
+    assert betas[0] == pytest.approx(1.3, abs=0.1)
     assert alpha == pytest.approx(0.0002, abs=0.001)
     assert car == pytest.approx(0.05, abs=0.01)
     assert value == car
@@ -81,8 +81,8 @@ def test_estimation_window_excludes_the_event_period() -> None:
     y = 1.0 * x + rng.normal(0, 0.002, n)
     day0 = 300
     y[day0 - 5] += 0.5
-    _, _, _, beta = compute_stat(y, x, day0, 0, "factor_only", "abnormal_return")
-    assert beta == pytest.approx(1.0, abs=0.1)
+    _, _, _, betas = compute_stat(y, x, day0, 0, "factor_only", "abnormal_return")
+    assert betas[0] == pytest.approx(1.0, abs=0.1)
 
 
 def test_fdr_adjust_is_monotone_and_never_smaller() -> None:

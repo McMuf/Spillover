@@ -57,3 +57,21 @@ test("the labeling page with headlines has no WCAG A/AA violations", async ({ pa
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 });
+
+
+test("with nothing to label yet, the page says so instead of showing an empty space", async ({ page }) => {
+  await page.unroute("**/data/site.json");
+  await page.route("**/data/site.json", async (route) => {
+    const res = await route.fetch();
+    const site = (await res.json()) as { labeling: { candidates: unknown[] } };
+    site.labeling.candidates = [];
+    await route.fulfill({ response: res, json: site });
+  });
+  await page.goto("/#/label");
+  const msg = page.getByText("No headlines to label right now.", { exact: false });
+  await expect(msg).toBeVisible();
+  // Nothing may sit on top of it.
+  const box = await msg.boundingBox();
+  const send = await page.getByRole("heading", { name: "Add your labels to the project" }).boundingBox();
+  expect(box && send && box.y + box.height <= send.y).toBe(true);
+});

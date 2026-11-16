@@ -13,6 +13,13 @@ on:
   # do not trigger workflows, so without this the site would not show them.
   schedule:
     - cron: "15 23 * * 1-5"
+  # Rebuild as soon as an ingest run finishes, so new headlines, predictions and proofs show up
+  # without waiting for the evening rebuild. ingest only ever runs on main (schedule or manual),
+  # never on pull requests, so this never builds untrusted code.
+  workflow_run:
+    workflows: [ingest]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -18,6 +18,7 @@ def load(path: Path) -> dict[str, Any]:
 
 
 SECRET = re.compile(r"\$\{\{\s*secrets\.")  # an actual expression, not the word in a comment
+OWN_SECRET = re.compile(r"\$\{\{\s*secrets\.(?!GITHUB_TOKEN\b)")
 
 
 def on_block(path: Path) -> dict[str, Any]:
@@ -183,3 +184,20 @@ def test_new_predictions_are_submitted_for_timestamping_in_the_same_run() -> Non
     commit_at = next(i for i, n in enumerate(names) if n.startswith("Commit"))
     assert predict_at < stamp_at < commit_at
     assert upgrade_at < commit_at, "completed proofs must be in the same commit"
+
+
+def test_a_secret_holding_workflow_is_only_chained_after_workflows_no_pull_request_can_start() -> (
+    None
+):
+    """workflow_run inherits trust from the run that triggered it; never let a PR be that run."""
+    by_name = {load(p).get("name"): load(p) for p in WORKFLOWS}
+    for path in WORKFLOWS:
+        wf = load(path)
+        # Our own keys (FRED, Anthropic...). GitHub's built-in GITHUB_TOKEN is excluded: the comment
+        # bot uses it after `check` by design and is covered by its own never-run-PR-code test.
+        if "workflow_run" not in wf["_triggers"] or not OWN_SECRET.search(path.read_text()):
+            continue
+        for upstream in on_block(path)["workflow_run"]["workflows"]:
+            assert not (by_name[upstream]["_triggers"] & {"pull_request", "pull_request_target"}), (
+                f"{path.name} holds secrets and runs after {upstream}, which a pull request can start"
+            )

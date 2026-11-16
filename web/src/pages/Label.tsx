@@ -157,7 +157,7 @@ function LabelBody({ site }: { site: SiteData }) {
         </ol>
       )}
 
-      <section aria-labelledby="send-h" className={`${PANEL} lg:sticky lg:bottom-4`}>
+      <section aria-labelledby="send-h" className={PANEL}>
         <h2 id="send-h" className="text-lg font-bold">
           Add your labels to the project
         </h2>

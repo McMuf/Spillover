@@ -179,5 +179,7 @@ def test_new_predictions_are_submitted_for_timestamping_in_the_same_run() -> Non
     runs = [st.get("run", "") for _, st in steps(wf)]
     predict_at = next(i for i, r in enumerate(runs) if "spillover predict" in r)
     stamp_at = next(i for i, r in enumerate(runs) if "spillover stamp" in r)
+    upgrade_at = next(i for i, r in enumerate(runs) if "spillover upgrade" in r)
     commit_at = next(i for i, n in enumerate(names) if n.startswith("Commit"))
     assert predict_at < stamp_at < commit_at
+    assert upgrade_at < commit_at, "completed proofs must be in the same commit"

@@ -87,6 +87,14 @@ jobs:
         continue-on-error: true
         run: uv run --group ots spillover stamp
 
+      # Complete earlier proofs once Bitcoin has confirmed them (a few hours after submission), so
+      # proofs finish even when GitHub skips the scheduled stamp runs. Also soft: a calendar being
+      # slow only means "still pending", never a broken ledger.
+      - name: Complete pending timestamp proofs
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        continue-on-error: true
+        run: uv run --group ots spillover upgrade
+
       - name: Commit new events and predictions
         if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.placebo.outcome == 'success' }}
         run: |

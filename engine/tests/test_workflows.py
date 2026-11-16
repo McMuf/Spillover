@@ -171,3 +171,13 @@ def test_the_site_falls_back_to_synthetic_data_when_ingest_is_off() -> None:
     assert "fixtures/synthetic" in export["env"]["SPILLOVER_DATA"]
     cache = next(st for st in wf["jobs"]["build"]["steps"] if st.get("id") == "cache")
     assert "vars.INGEST_ENABLED == 'true'" in cache["if"]
+
+
+def test_new_predictions_are_submitted_for_timestamping_in_the_same_run() -> None:
+    wf = load(ROOT / ".github" / "workflows" / "ingest.yml")
+    names = [st.get("name", "") for _, st in steps(wf)]
+    runs = [st.get("run", "") for _, st in steps(wf)]
+    predict_at = next(i for i, r in enumerate(runs) if "spillover predict" in r)
+    stamp_at = next(i for i, r in enumerate(runs) if "spillover stamp" in r)
+    commit_at = next(i for i, n in enumerate(names) if n.startswith("Commit"))
+    assert predict_at < stamp_at < commit_at

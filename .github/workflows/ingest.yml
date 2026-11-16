@@ -39,8 +39,8 @@ jobs:
           python-version: "3.12"
           enable-cache: true
 
-      - name: Install (with the Claude SDK)
-        run: uv sync --group llm
+      - name: Install (with the Claude SDK and the OpenTimestamps client)
+        run: uv sync --group llm --group ots
 
       # Never build on a ledger that has been tampered with.
       - name: Verify the ledger
@@ -74,8 +74,18 @@ jobs:
         run: uv run spillover ingest --config data/sources.ci.toml
 
       - name: Freeze predictions for forward events
+        id: predict
         if: ${{ !cancelled() && steps.prices.outcome == 'success' }}
         run: uv run spillover predict --data data/cache
+
+      # Ask the OpenTimestamps calendars for a proof right away instead of waiting for the next
+      # scheduled stamp run (GitHub does not guarantee scheduled runs happen on time). A calendar
+      # outage must not stop the predictions from being committed, so this step may fail softly;
+      # stamp.yml retries anything left unstamped and later completes the Bitcoin proofs.
+      - name: Submit new predictions for timestamping
+        if: ${{ !cancelled() && steps.prices.outcome == 'success' && steps.predict.outcome == 'success' }}
+        continue-on-error: true
+        run: uv run --group ots spillover stamp
 
       - name: Commit new events and predictions
         if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.placebo.outcome == 'success' }}

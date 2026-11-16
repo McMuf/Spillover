@@ -18,9 +18,10 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
     await expect(legend.getByText(tag, { exact: true })).toBeVisible();
   }
 
-  await page.getByRole("link", { name: /On FOMC decision days/ }).first().click();
+  await page.getByRole("link", { name: /Fed rate decisions make the S&P 500 swing/ }).first().click();
   await expect(page).toHaveURL(/#\/claims\/clm_fomc_abs_move_spx_v1$/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("FOMC");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("S&P 500");
+  await expect(page.getByText(/On FOMC decision days, the S&P 500/).first()).toBeVisible();
   await expect(page.getByTestId("node-legend")).toBeVisible();
   await expect(page.getByTestId("graph-canvas")).toBeVisible();
 
@@ -31,7 +32,7 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
   await expect(page.getByRole("table", { name: /Mean abnormal path/ })).toBeVisible();
 
   // Challenge tab: structured lanes, with pull-request links pre-filled from the templates.
-  await page.getByRole("tab", { name: /Both sides/ }).click();
+  await page.getByRole("tab", { name: /Opposite sides/ }).click();
   await expect(page.getByRole("heading", { name: /Challenges \(0\)/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: /Replications \(0\)/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Propose a replication (pull request)" })).toHaveAttribute(

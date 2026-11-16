@@ -5,7 +5,7 @@ import type { CalibrationBin, ForwardRow } from "../generated/site";
 import { STATUSES } from "../lib/format";
 import { makeClaim, makeSite } from "../test-utils";
 import { CalibrationPlot } from "./CalibrationPlot";
-import { ClaimCard } from "./ClaimCard";
+import { TrendingCard } from "./TrendingCard";
 import { dayToTime, timeToDay } from "./EventWindowChart";
 import { EvidenceMeter } from "./EvidenceMeter";
 import { ForwardLogTable } from "./ForwardLogTable";
@@ -118,21 +118,27 @@ describe("CalibrationPlot", () => {
   });
 });
 
-describe("ClaimCard", () => {
-  it("leads with the statement, two key numbers, status and a neutral backtest pill", () => {
+describe("TrendingCard", () => {
+  it("leads with a plain headline, the plain-English test, the ticker and status", () => {
     const item = makeClaim();
     render(
       <MemoryRouter>
-        <ClaimCard item={item} site={makeSite([item])} />
+        <TrendingCard item={item} />
       </MemoryRouter>,
     );
     expect(screen.getByText("Draft")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /After a headline/ })).toHaveAttribute("href", "/claims/clm_demo_v1");
+    expect(screen.getByRole("link", { name: /ABC lags the market/ })).toHaveAttribute("href", "/claims/clm_demo_v1");
+    expect(screen.getByText(/we check whether ABC falls/)).toBeInTheDocument();
     expect(screen.getAllByText("ABC").length).toBeGreaterThan(0);
-    expect(screen.getByText(/^0 of \d+$/)).toBeInTheDocument();
-    // A backtest is not an outcome, so its pill never takes the green or red reserved for outcomes.
-    const pill = screen.getByTestId("backtest-pill");
-    expect(pill.className).not.toMatch(/positive|negative/);
+  });
+
+  it("uses no gradients or colored tints: one accent, flat surfaces", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <TrendingCard item={makeClaim()} />
+      </MemoryRouter>,
+    );
+    expect(container.innerHTML).not.toMatch(/gradient|color-mix|positive|negative/);
   });
 });
 

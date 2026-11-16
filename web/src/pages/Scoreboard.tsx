@@ -26,7 +26,7 @@ function Board({ site }: { site: SiteData }) {
             <Link className="underline" to="/">claims page</Link> with backtest-only results.
           </p>
         ) : (
-          <div tabIndex={0} role="region" aria-label="Scoreboard by claim (scrollable)" className="overflow-x-auto rounded-xl border border-line">
+          <div tabIndex={0} role="region" aria-label="Scoreboard by claim (scrollable)" className="overflow-x-auto rounded-2xl bg-surface">
             <table className="w-full min-w-[34rem] text-left text-sm">
               <caption className="sr-only">Scoreboard by claim</caption>
               <thead className="bg-surface-alt text-xs text-muted">

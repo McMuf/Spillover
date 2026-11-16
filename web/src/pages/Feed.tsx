@@ -1,43 +1,64 @@
-import { useMemo } from "react";
-import { EventItem } from "../components/EventItem";
+import { useMemo, useState, type CSSProperties } from "react";
+import { FeedItem } from "../components/FeedItem";
 import { Ready } from "../components/Ready";
-import { Tag } from "../components/ui";
-import type { SiteData } from "../generated/site";
+import { Segmented } from "../components/ui";
+import type { SiteData, SiteEvent } from "../generated/site";
 import { categoryOf } from "../lib/plain";
+
+const latest = (a: SiteEvent, b: SiteEvent) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id);
+const trending = (a: SiteEvent, b: SiteEvent) => b.claims.filter((c) => c.effective).length - a.claims.filter((c) => c.effective).length || latest(a, b);
+
+function Column({ topic, events, site }: { topic: string; events: SiteEvent[]; site: SiteData }) {
+  const [mode, setMode] = useState<"trending" | "latest">("latest");
+  const items = useMemo(() => [...events].sort(mode === "latest" ? latest : trending).slice(0, 12), [events, mode]);
+  return (
+    <section aria-label={topic} className="min-w-0 py-2 lg:px-6 lg:first:pl-0 lg:last:pr-0">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="text-[15px] font-bold">
+          {topic} <span className="font-normal text-muted">{events.length}</span>
+        </h2>
+        <Segmented
+          label={`Order of ${topic}`}
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: "trending", label: "Trending" },
+            { value: "latest", label: "Latest" },
+          ]}
+        />
+      </div>
+      <ul>
+        {items.map((e) => (
+          <FeedItem key={e.event_id} event={e} site={site} />
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function Feed({ site }: { site: SiteData }) {
   const columns = useMemo(() => {
-    const sorted = [...site.events].sort((a, b) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id));
-    const by = new Map<string, { cat: ReturnType<typeof categoryOf>; items: typeof sorted }>();
-    for (const e of sorted) {
-      const cat = categoryOf(e.event_type);
-      const col = by.get(cat.name) ?? { cat, items: [] };
-      col.items.push(e);
-      by.set(cat.name, col);
+    const by = new Map<string, SiteEvent[]>();
+    for (const e of site.events) {
+      const t = categoryOf(e.event_type);
+      by.set(t, [...(by.get(t) ?? []), e]);
     }
-    return [...by.values()].sort((a, b) => b.items.length - a.items.length);
+    // News topics first; the placebo control days go last.
+    return [...by.entries()].sort((a, b) => Number(a[0] === "Control test") - Number(b[0] === "Control test") || b[1].length - a[1].length);
   }, [site]);
 
   return (
     <>
-      <h1 className="mb-1 text-3xl font-extrabold">Feed</h1>
-      <p className="mb-6 max-w-2xl text-sm text-muted">
-        Dated, sourced events the claims are tested on, grouped by topic and newest first. Each one lists the markets it touches.
+      <h1 className="mb-1 text-3xl font-extrabold tracking-tight">Feed</h1>
+      <p className="mb-8 max-w-2xl text-[15px] text-muted">
+        Dated, sourced events the claims are tested on, grouped by topic. Each one links to the markets it touches.
       </p>
-      <div className="grid gap-4 lg:grid-cols-3">
-        {columns.map(({ cat, items }) => (
-          <section key={cat.name} aria-label={cat.name} className="rounded-xl border border-line bg-surface p-4">
-            <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
-              {cat.name}
-              <Tag hue={cat.hue}>{items.length}</Tag>
-            </h2>
-            <ul>
-              {items.slice(0, 12).map((e) => (
-                <EventItem key={e.event_id} event={e} site={site} />
-              ))}
-            </ul>
-            {items.length > 12 && <p className="mt-2 text-xs text-muted">Showing the latest 12 of {items.length}.</p>}
-          </section>
+      <div
+        style={{ "--cols": Math.max(columns.length, 1) } as CSSProperties}
+        className="grid gap-8 lg:grid-cols-[repeat(var(--cols),minmax(0,1fr))] lg:gap-0 lg:divide-x lg:divide-line"
+      >
+        {columns.map(([topic, events]) => (
+          <Column key={topic} topic={topic} events={events} site={site} />
         ))}
         {columns.length === 0 && <p className="text-muted">No events yet.</p>}
       </div>

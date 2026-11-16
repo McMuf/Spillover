@@ -1,117 +1,175 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ClaimCard } from "../components/ClaimCard";
-import { EventItem } from "../components/EventItem";
+import { EventCard } from "../components/EventCard";
+import { FeedItem } from "../components/FeedItem";
 import { HowItWorks } from "../components/HowItWorks";
-import { Icon, type IconName } from "../components/Icon";
+import { Icon } from "../components/Icon";
 import { NodeLegend } from "../components/NodeLegend";
 import { Ready } from "../components/Ready";
 import { TrendingCard } from "../components/TrendingCard";
-import { PillButton, SectionHead, Stamp, tint } from "../components/ui";
-import type { CategoryHue } from "../design/tokens";
-import type { SiteData } from "../generated/site";
-import { byTrending } from "../lib/plain";
+import { IconButton, SectionHead, Segmented } from "../components/ui";
+import type { SiteData, SiteEvent } from "../generated/site";
+import { byTrending, categoryOf } from "../lib/plain";
 
-const TOP = 3;
+/** Horizontal carousel with arrow buttons that switch off at either end. */
+function useCarousel() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ prev: false, next: false });
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setEdges({ prev: el.scrollLeft > 4, next: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    el.addEventListener("scroll", update, { passive: true });
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", update);
+    };
+  }, [update]);
+  const go = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth, behavior: "smooth" });
+  return { ref, edges, go };
+}
 
-function Stat({ icon, hue, label, value }: { icon: IconName; hue: CategoryHue; label: string; value: string }) {
+
+function Trending({ site }: { site: SiteData }) {
+  const ranked = useMemo(() => byTrending(site.claims), [site]);
+  const { ref, edges, go } = useCarousel();
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-4">
-      <span style={tint(hue, 16)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border" aria-hidden="true">
-        <Icon name={icon} size={20} />
-      </span>
-      <div>
-        <p className="text-xl font-extrabold leading-none">{value}</p>
-        <p className="mt-1 text-xs text-muted">{label}</p>
+    <section aria-labelledby="trending-h">
+      <SectionHead
+        id="trending-h"
+        title="Trending claims"
+        right={
+          (edges.prev || edges.next) && (
+            <div className="flex gap-2">
+              <IconButton icon="back" label="Previous claims" onClick={() => go(-1)} disabled={!edges.prev} />
+              <IconButton icon="chevronRight" label="More claims" onClick={() => go(1)} disabled={!edges.next} />
+            </div>
+          )
+        }
+      />
+      <div ref={ref} className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 md:mx-0 md:scroll-px-0 md:px-0">
+        {ranked.map((c) => (
+          <div key={c.claim.id} className="w-[85%] shrink-0 snap-start sm:w-[calc(50%-8px)] lg:w-[calc((100%-32px)/3)]">
+            <TrendingCard item={c} />
+          </div>
+        ))}
+        {ranked.length === 0 && <p className="text-muted">No claims yet. Be the first to submit one.</p>}
       </div>
-    </div>
+    </section>
   );
 }
 
-function EventsRail({ site }: { site: SiteData }) {
-  const [mode, setMode] = useState<"latest" | "scheduled">("latest");
-  const events = useMemo(() => {
-    const all = [...site.events].sort((a, b) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id));
-    return (mode === "scheduled" ? all.filter((e) => e.scheduled) : all).slice(0, 8);
-  }, [site, mode]);
+function Recent({ site }: { site: SiteData }) {
+  // Control days are bookkeeping for the placebo, not news, so they stay out of this row.
+  const events = useMemo(
+    () => [...site.events].filter((e) => e.event_type !== "RANDOM_DATE").sort((a, b) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id)).slice(0, 9),
+    [site],
+  );
+  const { ref, edges, go } = useCarousel();
+  if (events.length === 0) return null;
   return (
-    <section aria-labelledby="rail-h" className="rounded-xl border border-line bg-surface p-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 id="rail-h" className="text-lg font-bold">
-          Events
-        </h2>
-        <div role="group" aria-label="Events shown" className="flex gap-1.5">
-          <PillButton active={mode === "latest"} onClick={() => setMode("latest")}>Latest</PillButton>
-          <PillButton active={mode === "scheduled"} onClick={() => setMode("scheduled")}>Scheduled</PillButton>
-        </div>
+    <section aria-labelledby="recent-h">
+      <SectionHead
+        id="recent-h"
+        title="Recent events"
+        right={
+          (edges.prev || edges.next) && (
+            <div className="flex gap-2">
+              <IconButton icon="back" label="Earlier events" onClick={() => go(-1)} disabled={!edges.prev} />
+              <IconButton icon="chevronRight" label="More events" onClick={() => go(1)} disabled={!edges.next} />
+            </div>
+          )
+        }
+      />
+      <div ref={ref} className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 md:mx-0 md:scroll-px-0 md:px-0">
+        {events.map((e) => (
+          <div key={e.event_id} className="w-[85%] shrink-0 snap-start sm:w-[calc(50%-8px)] lg:w-[calc((100%-32px)/3)]">
+            <EventCard event={e} site={site} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Rail({ site }: { site: SiteData }) {
+  const [topic, setTopic] = useState("All");
+  const [mode, setMode] = useState<"trending" | "latest">("trending");
+  const topics = useMemo(() => ["All", ...new Set(site.events.map((e) => categoryOf(e.event_type)))], [site]);
+  const items = useMemo(() => {
+    // "All" means news: control days only appear when their own topic is picked.
+    const pool = site.events.filter((e) => (topic === "All" ? e.event_type !== "RANDOM_DATE" : categoryOf(e.event_type) === topic));
+    const latest = (a: SiteEvent, b: SiteEvent) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id);
+    // "Trending" here means the events that feed the most claims, newest first among equals.
+    const trending = (a: SiteEvent, b: SiteEvent) => b.claims.filter((c) => c.effective).length - a.claims.filter((c) => c.effective).length || latest(a, b);
+    return [...pool].sort(mode === "latest" ? latest : trending).slice(0, 8);
+  }, [site, topic, mode]);
+  return (
+    <section aria-labelledby="feed-h">
+      <h2 id="feed-h" className="sr-only">Feed</h2>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <label className="relative">
+          <span className="sr-only">Topic</span>
+          <select
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="appearance-none bg-transparent pr-6 text-[15px] font-bold text-fg"
+          >
+            {topics.map((t) => (
+              <option key={t} value={t} className="bg-surface">
+                {t}
+              </option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-muted">
+            <Icon name="chevronDown" size={16} />
+          </span>
+        </label>
+        <Segmented
+          label="Order"
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: "trending", label: "Trending" },
+            { value: "latest", label: "Latest" },
+          ]}
+        />
       </div>
       <ul>
-        {events.map((e) => (
-          <EventItem key={e.event_id} event={e} site={site} />
+        {items.map((e) => (
+          <FeedItem key={e.event_id} event={e} site={site} />
         ))}
-        {events.length === 0 && <li className="py-4 text-sm text-muted">No events yet.</li>}
+        {items.length === 0 && <li className="text-sm text-muted">No events yet.</li>}
       </ul>
-      <Link to="/feed" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
-        See the full feed <Icon name="chevronRight" size={14} />
+      <Link to="/feed" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
+        Open the full feed <Icon name="chevronRight" size={14} />
       </Link>
     </section>
   );
 }
 
 function HomeBody({ site }: { site: SiteData }) {
-  const ranked = useMemo(() => byTrending(site.claims), [site]);
-  const top = ranked.slice(0, TOP);
-  const rest = ranked.slice(TOP);
-  const eventsTested = site.claims.reduce((n, c) => n + (c.backtest?.n_effective ?? 0), 0);
-  const forward = site.scoreboard.claims.reduce((n, r) => n + r.effective_events, 0);
-
   return (
     <>
-      <h1 className="mb-6 max-w-4xl text-3xl font-extrabold leading-[1.1] md:text-5xl">
+      <h1 className="mb-8 max-w-3xl text-3xl font-extrabold leading-[1.1] tracking-tight md:text-[44px]">
         Does news really move markets? Spillover tests it in public.
       </h1>
-
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-10">
-          <section aria-labelledby="trending-h">
-            <SectionHead
-              id="trending-h"
-              title="Trending claims"
-              note="Claims with the most evidence behind them so far, with the markets each one is about."
-              right={<Stamp>As of {site.meta.data_as_of}</Stamp>}
-            />
-            <div className="grid gap-4 md:grid-cols-3">
-              {top.map((c) => (
-                <TrendingCard key={c.claim.id} item={c} />
-              ))}
-              {top.length === 0 && <p className="text-muted">No claims yet. Be the first to submit one.</p>}
-            </div>
-          </section>
-
-          <section aria-label="Scoreboard at a glance" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat icon="layers" hue="catBlue" label="claims on the ledger" value={String(site.claims.length)} />
-            <Stat icon="calendar" hue="catPurple" label="past events tested" value={String(eventsTested)} />
-            <Stat icon="lock" hue="catOrange" label="forward events collected" value={String(forward)} />
-            <Stat icon="shield" hue="catCyan" label="placebo check" value={site.scoreboard.placebo.alert ? "Alert" : "Clean"} />
-          </section>
-
-          {rest.length > 0 && (
-            <section aria-labelledby="more-h">
-              <SectionHead id="more-h" title="More claims" right={<Link to="/explore" className="text-sm font-semibold text-accent hover:underline">Explore all</Link>} />
-              <div className="grid gap-4 md:grid-cols-2">
-                {rest.map((c) => (
-                  <ClaimCard key={c.claim.id} item={c} site={site} />
-                ))}
-              </div>
-            </section>
-          )}
-
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0 space-y-12">
+          <Trending site={site} />
+          <Recent site={site} />
           <HowItWorks />
           <NodeLegend />
         </div>
-
-        <aside aria-label="Events" className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-          <EventsRail site={site} />
+        <aside aria-label="Feed" className="min-w-0 border-line xl:sticky xl:top-20 xl:self-start xl:border-l xl:pl-6">
+          <Rail site={site} />
         </aside>
       </div>
     </>

@@ -103,7 +103,7 @@ export default function GraphView({ model, label }: { model: GraphModel; label: 
           ref={ref}
           role="img"
           aria-label={`${label}. A list of the same nodes follows for keyboard and screen reader use.`}
-          className="h-[460px] w-full rounded-xl border border-line bg-surface"
+          className="h-[460px] w-full rounded-2xl bg-surface"
           data-testid="graph-canvas"
         />
       )}
@@ -114,7 +114,7 @@ export default function GraphView({ model, label }: { model: GraphModel; label: 
             <button
               type="button"
               onClick={() => setSelected(n)}
-              className="flex w-full items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-left text-sm hover:bg-surface-alt"
+              className="flex w-full items-center gap-2 rounded-2xl bg-surface px-3 py-2 text-left text-sm hover:bg-surface-alt"
             >
               <NodeShape type={n.type} size={18} />
               <span className="font-mono text-xs text-muted">{NODE_BY_KEY[n.type].tag}</span>
@@ -127,7 +127,7 @@ export default function GraphView({ model, label }: { model: GraphModel; label: 
       <Dialog.Root open={selected !== null} onOpenChange={(o) => !o && setSelected(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
-          <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[14px] border border-line bg-surface p-5 text-fg shadow-lg sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-96 sm:rounded-none sm:rounded-l-[14px]">
+          <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-surface p-5 text-fg shadow-lg sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-96 sm:rounded-none sm:rounded-l-[14px]">
             {selected && (
               <>
                 <Dialog.Title className="mb-1 flex items-center gap-2 text-lg font-semibold">

@@ -12,7 +12,7 @@ export function ForwardLogTable({ rows }: { rows: ForwardRow[] }) {
     );
   }
   return (
-    <div tabIndex={0} role="region" aria-label="Frozen forward predictions (scrollable)" className="overflow-x-auto rounded-xl border border-line">
+    <div tabIndex={0} role="region" aria-label="Frozen forward predictions (scrollable)" className="overflow-x-auto rounded-2xl bg-surface">
       <table className="w-full min-w-[34rem] text-left text-sm">
         <caption className="sr-only">Frozen forward predictions</caption>
         <thead className="bg-surface-alt text-xs text-muted">

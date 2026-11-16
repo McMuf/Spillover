@@ -4,7 +4,7 @@ import { NodeShape } from "./NodeShape";
 /** Always-visible legend. If a shape could mean two things, the design is wrong. */
 export function NodeLegend({ compact = false }: { compact?: boolean }) {
   return (
-    <section aria-label="Node legend" data-testid="node-legend" className="rounded-xl border border-line bg-surface p-4">
+    <section aria-label="Node legend" data-testid="node-legend" className="rounded-2xl bg-surface p-4">
       <h2 className="mb-3 text-sm font-semibold">Node legend</h2>
       <dl className={compact ? "grid gap-2 sm:grid-cols-2" : "grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
         {NODE_TYPES.map((t) => (

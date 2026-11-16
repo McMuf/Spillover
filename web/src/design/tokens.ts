@@ -11,15 +11,18 @@ export type ThemeName = "dark";
 export interface ColorTokens {
   /** Page background. */
   bg: string;
+  /** Cards and panels. */
   surface: string;
+  /** Inputs, chips and raised areas inside a card. */
   surfaceAlt: string;
+  /** Hairline dividers. */
   line: string;
   fg: string;
   muted: string;
-  /** Links, progress, chart lines. */
+  /** The single accent: active tab, highlighted names, links, chart lines, the active filter. */
   accent: string;
   onAccent: string;
-  /** Filled pill buttons and the active filter. */
+  /** Main call-to-action buttons. */
   primary: string;
   onPrimary: string;
   /** Realized, favorable outcome only. */
@@ -28,47 +31,32 @@ export interface ColorTokens {
   negative: string;
   noticeBg: string;
   noticeFg: string;
-  /** Decorative category hues for chips, tags and card art. They never mean good or bad. */
-  catBlue: string;
-  catPurple: string;
-  catOrange: string;
-  catCyan: string;
-  catPink: string;
-  catYellow: string;
 }
 
 /**
- * Palette after TradingView's dark theme (blue #2962FF, slate surfaces, soft grays) on a black page.
+ * Black page, flat near-black surfaces, one lavender-blue accent. Hierarchy comes from type and
+ * spacing, not from color, gradients or outlines.
  */
 export const color: Record<ThemeName, ColorTokens> = {
   dark: {
     bg: "#000000",
-    surface: "#131722",
-    surfaceAlt: "#1e222d",
-    line: "#2a2e39",
-    fg: "#e0e3eb",
-    muted: "#9598a1",
-    accent: "#7aa2ff",
-    onAccent: "#0b0e14",
-    primary: "#2962ff",
-    onPrimary: "#ffffff",
-    positive: "#2ebd85",
-    negative: "#f7525f",
-    noticeBg: "#2a2410",
-    noticeFg: "#f0d58a",
-    catBlue: "#5c8dff",
-    catPurple: "#b388ff",
-    catOrange: "#ffa94d",
-    catCyan: "#4dd0e1",
-    catPink: "#ff7aa8",
-    catYellow: "#ffd54f",
+    surface: "#111111",
+    surfaceAlt: "#1b1b1b",
+    line: "#262626",
+    fg: "#f5f5f5",
+    muted: "#8e8e8e",
+    accent: "#9aabff",
+    onAccent: "#0a0a0a",
+    primary: "#f5f5f5",
+    onPrimary: "#0a0a0a",
+    positive: "#3ecf8e",
+    negative: "#ff6b4a",
+    noticeBg: "#111111",
+    noticeFg: "#c9c9c9",
   },
 };
 
-export const CATEGORY_HUES = ["catBlue", "catPurple", "catOrange", "catCyan", "catPink", "catYellow"] as const;
-export type CategoryHue = (typeof CATEGORY_HUES)[number];
-
-export const radius = { card: "12px", pill: "999px" };
+export const radius = { card: "16px", pill: "999px" };
 export const font = {
   sans: '"Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
@@ -92,7 +80,6 @@ export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTo
   ["positive", "surfaceAlt"],
   ["negative", "surfaceAlt"],
   ["noticeFg", "noticeBg"],
-  ...CATEGORY_HUES.flatMap((h) => [[h, "surface"] as const, [h, "surfaceAlt"] as const]),
 ];
 
 /** WCAG relative luminance and contrast ratio for #rrggbb colors. */

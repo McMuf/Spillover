@@ -215,6 +215,27 @@ def test_unusable_responses_become_extraction_errors(response: Any, needle: str)
         AnthropicLlm(FakeAnthropic(response)).complete("s", "u")
 
 
+class FakeApiError(Exception):
+    """Shaped like the SDK's status errors: the server's JSON error is on ``body``."""
+
+    def __init__(self, kind: str, message: str) -> None:
+        super().__init__("raw text that must not be shown sk-ant-SECRET")
+        self.body = {"type": "error", "error": {"type": kind, "message": message}}
+
+
+def test_the_apis_own_reason_is_shown_with_anything_key_shaped_removed() -> None:
+    boom = FakeApiError(
+        "invalid_request_error",
+        "Your credit balance is too low. key sk-ant-api03-AAAA_bbbb-cccc " + "x" * 300,
+    )
+    with pytest.raises(ExtractionError) as err:
+        AnthropicLlm(FakeAnthropic(error=boom)).complete("s", "u")
+    text = str(err.value)
+    assert "[FakeApiError] invalid_request_error: Your credit balance is too low" in text
+    assert "sk-ant" not in text and "raw text" not in text and "AAAA" not in text
+    assert len(text) < 300
+
+
 def test_api_failures_are_named_but_never_echoed() -> None:
     boom = RuntimeError("401 invalid key sk-ant-SECRET")
     with pytest.raises(ExtractionError) as err:

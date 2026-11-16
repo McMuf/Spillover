@@ -169,7 +169,9 @@ class AnthropicLlm:
         except ExtractionError:
             raise
         except Exception as exc:  # network, rate limit, auth: name the type, never echo the message
-            raise ExtractionError(f"model call failed ({type(exc).__name__})") from None
+            raise ExtractionError(
+                f"model call failed [{type(exc).__name__}]{api_error_detail(exc)}"
+            ) from None
 
     def _complete(self, system: str, user: str) -> str:
         response = self._client.messages.create(
@@ -192,6 +194,26 @@ class AnthropicLlm:
             if block.type == "text":
                 return str(block.text)
         raise ExtractionError("the model returned no text")
+
+
+# Anything shaped like a key or token is removed before an error reason is shown.
+_KEYLIKE = re.compile(r"sk-ant-[A-Za-z0-9_\-]+|[A-Za-z0-9_\-]{32,}")
+
+
+def api_error_detail(exc: BaseException) -> str:
+    """The API's own reason for rejecting a request, e.g. ' invalid_request_error: <message>'.
+
+    Only structured API errors qualify (the SDK puts the server's JSON error in ``exc.body``);
+    any other exception yields "" so its text is never shown. The server's message describes the
+    request, not the key, but key-shaped strings are still scrubbed and the text is capped.
+    """
+    body = getattr(exc, "body", None)
+    err = body.get("error") if isinstance(body, dict) else None
+    if not isinstance(err, dict):
+        return ""
+    kind = re.sub(r"[^a-z_]", "", str(err.get("type", "")))[:40]
+    message = _KEYLIKE.sub("[redacted]", " ".join(str(err.get("message", "")).split()))[:200]
+    return f" {kind}: {message}" if kind or message else ""
 
 
 @dataclass(frozen=True)

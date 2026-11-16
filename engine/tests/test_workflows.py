@@ -137,3 +137,17 @@ def test_no_ingest_step_runs_on_a_ledger_that_failed_verification() -> None:
             )
     prices = next(st for st in named if st.get("id") == "prices")
     assert "steps.verify.outcome == 'success'" in prices["if"]
+
+
+def test_the_paid_headline_step_has_its_own_switch_and_is_the_only_one_with_the_claude_key() -> (
+    None
+):
+    """Free parts (calendar, placebo, prices, predictions) must run without any paid credit."""
+    wf = load(ROOT / ".github" / "workflows" / "ingest.yml")
+    for _, st in steps(wf):
+        uses_claude = "ANTHROPIC_API_KEY" in str(st.get("env", {}))
+        if "ingest-headlines" in st.get("run", ""):
+            assert uses_claude
+            assert "vars.EXTRACT_HEADLINES == 'true'" in str(st.get("if", ""))
+        else:
+            assert not uses_claude, st.get("name")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -611,9 +612,9 @@ def headline_run_problem(summary: HeadlineSummary) -> str | None:
             "ANTHROPIC_API_KEY is not set for this step. Check the repository secret's exact name."
         )
     if summary.extraction_errors and summary.live_calls == 0:
-        kinds = sorted(
-            {e.rsplit("(", 1)[-1].rstrip(")") for e in summary.extraction_errors if "(" in e}
-        )
+        kinds = sorted({k for e in summary.extraction_errors for k in re.findall(r"\[(\w+)\]", e)})
+        # One example of the API's own reason (all calls usually fail the same way).
+        reasons = [e.split("] ", 1)[1] for e in summary.extraction_errors if "] " in e]
         hint = ""
         if "AuthenticationError" in kinds or "PermissionDeniedError" in kinds:
             hint = " The API key was rejected: create a new key and update the secret."
@@ -623,9 +624,10 @@ def headline_run_problem(summary: HeadlineSummary) -> str | None:
             )
         elif "RateLimitError" in kinds:
             hint = " Rate limited: lower max_new_per_run or wait for the next run."
+        said = f" The API said: {reasons[0]}" if reasons else ""
         return (
             f"every model call failed ({len(summary.extraction_errors)} headline(s); "
-            f"{', '.join(kinds) or 'see above'}).{hint}"
+            f"{', '.join(kinds) or 'see above'}).{said}{hint}"
         )
     return None
 

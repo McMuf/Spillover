@@ -12,11 +12,15 @@ def test_missing_key_is_a_problem() -> None:
 
 
 def test_every_call_failing_names_the_error_type_and_a_likely_fix() -> None:
-    errors = [f"h{i}: model call failed (BadRequestError)" for i in range(3)]
+    errors = [
+        f"h{i}: model call failed [BadRequestError] invalid_request_error: credit balance too low"
+        for i in range(3)
+    ]
     msg = headline_run_problem(HeadlineSummary(feeds_ok=2, extraction_errors=errors))
     assert msg is not None and "BadRequestError" in msg and "billing" in msg
+    assert "The API said: invalid_request_error: credit balance too low" in msg
 
-    auth = ["h1: model call failed (AuthenticationError)"]
+    auth = ["h1: model call failed [AuthenticationError]"]
     msg = headline_run_problem(HeadlineSummary(feeds_ok=2, extraction_errors=auth))
     assert msg is not None and "rejected" in msg
 

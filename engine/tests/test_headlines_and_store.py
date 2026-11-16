@@ -417,7 +417,7 @@ def test_cli_ingest_headlines_with_a_model_writes_records(
 ) -> None:
     cfg_path = make_config(tmp_path)
     monkeypatch.setattr(cli_module, "http_get", fetcher(PAGES))
-    monkeypatch.setattr(cli_module, "_llm_from_env", lambda model: FakeLlm(GOOD))
+    monkeypatch.setattr(cli_module, "_llm_from_env", lambda *a, **k: FakeLlm(GOOD))
     result = runner.invoke(app, ["ingest-headlines", "--config", str(cfg_path)])
     assert result.exit_code == 0 and "new records written 3" in result.output, result.output
 
@@ -427,7 +427,7 @@ def test_cli_fails_when_no_feed_can_be_read(
 ) -> None:
     cfg_path = make_config(tmp_path)
     monkeypatch.setattr(cli_module, "http_get", fetcher({}))
-    monkeypatch.setattr(cli_module, "_llm_from_env", lambda model: None)
+    monkeypatch.setattr(cli_module, "_llm_from_env", lambda *a, **k: None)
     assert runner.invoke(app, ["ingest-headlines", "--config", str(cfg_path)]).exit_code == 1
 
 
@@ -460,7 +460,26 @@ def test_cli_gold_template_and_eval(tmp_path: Path) -> None:
             str(tmp_path / "c"),
             "--out",
             str(tmp_path / "acc.json"),
+            "--engine",
+            "claude",
         ],
         env={"ANTHROPIC_API_KEY": ""},
     )
+    # Claude without a key cannot answer, so the row is reported unscored, never guessed.
     assert e.exit_code == 0 and json.loads((tmp_path / "acc.json").read_text())["n_unscored"] == 1
+    free = runner.invoke(
+        app,
+        [
+            "eval-extractor",
+            "--gold",
+            str(gold),
+            "--cache",
+            str(tmp_path / "c2"),
+            "--out",
+            str(tmp_path / "acc2.json"),
+        ],
+    )
+    # The free rule-based labeler (the default) always answers, so every row is scored.
+    assert (
+        free.exit_code == 0 and json.loads((tmp_path / "acc2.json").read_text())["n_unscored"] == 0
+    )

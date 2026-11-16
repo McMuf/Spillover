@@ -78,6 +78,10 @@ class FeedSpec(_Strict):
 
 
 class ExtractorSettings(_Strict):
+    # "rules": the free, deterministic labeler (phrase rules + a company list). "claude": the
+    # Claude API (needs ANTHROPIC_API_KEY and credit). Both write the same validated answers.
+    engine: Literal["claude", "rules"] = "claude"
+    companies: Path = Path("labels/companies.json")  # rules: the company name/ticker snapshot
     model: str = "claude-haiku-5-5"
     store: Path = Path("events")
     cache: Path = Path("events/extractions")

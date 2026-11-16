@@ -10,6 +10,7 @@ from typing import Annotated
 
 import typer
 
+from spillover.company_names import fetch_companies, write_companies
 from spillover.data import DataError, load_market_data
 from spillover.eventstore import StoreError
 from spillover.eventstudy import (
@@ -52,6 +53,7 @@ from spillover.pr_bot import run as run_pr_bot
 from spillover.register import register_claims, stamp_challenges, stamp_replications
 from spillover.replicate import RESULTS_DIR, run_pending
 from spillover.report import format_report
+from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import ScoreError, grade_all, verify_outcomes
 from spillover.site_export import build_site_data, site_json_schema
@@ -545,9 +547,16 @@ def pr_comment(
         typer.echo(body)
 
 
-def _llm_from_env(model: str) -> Llm | None:
-    """A Claude client if ANTHROPIC_API_KEY is set, else None (cache-only mode)."""
+def _llm_from_env(model: str, engine: str = "claude", companies: Path | None = None) -> Llm | None:
+    """The configured labeler: the free rules, or a Claude client if ANTHROPIC_API_KEY is set
+    (else None, cache-only mode)."""
     import os
+
+    if engine == "rules":
+        path = companies or COMPANIES_FILE
+        if not path.exists():
+            raise _fail(f"{path} is missing; build it with `spillover company-names`")
+        return RulesExtractor.load(path)
 
     if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
         return None
@@ -576,7 +585,8 @@ def ingest_headlines(
         cfg = load_config(config)
         if not cfg.headlines:
             raise _fail(f"{config} lists no [[headlines]] feeds")
-        summary = run_headlines(cfg, http_get, _llm_from_env(cfg.extractor.model))
+        llm = _llm_from_env(cfg.extractor.model, cfg.extractor.engine, cfg.extractor.companies)
+        summary = run_headlines(cfg, http_get, llm)
     except (ConfigError, StoreError, FeedError, FetchError) as exc:
         raise _fail(redact(str(exc))) from exc
     typer.echo(
@@ -633,17 +643,40 @@ def headline_run_problem(summary: HeadlineSummary) -> str | None:
     return None
 
 
+@app.command("company-names")
+def company_names(
+    out: Annotated[Path, typer.Option(help="Where to write the snapshot.")] = COMPANIES_FILE,
+) -> None:
+    """Refresh the company name/ticker snapshot for the rule-based labeler (Wikidata, CC0)."""
+    try:
+        rows = fetch_companies(http_get)
+    except FetchError as exc:
+        raise _fail(redact(str(exc))) from exc
+    if len(rows) < 500:
+        raise _fail(f"only {len(rows)} companies came back; refusing to replace the snapshot")
+    write_companies(out, rows)
+    typer.echo(
+        f"wrote {out}: {len(rows)} companies listed on the NYSE or Nasdaq (source: Wikidata, CC0)"
+    )
+
+
 @app.command("eval-extractor")
 def eval_extractor(
     gold: Annotated[Path, typer.Option(help="Hand-labeled gold set (JSONL).")] = GOLD_FILE,
     cache: Annotated[Path, typer.Option(help="Extraction cache.")] = Path("events/extractions"),
     model: Annotated[str, typer.Option(help="Model id.")] = "claude-haiku-5-5",
+    engine: Annotated[
+        str, typer.Option(help="'rules' (free) or 'claude' (needs a key and credit).")
+    ] = "rules",
     out: Annotated[Path | None, typer.Option(help="Write the accuracy report here.")] = None,
 ) -> None:
-    """Score the extractor against the gold set (cache first; live only if a key is set)."""
+    """Score a labeler against the hand-labeled gold set and report its accuracy."""
+    if engine not in ("rules", "claude"):
+        raise _fail("engine must be 'rules' or 'claude'")
     try:
         rows, sha = load_gold(gold)
-        report = evaluate_gold(rows, sha, _llm_from_env(model), cache, model)
+        llm = _llm_from_env(model, engine)
+        report = evaluate_gold(rows, sha, llm, cache, llm.model_id if llm else model)
     except (GoldError, ExtractionError) as exc:
         raise _fail(str(exc)) from exc
     text = json.dumps(report.to_dict(), indent=2, sort_keys=True)

@@ -440,7 +440,12 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 
 **What it does.** Converts a headline into a typed event: event type from a fixed taxonomy, entities, and a confidence label.
 
-**Status.** Built and tested with a fake model and the real feed formats. **Not yet run against the live Claude API**, and the 50-headline gold set is **not labeled yet**, so no accuracy number exists. Until it does, treat extracted events as unmeasured.
+**Status.** Two labelers write the same validated answers, and the configuration picks one:
+
+- **Rules (free, the live default).** Phrase rules decide *what* happened, one per event type; a committed snapshot of NYSE and Nasdaq company names and tickers from [Wikidata](https://www.wikidata.org/) (CC0, `labels/companies.json`, refreshed on purpose with `spillover company-names`) decides *who*. Everyday words that are also company names ("Target", "Block") count only next to a corporate suffix or an exchange ticker, and for a regulatory action only the company the action is *against* counts, not one merely mentioned. When the event is clear but the company is not a listed one, the label is low confidence and goes to human review instead of guessing. Deterministic, so the same headline always gets the same label.
+- **Claude (paid, optional).** More capable, especially at naming companies; needs `ANTHROPIC_API_KEY` and account credit. Set `engine = "claude"` in the `[extractor]` settings.
+
+The 50-headline gold set is **not labeled yet**, so neither labeler has a published accuracy number; until it does, treat extracted events as unmeasured. Each label records which labeler and version produced it.
 
 **How.**
 - `spillover ingest-headlines` reads the official feeds in `data/sources.toml` (titles, links, ids and publication times only), skips anything already stored, and sends each new headline to Claude (`claude-haiku-5-5` by default, low effort) with a strict structured-output schema whose event type is an enum of the taxonomy in `engine/spillover/taxonomy.py`. The answer is validated again by Pydantic and rejected if it does not parse. A per-run cost cap (`max_new_per_run`) bounds spend.
@@ -542,7 +547,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 | `site.yml` | push to `main`, weekdays after scoring | Pages deploy; the FRED key in one step that runs before any npm package | Build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
-`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` stay off until the `FRED_API_KEY` secret exists and the repository variable `INGEST_ENABLED` is `true`; that part costs nothing. On this repository both are set: ingestion has been running live since November 16, 2026. Headline labeling is the only paid step (Claude API credit, roughly a cent per hundred headlines with Haiku) and has its own switch: add `ANTHROPIC_API_KEY`, add credit to that account, and set the variable `EXTRACT_HEADLINES` to `true`. Calendar and placebo claims never need it. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
+`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` stay off until the `FRED_API_KEY` secret exists and the repository variable `INGEST_ENABLED` is `true`; that part costs nothing. On this repository both are set: ingestion has been running live since November 16, 2026. Headline labeling has its own switch, the variable `EXTRACT_HEADLINES` (`true` to run it). With the default rule-based labeler it is free; switching the labeler to Claude (`engine = "claude"`) costs roughly a cent per hundred headlines with Haiku and needs `ANTHROPIC_API_KEY` plus account credit. Calendar and placebo claims never need it. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
 
@@ -598,13 +603,16 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 
 | Series | What | Original source | Terms on FRED |
 |---|---|---|---|
-| `SP500` | S&P 500 index | S&P Dow Jones Indices | Copyright notice on the series page; only derived results are published |
-| `NASDAQCOM` | Nasdaq Composite | Nasdaq, Inc. | Copyright notice on the series page; only derived results are published |
+| `SP500` | S&P 500 index | S&P Dow Jones Indices LLC | **Copyrighted: pre-approval required.** Used without written permission only for non-commercial educational use, which is how Spillover uses it; only derived statistics are published, never index values |
+| `NASDAQCOM` | Nasdaq Composite | Nasdaq, Inc. | **Copyrighted: pre-approval required.** Same terms and same use as `SP500` |
 | `DTWEXBGS` | Broad US dollar index | Board of Governors of the Federal Reserve System | Public domain, citation requested |
 | `DEXJPUS` | Yen per US dollar | Board of Governors of the Federal Reserve System | Public domain, citation requested |
 | `DCOILWTICO` | WTI crude oil spot price | US Energy Information Administration | Public domain, citation requested |
 | Release calendars 10 and 50 | CPI and jobs report dates | Bureau of Labor Statistics schedules | Dates only |
 | FOMC calendar | Fed decision dates | federalreserve.gov | Public domain (US government work) |
+| `labels/companies.json` | Company names and tickers for the free headline labeler | Wikidata | CC0 (public domain) |
+
+FRED's [copyright categories](https://fred.stlouisfed.org/legal/): series marked *pre-approval required* may be used without the owner's written permission **only for non-commercial educational or personal use**. Spillover is a non-commercial, open-source research project and relies on that allowance for the S&P 500 and Nasdaq series. Anyone reusing this project commercially must get permission from S&P Dow Jones Indices and Nasdaq, Inc., or switch those claims to other sources. The public-domain series carry no such limit.
 
 **Why Apache-2.0 and not MIT?** The explicit patent grant and contribution terms make it safer for companies and individuals to use and contribute. **Why DCO and not a CLA?** A one-line sign-off lowers friction for first-time contributors and keeps copyright with the author.
 

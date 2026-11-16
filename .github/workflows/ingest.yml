@@ -7,10 +7,10 @@ name: ingest
 #   1. Add the repository secret FRED_API_KEY (free).
 #   2. Read the notes in data/sources.ci.toml about the data terms.
 #   3. Set the repository variable INGEST_ENABLED to "true" (Settings > Secrets and variables > Actions).
-# Everything above is free. Headline labeling is the only part that costs money (Claude API credit),
-# so it has its own switch and stays off until you set it:
-#   4. Add the secret ANTHROPIC_API_KEY, add credit to that account, and set the variable
-#      EXTRACT_HEADLINES to "true". The cost cap is max_new_per_run in data/sources.ci.toml.
+# Everything above is free. Headline labeling has its own switch:
+#   4. Set the variable EXTRACT_HEADLINES to "true". With the default rule-based labeler
+#      (engine = "rules" in data/sources.ci.toml) it is free. With engine = "claude" it costs
+#      Claude API credit and needs the secret ANTHROPIC_API_KEY; the cap is max_new_per_run.
 #
 # It never runs pull-request code: scheduled and manual runs only, from main.
 on:
@@ -56,7 +56,7 @@ jobs:
         run: uv run spillover placebo-events
 
       - name: Fetch headlines and extract events
-        # The only paid step. Skipped (not failed) unless EXTRACT_HEADLINES is "true".
+        # Skipped (not failed) unless EXTRACT_HEADLINES is "true". Free with the rules labeler.
         if: ${{ vars.EXTRACT_HEADLINES == 'true' }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

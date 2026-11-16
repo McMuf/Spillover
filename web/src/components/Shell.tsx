@@ -126,9 +126,10 @@ export function Shell() {
             <a className="underline hover:text-fg" href={`https://github.com/${repo}`}>
               Source on GitHub
             </a>
-            {" · "}Market data: FRED, Federal Reserve Bank of St. Louis (series from the Board of Governors
-            of the Federal Reserve System, the US Energy Information Administration, S&amp;P Dow Jones Indices
-            and Nasdaq)
+            {" · "}Market data via FRED, Federal Reserve Bank of St. Louis: dollar and yen series from the
+            Board of Governors of the Federal Reserve System and oil prices from the US Energy Information
+            Administration (public domain). S&amp;P 500 © S&amp;P Dow Jones Indices LLC; Nasdaq Composite © Nasdaq,
+            Inc.; used for non-commercial educational research. Only statistics derived from them are shown.
             {" · "}build {__COMMIT__}
             {" · "}Charts powered by{" "}
             <a className="underline hover:text-fg" href="https://www.tradingview.com/" rel="noopener noreferrer">

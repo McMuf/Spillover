@@ -83,6 +83,9 @@ url = "https://www.sec.gov/news/pressreleases.rss"
 terms = "US federal government work, public domain; SEC asks automated clients to stay under 10 requests per second and to identify themselves"
 
 [extractor]
+# "rules" is free: phrase rules plus the committed company list (labels/companies.json). Switch to
+# "claude" (and add ANTHROPIC_API_KEY plus credit) for the more capable, paid labeler.
+engine = "rules"
 model = "claude-haiku-5-5"
 store = "events"
 cache = "events/extractions"

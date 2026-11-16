@@ -56,7 +56,7 @@ from spillover.report import format_report
 from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import ScoreError, grade_all, verify_outcomes
-from spillover.site_export import build_site_data, site_json_schema
+from spillover.site_export import build_labeling, build_site_data, site_json_schema
 from spillover.stamp import StampError, ots_binary, stamp_new, upgrade_pending
 
 app = typer.Typer(
@@ -227,6 +227,7 @@ def export_site(
             challenges_dir=Path("challenges"),
             replications_dir=Path("replications"),
             results_dir=RESULTS_DIR,
+            labeling=build_labeling(),
         )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc

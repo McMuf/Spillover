@@ -56,6 +56,9 @@ function stripTitles(node, keep = false) {
     if (!keep) delete node.title;
     for (const [k, v] of Object.entries(node)) {
       if (k === "$defs") for (const [name, def] of Object.entries(v)) { stripTitles(def); def.title = name; }
+      // A "properties" map is keyed by FIELD names: a field may itself be called "title", so walk
+      // into each field's schema instead of treating the map as a schema.
+      else if (k === "properties") for (const field of Object.values(v)) stripTitles(field);
       else if (k !== "title") stripTitles(v);
     }
   }

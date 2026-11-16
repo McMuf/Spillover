@@ -11,6 +11,7 @@ output is deterministic for the same inputs.
 from __future__ import annotations
 
 import math
+import tempfile
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -18,6 +19,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict
 
 from spillover.data import DataError, MarketData
+from spillover.eventstore import load_records
 from spillover.eventstudy import (
     DEFAULT_BOOT,
     DEFAULT_SEED,
@@ -27,6 +29,8 @@ from spillover.eventstudy import (
     mean_window_path,
     run_backtest,
 )
+from spillover.extractor import ExtractionError
+from spillover.gold import GOLD_FILE, GoldError, GoldRow, evaluate_gold, load_gold
 from spillover.lanes import describe_changes, lane_files, load_challenge, load_replication
 from spillover.ledger import (
     RULES_VERSION,
@@ -37,8 +41,10 @@ from spillover.ledger import (
 )
 from spillover.models import Claim, superseded_ids
 from spillover.replicate import load_result, result_path
+from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import load_outcome, outcome_files, prediction_symbols, window_closed
+from spillover.taxonomy import EXTRACTABLE, NONE
 
 REPO = "McMuf/Spillover"
 
@@ -251,12 +257,59 @@ class SiteMeta(_M):
     data_as_of: date
 
 
+class LabelCandidate(_M):
+    """A recent headline for a person to label. The labeler's own answer is deliberately left out,
+    so the person labels blind instead of agreeing with it."""
+
+    headline_id: str
+    title: str
+    source: str
+    url: str
+    published_at: datetime
+
+
+class EventTypeInfo(_M):
+    name: str
+    definition: str
+
+
+class LabelerAccuracy(_M):
+    """The free labeler scored against the people's labels in labels/gold.jsonl."""
+
+    extractor_version: str
+    gold_sha256: str
+    n_scored: int
+    type_accuracy: float | None
+    entity_precision: float | None
+    entity_recall: float | None
+    low_confidence_rate: float | None
+
+
+class GoldLabel(_M):
+    """A label a person already gave (labels/gold.jsonl is public in the repo anyway)."""
+
+    title: str
+    source: str
+    expected_type: str
+    expected_entities: list[str]
+
+
+class Labeling(_M):
+    candidates: list[LabelCandidate]
+    event_types: list[EventTypeInfo]
+    gold_rows: int
+    # The labels already in the repo, so the page can download the complete file to replace it.
+    gold: list[GoldLabel]
+    accuracy: LabelerAccuracy | None
+
+
 class SiteData(_M):
     schema_version: Literal[1]
     meta: SiteMeta
     claims: list[SiteClaim]
     events: list[SiteEvent]
     scoreboard: Scoreboard
+    labeling: Labeling
 
 
 def site_json_schema() -> dict[str, Any]:
@@ -268,6 +321,78 @@ def site_json_schema() -> dict[str, Any]:
 
 
 # --- building ----------------------------------------------------------------------------------
+
+
+def _event_types() -> list[EventTypeInfo]:
+    return [EventTypeInfo(name=t.name, definition=t.definition) for t in EXTRACTABLE] + [
+        EventTypeInfo(name=NONE, definition="None of the above. Use this whenever unsure.")
+    ]
+
+
+def build_labeling(
+    store: Path = Path("events"),
+    gold_path: Path = GOLD_FILE,
+    companies: Path = COMPANIES_FILE,
+    n: int = 60,
+) -> Labeling:
+    """Recent unlabeled headlines to label, and the labeler's accuracy once people have labeled."""
+    gold_rows: list[GoldRow] = []
+    accuracy: LabelerAccuracy | None = None
+    if gold_path.exists():
+        try:
+            gold_rows, sha = load_gold(gold_path)
+            if companies.exists():
+                rules = RulesExtractor.load(companies)
+                with tempfile.TemporaryDirectory() as cache:  # rules are deterministic: no cache
+                    report = evaluate_gold(gold_rows, sha, rules, Path(cache), rules.model_id)
+                accuracy = LabelerAccuracy(
+                    extractor_version=report.extractor_version,
+                    gold_sha256=report.gold_sha256,
+                    n_scored=report.n_scored,
+                    type_accuracy=report.type_accuracy,
+                    entity_precision=report.entity_precision,
+                    entity_recall=report.entity_recall,
+                    low_confidence_rate=report.low_confidence_rate,
+                )
+        except (GoldError, ExtractionError):
+            gold_rows, accuracy = [], None
+    done = {(g.source, g.title) for g in gold_rows}
+    seen: set[tuple[str, str]] = set()
+    candidates: list[LabelCandidate] = []
+    records = sorted(
+        load_records(store), key=lambda r: (r.published_at, r.headline_id), reverse=True
+    )
+    for r in records:
+        key = (r.source, r.title)
+        if key in done or key in seen:
+            continue
+        seen.add(key)
+        candidates.append(
+            LabelCandidate(
+                headline_id=r.headline_id,
+                title=r.title,
+                source=r.source,
+                url=r.url,
+                published_at=r.published_at,
+            )
+        )
+        if len(candidates) == n:
+            break
+    return Labeling(
+        candidates=candidates,
+        event_types=_event_types(),
+        gold_rows=len(gold_rows),
+        gold=[
+            GoldLabel(
+                title=g.title,
+                source=g.source,
+                expected_type=g.expected_type,
+                expected_entities=list(g.expected_entities),
+            )
+            for g in gold_rows
+        ],
+        accuracy=accuracy,
+    )
 
 
 def _f(x: float) -> float | None:
@@ -425,6 +550,7 @@ def build_site_data(
     challenges_dir: Path | None = None,
     replications_dir: Path | None = None,
     results_dir: Path | None = None,
+    labeling: Labeling | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
     board = Scoreboard.model_validate(
@@ -522,4 +648,6 @@ def build_site_data(
         claims=site_claims,
         events=sorted(events, key=lambda e: (e.date, e.event_id)),
         scoreboard=board,
+        labeling=labeling
+        or Labeling(candidates=[], event_types=_event_types(), gold_rows=0, gold=[], accuracy=None),
     )

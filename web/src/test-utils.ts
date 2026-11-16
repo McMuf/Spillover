@@ -82,5 +82,6 @@ export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
       placebo: { claims: [], alert: false, message: "No placebo claim has shown a significant result." },
       notes: [],
     },
+    labeling: { candidates: [], event_types: [{ name: "NONE", definition: "None of the above." }], gold_rows: 0, gold: [], accuracy: null },
   };
 }

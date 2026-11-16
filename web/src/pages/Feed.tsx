@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
+import { Link } from "react-router-dom";
 import { FeedItem } from "../components/FeedItem";
 import { Ready } from "../components/Ready";
 import { Segmented } from "../components/ui";
@@ -51,7 +52,10 @@ function Feed({ site }: { site: SiteData }) {
     <>
       <h1 className="mb-1 text-3xl font-extrabold tracking-tight">Feed</h1>
       <p className="mb-8 max-w-2xl text-[15px] text-muted">
-        Dated, sourced events the claims are tested on, grouped by topic. Each one links to the markets it touches.
+        Dated, sourced events the claims are tested on, grouped by topic. Each one links to the markets it touches.{" "}
+        <Link to="/label" className="text-accent underline underline-offset-2">
+          Help check the headline labels
+        </Link>
       </p>
       <div
         style={{ "--cols": Math.max(columns.length, 1) } as CSSProperties}

@@ -662,6 +662,25 @@
       "title": "EventStatOut",
       "type": "object"
     },
+    "EventTypeInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "definition"
+      ],
+      "title": "EventTypeInfo",
+      "type": "object"
+    },
     "EvidenceOut": {
       "additionalProperties": false,
       "properties": {
@@ -766,6 +785,39 @@
       "title": "ForwardRow",
       "type": "object"
     },
+    "GoldLabel": {
+      "additionalProperties": false,
+      "description": "A label a person already gave (labels/gold.jsonl is public in the repo anyway).",
+      "properties": {
+        "expected_entities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Expected Entities",
+          "type": "array"
+        },
+        "expected_type": {
+          "title": "Expected Type",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "source",
+        "expected_type",
+        "expected_entities"
+      ],
+      "title": "GoldLabel",
+      "type": "object"
+    },
     "Instrument": {
       "additionalProperties": false,
       "description": "A thing with a price, always labeled with where it trades.",
@@ -810,6 +862,164 @@
         "basket"
       ],
       "title": "Instrument",
+      "type": "object"
+    },
+    "LabelCandidate": {
+      "additionalProperties": false,
+      "description": "A recent headline for a person to label. The labeler's own answer is deliberately left out,\nso the person labels blind instead of agreeing with it.",
+      "properties": {
+        "headline_id": {
+          "title": "Headline Id",
+          "type": "string"
+        },
+        "published_at": {
+          "format": "date-time",
+          "title": "Published At",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "headline_id",
+        "title",
+        "source",
+        "url",
+        "published_at"
+      ],
+      "title": "LabelCandidate",
+      "type": "object"
+    },
+    "LabelerAccuracy": {
+      "additionalProperties": false,
+      "description": "The free labeler scored against the people's labels in labels/gold.jsonl.",
+      "properties": {
+        "entity_precision": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entity Precision"
+        },
+        "entity_recall": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Entity Recall"
+        },
+        "extractor_version": {
+          "title": "Extractor Version",
+          "type": "string"
+        },
+        "gold_sha256": {
+          "title": "Gold Sha256",
+          "type": "string"
+        },
+        "low_confidence_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Low Confidence Rate"
+        },
+        "n_scored": {
+          "title": "N Scored",
+          "type": "integer"
+        },
+        "type_accuracy": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Type Accuracy"
+        }
+      },
+      "required": [
+        "extractor_version",
+        "gold_sha256",
+        "n_scored",
+        "type_accuracy",
+        "entity_precision",
+        "entity_recall",
+        "low_confidence_rate"
+      ],
+      "title": "LabelerAccuracy",
+      "type": "object"
+    },
+    "Labeling": {
+      "additionalProperties": false,
+      "properties": {
+        "accuracy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LabelerAccuracy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/LabelCandidate"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "event_types": {
+          "items": {
+            "$ref": "#/$defs/EventTypeInfo"
+          },
+          "title": "Event Types",
+          "type": "array"
+        },
+        "gold": {
+          "items": {
+            "$ref": "#/$defs/GoldLabel"
+          },
+          "title": "Gold",
+          "type": "array"
+        },
+        "gold_rows": {
+          "title": "Gold Rows",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "candidates",
+        "event_types",
+        "gold_rows",
+        "gold",
+        "accuracy"
+      ],
+      "title": "Labeling",
       "type": "object"
     },
     "PlaceboInfo": {
@@ -1516,6 +1726,9 @@
       "title": "Events",
       "type": "array"
     },
+    "labeling": {
+      "$ref": "#/$defs/Labeling"
+    },
     "meta": {
       "$ref": "#/$defs/SiteMeta"
     },
@@ -1533,7 +1746,8 @@
     "meta",
     "claims",
     "events",
-    "scoreboard"
+    "scoreboard",
+    "labeling"
   ],
   "title": "Spillover site data",
   "type": "object"

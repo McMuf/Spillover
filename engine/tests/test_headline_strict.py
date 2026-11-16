@@ -1,6 +1,8 @@
 """A headline run that did nothing useful must say why, so scheduled runs fail loudly."""
 
-from spillover.cli import headline_run_problem
+import pytest
+
+from spillover.cli import github_error_line, headline_run_problem
 from spillover.ingest.headline_run import HeadlineSummary
 
 
@@ -28,3 +30,15 @@ def test_a_partial_failure_or_a_quiet_feed_is_fine() -> None:
         is None
     )
     assert headline_run_problem(HeadlineSummary(feeds_ok=2, fetched=45, already_stored=45)) is None
+
+
+def test_failures_become_a_redacted_annotation_on_github_actions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    line = github_error_line("fetch failed for https://x/api?api_key=SECRET123\nsecond line")
+    assert line is not None and line.startswith("::error title=spillover::")
+    assert "SECRET123" not in line and "%0A" in line and "\n" not in line
+
+    monkeypatch.delenv("GITHUB_ACTIONS")
+    assert github_error_line("quiet locally") is None

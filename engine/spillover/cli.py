@@ -103,7 +103,25 @@ DataOpt = Annotated[
 
 def _fail(message: str) -> typer.Exit:
     typer.echo(message, err=True)
+    line = github_error_line(message)
+    if line:
+        typer.echo(line)
     return typer.Exit(code=1)
+
+
+def github_error_line(message: str) -> str | None:
+    """On GitHub Actions, the failure as an error annotation for the run's summary page.
+
+    Run logs need a login to read; annotations are visible to anyone who can see the run, so the
+    reason a scheduled job failed is one click away. The text is redacted like everything else.
+    Returns None outside GitHub Actions.
+    """
+    import os
+
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return None
+    text = redact(message).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    return f"::error title=spillover::{text}"
 
 
 def _inspect(path: Path, claims: dict[str, Claim]) -> tuple[str, str | None]:

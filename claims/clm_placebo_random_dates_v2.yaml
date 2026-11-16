@@ -30,4 +30,4 @@ falsifier: >
 
 registered_by: McMuf
 # CI stamps this when the file merges to main. Leave it as shown.
-registered_at: set_by_ci_on_merge
+registered_at: 2026-11-16T00:37:46Z

@@ -5,7 +5,7 @@ import type { CalibrationBin, ForwardRow } from "../generated/site";
 import { STATUSES } from "../lib/format";
 import { makeClaim, makeSite } from "../test-utils";
 import { CalibrationPlot } from "./CalibrationPlot";
-import { ClaimCard } from "./ClaimCard";
+import { ClaimRow } from "./ClaimRow";
 import { dayToTime, timeToDay } from "./EventWindowChart";
 import { EvidenceMeter } from "./EvidenceMeter";
 import { ForwardLogTable } from "./ForwardLogTable";
@@ -118,20 +118,21 @@ describe("CalibrationPlot", () => {
   });
 });
 
-describe("ClaimCard", () => {
-  it("leads with status, statement, evidence meter and a backtest label", () => {
+describe("ClaimRow", () => {
+  it("leads with symbol, venue, statement, status and a neutral backtest pill", () => {
     const item = makeClaim();
     render(
       <MemoryRouter>
-        <ClaimCard item={item} site={makeSite([item])} />
+        <ClaimRow item={item} site={makeSite([item])} />
       </MemoryRouter>,
     );
     expect(screen.getByText("Draft")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /After a headline/ })).toHaveAttribute("href", "/claims/clm_demo_v1");
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
-    expect(screen.getByText(/Backtest/)).toBeInTheDocument();
-    expect(screen.getByText(/synthetic data/)).toBeInTheDocument();
     expect(screen.getByText("ABC")).toBeInTheDocument();
+    expect(screen.getByText(/0 of \d+ forward events/)).toBeInTheDocument();
+    // A backtest is not an outcome, so its pill never takes the green or red reserved for outcomes.
+    const pill = screen.getByText(/^Backtest/).parentElement;
+    expect(pill?.className).not.toMatch(/positive|negative/);
   });
 });
 

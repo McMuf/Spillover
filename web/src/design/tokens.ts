@@ -1,10 +1,12 @@
 /**
- * Design tokens: the single source for both themes. Components use semantic names (bg, fg,
- * accent...) through CSS variables, never raw colors. Red and green are reserved for realized
- * outcomes (`positive`, `negative`); everything else is neutral or the one calm accent.
+ * Design tokens. Spillover is dark-only: there is one theme and no switcher.
+ *
+ * Components use semantic names (bg, fg, primary...) through CSS variables, never raw colors.
+ * Red and green are reserved for outcomes that already happened (`positive`, `negative`);
+ * estimates, backtests and every other number stay neutral.
  */
 
-export type ThemeName = "light" | "dark";
+export type ThemeName = "dark";
 
 export interface ColorTokens {
   bg: string;
@@ -13,8 +15,12 @@ export interface ColorTokens {
   line: string;
   fg: string;
   muted: string;
+  /** Links, progress, chart lines. */
   accent: string;
   onAccent: string;
+  /** Filled pill buttons and the active tab. */
+  primary: string;
+  onPrimary: string;
   /** Realized, favorable outcome only. */
   positive: string;
   /** Realized, unfavorable outcome only. */
@@ -24,41 +30,28 @@ export interface ColorTokens {
 }
 
 export const color: Record<ThemeName, ColorTokens> = {
-  light: {
-    bg: "#fafaf9",
-    surface: "#ffffff",
-    surfaceAlt: "#f3f3f1",
-    line: "#dcdcd6",
-    fg: "#16181d",
-    muted: "#555c69",
-    accent: "#2b5cd6",
-    onAccent: "#ffffff",
-    positive: "#17703f",
-    negative: "#b02e19",
-    noticeBg: "#fff4d6",
-    noticeFg: "#5b4300",
-  },
   dark: {
-    bg: "#0f1115",
-    surface: "#16181d",
-    surfaceAlt: "#1d2027",
-    line: "#2e323c",
-    fg: "#f4f5f7",
-    muted: "#9aa1ad",
-    accent: "#7aa2ff",
-    onAccent: "#0f1115",
-    positive: "#4ec27f",
-    negative: "#ff8a6b",
-    noticeBg: "#2b2410",
+    bg: "#090c12",
+    surface: "#11151d",
+    surfaceAlt: "#181e2a",
+    line: "#222a3a",
+    fg: "#f3f6fb",
+    muted: "#98a2b5",
+    accent: "#8fb2ff",
+    onAccent: "#0a0f1a",
+    primary: "#1f3d73",
+    onPrimary: "#ffffff",
+    positive: "#3fd37f",
+    negative: "#ff7b59",
+    noticeBg: "#2a2410",
     noticeFg: "#f0d58a",
   },
 };
 
-export const space = { 1: "0.25rem", 2: "0.5rem", 3: "0.75rem", 4: "1rem", 6: "1.5rem", 8: "2rem" };
-export const radius = { sm: "6px", md: "10px", pill: "999px" };
+export const radius = { card: "22px", pill: "999px" };
 export const font = {
-  sans: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  sans: '"Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
 };
 
 /** Pairs that must meet WCAG AA (4.5:1) for normal text. Checked by a unit test. */
@@ -71,9 +64,14 @@ export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTo
   ["muted", "surfaceAlt"],
   ["accent", "bg"],
   ["accent", "surface"],
+  ["accent", "surfaceAlt"],
   ["onAccent", "accent"],
+  ["onPrimary", "primary"],
+  ["fg", "primary"],
   ["positive", "surface"],
   ["negative", "surface"],
+  ["positive", "surfaceAlt"],
+  ["negative", "surfaceAlt"],
   ["noticeFg", "noticeBg"],
 ];
 

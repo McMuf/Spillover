@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section aria-labelledby={id} className="space-y-3">
-      <h2 id={id} className="text-lg font-semibold">
+    <section aria-labelledby={id} className="space-y-3 rounded-[22px] border border-line bg-surface p-5">
+      <h2 id={id} className="text-[22px] font-extrabold">
         {title}
       </h2>
       {children}
@@ -41,9 +41,9 @@ const REFERENCES = [
 
 export default function Method() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">How the numbers are made</h1>
+        <h1 className="text-[32px] font-extrabold leading-tight">How the numbers are made</h1>
         <p className={`${P} mt-1 text-muted`}>
           Every figure on this site comes from the steps below. They are the standard event-study method, applied the same
           way to every claim. If a step here disagrees with what the code does, the code is wrong, so please{" "}

@@ -1,8 +1,9 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { ClaimCard } from "../components/ClaimCard";
-import { useTheme } from "../components/ThemeContext";
+import { ClaimRow } from "../components/ClaimRow";
+import { Hero } from "../components/Hero";
 import { NodeLegend } from "../components/NodeLegend";
 import { Ready } from "../components/Ready";
+import { Card, PillButton, SectionTabs, Stamp } from "../components/ui";
 import { STATUSES, type Status } from "../lib/format";
 import { buildGraph } from "../lib/graph";
 import type { SiteData } from "../generated/site";
@@ -10,10 +11,9 @@ import type { SiteData } from "../generated/site";
 const GraphView = lazy(() => import("../components/GraphView"));
 
 function ClaimsMap({ site }: { site: SiteData }) {
-  const { theme } = useTheme();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Status | "All">("All");
-  const [view, setView] = useState<"cards" | "graph">("cards");
+  const [view, setView] = useState<"list" | "graph">("list");
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -29,71 +29,61 @@ function ClaimsMap({ site }: { site: SiteData }) {
 
   return (
     <>
-      <section className="mb-6">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl">Write the claim. Freeze the call. Let the market grade it.</h1>
-        <p className="max-w-2xl text-muted">
-          An open ledger that tests how news spills over into markets. Each claim is frozen before the outcome, then
-          graded against what the broader market already explains. Inconclusive means “not enough data yet”.
-        </p>
-      </section>
+      <SectionTabs />
+      <Hero />
 
-      <div className="mb-4 flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[12rem] flex-1 flex-col text-xs text-muted">
-          Search claims
+      <Card title="Claims" stamp={`As of ${site.meta.data_as_of}`}>
+        <label className="mb-3 block text-sm text-muted">
+          <span className="sr-only">Search claims</span>
           <input
             type="search"
+            aria-label="Search claims"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="id, statement, symbol…"
-            className="mt-1 rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-fg"
+            placeholder="Search id, statement, symbol…"
+            className="w-full rounded-full border border-line bg-surface-alt px-5 py-3 text-[15px] text-fg placeholder:text-muted"
           />
         </label>
-        <label className="flex flex-col text-xs text-muted">
-          Status
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Status | "All")}
-            className="mt-1 rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-fg"
-          >
-            <option>All</option>
-            {STATUSES.map((s) => (
-              <option key={s}>{s}</option>
+
+        <div role="group" aria-label="Status" className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
+          {(["All", ...STATUSES] as const).map((s) => (
+            <PillButton key={s} active={status === s} onClick={() => setStatus(s)}>
+              {s}
+            </PillButton>
+          ))}
+        </div>
+
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <p className="text-sm text-muted" role="status">
+            {shown.length} of {site.claims.length} claim{site.claims.length === 1 ? "" : "s"}
+          </p>
+          <div role="group" aria-label="View" className="flex gap-2">
+            {(["list", "graph"] as const).map((v) => (
+              <PillButton key={v} active={view === v} onClick={() => setView(v)}>
+                {v === "list" ? "List" : "Graph"}
+              </PillButton>
             ))}
-          </select>
-        </label>
-        <div role="group" aria-label="View" className="flex rounded-full border border-line p-0.5 text-sm">
-          {(["cards", "graph"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={view === v}
-              onClick={() => setView(v)}
-              className={`rounded-full px-4 py-1.5 capitalize ${view === v ? "bg-accent text-on-accent" : "text-muted hover:text-fg"}`}
-            >
-              {v === "cards" ? "Cards" : "Graph"}
-            </button>
-          ))}
+          </div>
         </div>
-      </div>
 
-      <p className="mb-3 text-sm text-muted" role="status">
-        {shown.length} of {site.claims.length} claim{site.claims.length === 1 ? "" : "s"}
-      </p>
-
-      {view === "cards" ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {shown.map((c) => (
-            <ClaimCard key={c.claim.id} item={c} site={site} />
-          ))}
-          {shown.length === 0 && <p className="text-muted">No claims match. Clear the search or status filter.</p>}
+        {view === "list" ? (
+          <div>
+            {shown.map((c) => (
+              <ClaimRow key={c.claim.id} item={c} site={site} />
+            ))}
+            {shown.length === 0 && <p className="py-4 text-muted">No claims match. Clear the search or status filter.</p>}
+          </div>
+        ) : (
+          <Suspense fallback={<p className="text-muted">Loading graph…</p>}>
+            <GraphView model={model} label="Graph of the claims shown" />
+          </Suspense>
+        )}
+        <div className="mt-2 flex justify-end">
+          <Stamp>Backtest figures are neutral</Stamp>
         </div>
-      ) : (
-        <Suspense fallback={<p className="text-muted">Loading graph…</p>}>
-          <GraphView model={model} theme={theme} label="Graph of the claims shown" />
-        </Suspense>
-      )}
+      </Card>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <NodeLegend />
       </div>
     </>

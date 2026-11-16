@@ -5,14 +5,14 @@ import { pct, shortHash } from "../lib/format";
 export function ForwardLogTable({ rows }: { rows: ForwardRow[] }) {
   if (rows.length === 0) {
     return (
-      <p className="rounded-[10px] border border-dashed border-line p-4 text-sm text-muted">
+      <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">
         No frozen predictions yet. A claim collects forward evidence only after it is registered, and only for events
         that happen after registration. Nothing here is backfilled.
       </p>
     );
   }
   return (
-    <div tabIndex={0} role="region" aria-label="Frozen forward predictions (scrollable)" className="overflow-x-auto rounded-[10px] border border-line">
+    <div tabIndex={0} role="region" aria-label="Frozen forward predictions (scrollable)" className="overflow-x-auto rounded-2xl border border-line">
       <table className="w-full min-w-[34rem] text-left text-sm">
         <caption className="sr-only">Frozen forward predictions</caption>
         <thead className="bg-surface-alt text-xs text-muted">

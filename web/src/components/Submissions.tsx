@@ -19,7 +19,7 @@ export function ChallengeList({ items }: { items: ChallengeOut[] }) {
     <ul className="space-y-3">
       {items.map((c) => (
         <li key={c.id}>
-          <article className="rounded-[10px] border border-line bg-surface p-4">
+          <article className="rounded-2xl border border-line bg-surface p-4">
             <header className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-mono text-xs text-muted">{c.id}</span>
               <span className="text-xs font-semibold uppercase tracking-wide">Challenges {ASPECT[c.aspect]}</span>
@@ -57,7 +57,7 @@ export function ReplicationList({ items }: { items: ReplicationOut[] }) {
     <ul className="space-y-3">
       {items.map((r) => (
         <li key={r.id}>
-          <article className="rounded-[10px] border border-line bg-surface p-4">
+          <article className="rounded-2xl border border-line bg-surface p-4">
             <header className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-mono text-xs text-muted">{r.id}</span>
               <span className="text-xs text-muted">
@@ -73,7 +73,7 @@ export function ReplicationList({ items }: { items: ReplicationOut[] }) {
                 </div>
               ))}
             </dl>
-            <div className="mt-3 rounded-[10px] bg-surface-alt p-3 text-sm">
+            <div className="mt-3 rounded-2xl bg-surface-alt p-3 text-sm">
               {r.result ? (
                 <>
                   <p>

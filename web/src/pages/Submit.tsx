@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Ready } from "../components/Ready";
 import { EMPTY_FORM, pullRequestUrl, toYaml, validateYaml, type ClaimForm } from "../lib/claimYaml";
 
-const FIELD = "mt-1 w-full rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-fg";
+const FIELD = "mt-1 w-full rounded-2xl border border-line bg-surface-alt px-4 py-3 text-[15px] text-fg";
 
 function Form({ repo }: { repo: string }) {
   const [f, setF] = useState<ClaimForm>(EMPTY_FORM);
@@ -13,14 +13,14 @@ function Form({ repo }: { repo: string }) {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Submit a claim</h1>
+        <h1 className="text-[32px] font-extrabold leading-tight">Submit a claim</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
           Fill in the form. It writes the claim file, checks it live against the engine&apos;s schema, and opens a pull
           request. Review checks clarity and testability, never whether the idea is good.
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6">
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()} aria-label="Claim form">
           <label className="block text-sm">Claim id
             <input className={`${FIELD} font-mono`} value={f.id} onChange={(e) => set("id", e.target.value)} aria-describedby="id-help" />
@@ -75,12 +75,12 @@ function Form({ repo }: { repo: string }) {
 
         <div className="space-y-4">
           <section aria-labelledby="yaml-h">
-            <h2 id="yaml-h" className="mb-2 text-sm font-semibold">Your claim file</h2>
-            <pre tabIndex={0} aria-label="Generated claim file (scrollable)" className="max-h-96 overflow-auto rounded-[10px] border border-line bg-surface p-3 font-mono text-xs" data-testid="yaml-preview">{text}</pre>
+            <h2 id="yaml-h" className="mb-2 text-lg font-extrabold">Your claim file</h2>
+            <pre tabIndex={0} aria-label="Generated claim file (scrollable)" className="max-h-96 overflow-auto rounded-2xl border border-line bg-surface p-3 font-mono text-xs" data-testid="yaml-preview">{text}</pre>
           </section>
 
-          <section aria-labelledby="valid-h" className="rounded-[10px] border border-line bg-surface p-4">
-            <h2 id="valid-h" className="mb-2 text-sm font-semibold">Validation</h2>
+          <section aria-labelledby="valid-h" className="rounded-[22px] border border-line bg-surface p-5">
+            <h2 id="valid-h" className="mb-2 text-lg font-extrabold">Validation</h2>
             {problems.length === 0 ? (
               <p role="status" className="text-sm font-medium text-positive">✓ Valid against the claim schema.</p>
             ) : (
@@ -92,8 +92,8 @@ function Form({ repo }: { repo: string }) {
             )}
           </section>
 
-          <section aria-labelledby="feas-h" className="rounded-[10px] border border-line bg-surface p-4">
-            <h2 id="feas-h" className="mb-1 text-sm font-semibold">Feasibility check</h2>
+          <section aria-labelledby="feas-h" className="rounded-[22px] border border-line bg-surface p-5">
+            <h2 id="feas-h" className="mb-1 text-lg font-extrabold">Feasibility check</h2>
             <p className="text-sm text-muted">
               How many past events match and how many are independent is computed by the engine, which does not run in the
               browser. Save the file as <code className="font-mono">claims/{f.id}.yaml</code> and run{" "}

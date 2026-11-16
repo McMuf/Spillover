@@ -10,6 +10,7 @@ const CSP = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'", // charts and React set inline style attributes
   "img-src 'self' data:",
+  "font-src 'self'", // the Inter font is bundled and served from this site, never a CDN
   "connect-src 'self'",
   "base-uri 'self'",
   "form-action 'self'",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NODE_TYPES } from "./nodes";
 import { applyTheme } from "./theme";
-import { color, contrast, luminance, textPairs, type ThemeName } from "./tokens";
+import { color, contrast, luminance, textPairs } from "./tokens";
 
 describe("design tokens", () => {
   it("computes WCAG contrast correctly", () => {
@@ -10,22 +10,20 @@ describe("design tokens", () => {
     expect(luminance("#ffffff")).toBeCloseTo(1, 5);
   });
 
-  for (const theme of ["light", "dark"] as ThemeName[]) {
-    it(`every text pair meets WCAG AA (4.5:1) in the ${theme} theme`, () => {
-      for (const [fg, bg] of textPairs) {
-        const ratio = contrast(color[theme][fg], color[theme][bg]);
-        expect(ratio, `${fg} on ${bg} (${theme}) is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
-      }
-    });
-  }
+  it("every text pair meets WCAG AA (4.5:1)", () => {
+    for (const [fg, bg] of textPairs) {
+      const ratio = contrast(color.dark[fg], color.dark[bg]);
+      expect(ratio, `${fg} on ${bg} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 
-  it("defines the same tokens for both themes", () => {
-    expect(Object.keys(color.light).sort()).toEqual(Object.keys(color.dark).sort());
+  it("is dark only: there is no theme switcher and no light palette", () => {
+    expect(Object.keys(color)).toEqual(["dark"]);
   });
 
   it("writes tokens onto the root element as CSS variables", () => {
     const el = document.createElement("html");
-    applyTheme("dark", el);
+    applyTheme(el);
     expect(el.dataset.theme).toBe("dark");
     expect(el.style.getPropertyValue("--c-bg")).toBe(color.dark.bg);
     expect(el.style.getPropertyValue("--c-surface-alt")).toBe(color.dark.surfaceAlt);

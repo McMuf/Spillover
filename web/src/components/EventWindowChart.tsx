@@ -1,6 +1,6 @@
 import { ColorType, LineSeries, LineStyle, createChart, type UTCTimestamp } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
-import { color, type ThemeName } from "../design/tokens";
+import { color } from "../design/tokens";
 import type { Chart } from "../generated/site";
 
 const DAY = 86_400;
@@ -28,7 +28,7 @@ interface Overlay {
  * the event (day 0); the shaded bands are the estimation window and the event window.
  * A table of the same numbers is always one tab away on the claim page.
  */
-export function EventWindowChart({ chart, theme }: { chart: Chart; theme: ThemeName }) {
+export function EventWindowChart({ chart }: { chart: Chart }) {
   const ref = useRef<HTMLDivElement>(null);
   const [overlay, setOverlay] = useState<Overlay | null>(null);
 
@@ -36,7 +36,7 @@ export function EventWindowChart({ chart, theme }: { chart: Chart; theme: ThemeN
     const el = ref.current;
     if (!el) return;
     const first = chart.days[0] ?? 0;
-    const c = color[theme];
+    const c = color.dark;
     const api = createChart(el, {
       autoSize: true,
       height: 280,
@@ -88,7 +88,7 @@ export function EventWindowChart({ chart, theme }: { chart: Chart; theme: ThemeN
       ro.disconnect();
       api.remove();
     };
-  }, [chart, theme]);
+  }, [chart]);
 
   const band = (from: number | null, to: number | null, cls: string, label: string) =>
     from !== null && to !== null ? (

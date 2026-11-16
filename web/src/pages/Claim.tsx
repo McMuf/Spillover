@@ -1,6 +1,8 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Icon } from "../components/Icon";
+import { BackButton, PillButton, Tag } from "../components/ui";
 import { EvidenceMeter } from "../components/EvidenceMeter";
 import { ForwardLogTable } from "../components/ForwardLogTable";
 import { Histogram } from "../components/Histogram";
@@ -9,7 +11,6 @@ import { NodeLegend } from "../components/NodeLegend";
 import { Ready, Row } from "../components/Ready";
 import { ChallengeList, ReplicationList } from "../components/Submissions";
 import { StatusBadge } from "../components/StatusBadge";
-import { useTheme } from "../components/ThemeContext";
 import type { SiteClaim, SiteData } from "../generated/site";
 import { findClaim } from "../lib/data";
 import { citation, claimVersion, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
@@ -23,7 +24,7 @@ const EventWindowChart = lazy(() =>
   import("../components/EventWindowChart").then((m) => ({ default: m.EventWindowChart })),
 );
 
-const TAB = "whitespace-nowrap rounded-full px-3 py-2 text-sm sm:px-4 text-muted data-[state=active]:bg-surface-alt data-[state=active]:font-semibold data-[state=active]:text-fg";
+const TAB = "shrink-0 whitespace-nowrap rounded-full border border-line px-4 py-2 text-[15px] font-semibold text-muted data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-on-primary";
 
 function EmbedBox({ claimId }: { claimId: string }) {
   const [copied, setCopied] = useState(false);
@@ -38,7 +39,7 @@ function EmbedBox({ claimId }: { claimId: string }) {
     }
   };
   return (
-    <details className="rounded-[10px] border border-line bg-surface p-4">
+    <details className="rounded-2xl border border-line bg-surface p-4">
       <summary className="cursor-pointer text-sm font-semibold">Embed this claim</summary>
       <p className="mt-3 text-xs text-muted">
         Paste this into a blog post or web page to show a live, read-only card for this claim. It always shows the
@@ -51,7 +52,7 @@ function EmbedBox({ claimId }: { claimId: string }) {
           rows={3}
           value={snippet}
           onFocus={(e) => e.currentTarget.select()}
-          className="mt-1 w-full rounded-[10px] border border-line bg-surface-alt p-2 font-mono text-xs text-fg"
+          className="mt-1 w-full rounded-2xl border border-line bg-surface-alt p-2 font-mono text-xs text-fg"
         />
       </label>
       <button type="button" onClick={copy} className="mt-2 rounded-full border border-line px-4 py-1.5 text-sm hover:bg-surface-alt">
@@ -62,14 +63,13 @@ function EmbedBox({ claimId }: { claimId: string }) {
 }
 
 function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
-  const { theme } = useTheme();
   const c = item.claim;
   const b = item.backtest;
   const row = scoreboardRow(site.scoreboard.claims, c.id);
   const model = useMemo(() => buildGraph([item], site), [item, site]);
   return (
     <div className="space-y-6">
-      <section aria-labelledby="summary" className="rounded-[10px] border border-line bg-surface p-4">
+      <section aria-labelledby="summary" className="rounded-2xl border border-line bg-surface p-4">
         <h2 id="summary" className="mb-2 text-sm font-semibold">Summary</h2>
         <dl>
           <Row label="Expected direction">{c.expected_sign}</Row>
@@ -102,7 +102,7 @@ function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
       <section aria-labelledby="graph-h">
         <h2 id="graph-h" className="mb-2 text-sm font-semibold">How the claim is wired</h2>
         <Suspense fallback={<p className="text-muted">Loading graph…</p>}>
-          <GraphView model={model} theme={theme} label={`Graph of ${c.id}`} />
+          <GraphView model={model} label={`Graph of ${c.id}`} />
         </Suspense>
       </section>
 
@@ -110,7 +110,7 @@ function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
 
       <EmbedBox claimId={c.id} />
 
-      <details className="rounded-[10px] border border-line bg-surface p-4">
+      <details className="rounded-2xl border border-line bg-surface p-4">
         <summary className="cursor-pointer text-sm font-semibold">Claim file (YAML)</summary>
         <pre tabIndex={0} aria-label="Claim file (scrollable)" className="mt-3 overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs">{item.yaml}</pre>
       </details>
@@ -119,61 +119,18 @@ function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
 }
 
 function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
-  const { theme } = useTheme();
-  const [mode, setMode] = useState<"chart" | "table">("chart");
   const b = item.backtest;
-  const chart = item.chart;
   const placebo = site.claims.find((p) => p.claim.event_type === "RANDOM_DATE" && p.backtest);
   const isPlacebo = item.claim.event_type === "RANDOM_DATE";
   if (!b) return <p className="text-muted">No backtest could be run: {item.backtest_error}</p>;
 
   return (
     <div className="space-y-6">
-      <p className="rounded-[10px] bg-surface-alt p-3 text-xs text-muted">
+      <p className="rounded-2xl bg-surface-alt p-3 text-xs text-muted">
         These are <strong className="text-fg">backtest</strong> results, not forward evidence. Only events after
         registration count as forward evidence.
         {b.data_synthetic && " The data here is simulated."}
       </p>
-
-      {chart && (
-        <section aria-labelledby="chart-h">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 id="chart-h" className="text-sm font-semibold">Event window</h2>
-            <div role="group" aria-label="Chart or table" className="flex rounded-full border border-line p-0.5 text-xs">
-              {(["chart", "table"] as const).map((m) => (
-                <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}
-                  className={`rounded-full px-3 py-1 capitalize ${mode === m ? "bg-accent text-on-accent" : "text-muted"}`}>
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-          {mode === "chart" ? (
-            <Suspense fallback={<p className="text-muted">Loading chart…</p>}>
-              <EventWindowChart chart={chart} theme={theme} />
-            </Suspense>
-          ) : (
-            <div tabIndex={0} role="region" aria-label="Mean path by day (scrollable)" className="max-h-80 overflow-auto rounded-[10px] border border-line">
-              <table className="w-full text-left text-sm">
-                <caption className="sr-only">Mean abnormal path by trading day relative to the event</caption>
-                <thead className="sticky top-0 bg-surface-alt text-xs text-muted">
-                  <tr><th scope="col" className="px-3 py-2 font-medium">Day</th><th scope="col" className="px-3 py-2 font-medium">Mean level</th><th scope="col" className="px-3 py-2 font-medium">Low</th><th scope="col" className="px-3 py-2 font-medium">High</th></tr>
-                </thead>
-                <tbody>
-                  {chart.days.map((d, i) => (
-                    <tr key={d} className="border-t border-line">
-                      <td className="px-3 py-1.5">{d}</td>
-                      <td className="px-3 py-1.5">{chart.mean[i]?.toFixed(2)}</td>
-                      <td className="px-3 py-1.5">{chart.lo[i]?.toFixed(2)}</td>
-                      <td className="px-3 py-1.5">{chart.hi[i]?.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
 
       <section aria-labelledby="dist-h">
         <h2 id="dist-h" className="mb-2 text-sm font-semibold">Distribution across events</h2>
@@ -185,7 +142,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
         {isPlacebo ? (
           <p className="text-sm text-muted">This is the placebo: random dates should show nothing.</p>
         ) : placebo?.backtest ? (
-          <div tabIndex={0} role="region" aria-label="Placebo comparison (scrollable)" className="overflow-x-auto rounded-[10px] border border-line">
+          <div tabIndex={0} role="region" aria-label="Placebo comparison (scrollable)" className="overflow-x-auto rounded-2xl border border-line">
             <table className="w-full min-w-[28rem] text-left text-sm">
               <caption className="sr-only">This claim compared with the placebo</caption>
               <thead className="bg-surface-alt text-xs text-muted">
@@ -214,7 +171,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
           {b.n_matched} matched; {b.n_no_history} dropped for too little history, {b.n_scheduled_overlap} for a scheduled-event
           overlap, {b.n_overlap_collapsed} collapsed as overlapping.
         </p>
-        <div tabIndex={0} role="region" aria-label="Historical events (scrollable)" className="max-h-80 overflow-auto rounded-[10px] border border-line">
+        <div tabIndex={0} role="region" aria-label="Historical events (scrollable)" className="max-h-80 overflow-auto rounded-2xl border border-line">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Historical events</caption>
             <thead className="sticky top-0 bg-surface-alt text-xs text-muted">
@@ -254,7 +211,7 @@ function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
       </p>
 
       {!registered && (
-        <p role="note" className="rounded-[10px] border border-dashed border-line p-3 text-sm text-muted">
+        <p role="note" className="rounded-2xl border border-dashed border-line p-3 text-sm text-muted">
           This claim is a draft. Challenges and replications apply after it is registered; before that, comment on its pull
           request.
         </p>
@@ -265,7 +222,7 @@ function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
         {item.challenges.length > 0 ? (
           <ChallengeList items={item.challenges} />
         ) : (
-          <p className="rounded-[10px] border border-dashed border-line p-4 text-sm text-muted">None yet.</p>
+          <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">None yet.</p>
         )}
       </section>
 
@@ -274,7 +231,7 @@ function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
         {item.replications.length > 0 ? (
           <ReplicationList items={item.replications} />
         ) : (
-          <p className="rounded-[10px] border border-dashed border-line p-4 text-sm text-muted">None yet.</p>
+          <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">None yet.</p>
         )}
       </section>
 
@@ -301,6 +258,49 @@ function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
   );
 }
 
+/** The big chart at the top of the page: the mean abnormal path, with the event as a dashed line. */
+function HeadChart({ item }: { item: SiteClaim }) {
+  const [mode, setMode] = useState<"chart" | "table">("chart");
+  const chart = item.chart;
+  if (!chart) return null;
+  return (
+    <section aria-labelledby="chart-h" className="mb-5">
+      <h2 id="chart-h" className="sr-only">Event window</h2>
+      {mode === "chart" ? (
+        <Suspense fallback={<p className="text-muted">Loading chart…</p>}>
+          <EventWindowChart chart={chart} />
+        </Suspense>
+      ) : (
+        <div tabIndex={0} role="region" aria-label="Mean path by day (scrollable)" className="max-h-80 overflow-auto rounded-2xl border border-line">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Mean abnormal path by trading day relative to the event</caption>
+            <thead className="sticky top-0 bg-surface-alt text-xs text-muted">
+              <tr><th scope="col" className="px-3 py-2 font-medium">Day</th><th scope="col" className="px-3 py-2 font-medium">Mean level</th><th scope="col" className="px-3 py-2 font-medium">Low</th><th scope="col" className="px-3 py-2 font-medium">High</th></tr>
+            </thead>
+            <tbody>
+              {chart.days.map((d, i) => (
+                <tr key={d} className="border-t border-line">
+                  <td className="px-3 py-1.5">{d}</td>
+                  <td className="px-3 py-1.5">{chart.mean[i]?.toFixed(2)}</td>
+                  <td className="px-3 py-1.5">{chart.lo[i]?.toFixed(2)}</td>
+                  <td className="px-3 py-1.5">{chart.hi[i]?.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div role="group" aria-label="Chart or table" className="mt-3 flex gap-2">
+        {(["chart", "table"] as const).map((m) => (
+          <PillButton key={m} active={mode === m} onClick={() => setMode(m)}>
+            {m}
+          </PillButton>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
   const c = item.claim;
   const [tab, setTab] = useState("overview");
@@ -318,21 +318,34 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
   };
 
   return (
-    <div className="pb-24 sm:pb-0">
-      <Link to="/" className="text-sm text-muted hover:text-fg">← All claims</Link>
-      <header className="mb-5 mt-3">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <StatusBadge status={item.status} />
-          <span className="font-mono text-xs text-muted">{c.id}</span>
-          <InstrumentChip instrument={c.instrument} />
-          <span className="text-xs text-muted">{venueLabel(c.instrument.venue)}</span>
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <BackButton to="/" label="Back to all claims" />
+        <StatusBadge status={item.status} />
+      </div>
+      <header className="mb-5">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="font-mono text-[28px] font-extrabold">{c.instrument.symbol}</span>
+          <Tag>{venueLabel(c.instrument.venue)}</Tag>
         </div>
-        <h1 className="text-xl font-bold leading-snug sm:text-2xl">{c.statement.replace(/\s+/g, " ").trim()}</h1>
+        {item.backtest && (
+          <p className="mb-3">
+            <span className="text-[34px] font-extrabold leading-none">{pct(item.backtest.mean)}</span>{" "}
+            <span className="text-sm text-muted">
+              backtest estimate · n={item.backtest.n_effective}
+              {item.backtest.data_synthetic && " · synthetic data"}
+            </span>
+          </p>
+        )}
+        <h1 className="text-xl font-bold leading-snug">{c.statement.replace(/\s+/g, " ").trim()}</h1>
+        <p className="mt-2 font-mono text-xs text-muted">{c.id}</p>
         <p className="mt-2 text-sm text-muted"><strong className="text-fg">What would prove it wrong:</strong> {c.falsifier.replace(/\s+/g, " ").trim()}</p>
       </header>
 
+      <HeadChart item={item} />
+
       <Tabs.Root value={tab} onValueChange={setTab}>
-        <Tabs.List aria-label="Claim sections" className="mb-5 flex gap-1 overflow-x-auto border-b border-line pb-2">
+        <Tabs.List aria-label="Claim sections" className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">
           <Tabs.Trigger value="overview" className={TAB}>Overview</Tabs.Trigger>
           <Tabs.Trigger value="evidence" className={TAB}>Evidence</Tabs.Trigger>
           <Tabs.Trigger value="forward" className={TAB}>Forward log ({item.forward_log.length})</Tabs.Trigger>
@@ -344,12 +357,14 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
         <Tabs.Content value="challenge"><Challenge item={item} site={site} /></Tabs.Content>
       </Tabs.Root>
 
-      {/* Sticky on phones: the two most useful actions. There are no trade buttons anywhere. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-line bg-surface p-3 sm:static sm:mt-8 sm:border-0 sm:bg-transparent sm:p-0">
-        <button type="button" onClick={() => setTab("challenge")} className="flex-1 rounded-full border border-line px-4 py-2 text-sm font-semibold sm:flex-none">
+      {/* Floating actions. There are no trade buttons anywhere. */}
+      <div className="glass fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line p-2">
+        <button type="button" onClick={() => setTab("challenge")} className="flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-3 text-[15px] font-bold text-fg hover:bg-surface-alt">
+          <Icon name="flag" size={18} />
           Challenge
         </button>
-        <button type="button" onClick={copy} className="flex-1 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent sm:flex-none">
+        <button type="button" onClick={copy} className="flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-5 py-3 text-[15px] font-bold text-on-primary hover:brightness-110">
+          <Icon name="copy" size={18} />
           {copied ? "Copied" : "Copy citation"}
         </button>
       </div>

@@ -1,11 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-// Automated WCAG 2.x A/AA audit of every page, in both themes. Automated checks catch roughly a
+// Automated WCAG 2.x A/AA audit of every page, (the app is dark only). Automated checks catch roughly a
 // third of accessibility problems, so this is a floor, not a substitute for manual review.
 const PAGES = [
   ["claims", "/#/"],
   ["claim overview", "/#/claims/clm_fomc_abs_move_spx_v1"],
+  ["feed", "/#/feed"],
   ["event", "/#/events/fomc_2025-12-17"],
   ["scoreboard", "/#/scoreboard"],
   ["method", "/#/method"],
@@ -13,9 +14,8 @@ const PAGES = [
   ["submit", "/#/submit"],
 ] as const;
 
-for (const scheme of ["light", "dark"] as const) {
-  test.describe(`${scheme} theme`, () => {
-    test.use({ colorScheme: scheme });
+{
+  test.describe("dark theme", () => {
 
     for (const [name, path] of PAGES) {
       test(`${name} has no WCAG A/AA violations`, async ({ page }) => {

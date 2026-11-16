@@ -23,7 +23,7 @@ export default function EmbedClaim() {
           const b = item.backtest;
           const full = `${window.location.origin}${window.location.pathname}#/claims/${c.id}`;
           return (
-            <article className="rounded-[10px] border border-line bg-surface p-4" data-testid="embed-card">
+            <article className="rounded-[22px] border border-line bg-surface p-5" data-testid="embed-card">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <StatusBadge status={item.status} />
                 <span className="font-mono text-xs text-muted">{c.id}</span>

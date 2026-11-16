@@ -8,7 +8,7 @@ export function Ready({ children }: { children: (site: SiteData) => ReactNode })
   if (state.phase === "loading") return <p role="status" className="text-muted">Loading claims…</p>;
   if (state.phase === "error") {
     return (
-      <div role="alert" className="rounded-2xl border border-negative p-4 text-sm">
+      <div role="alert" className="rounded-xl border border-negative p-4 text-sm">
         <p className="font-semibold">The site data could not be loaded.</p>
         <p className="mt-1 text-muted">{state.message}</p>
       </div>

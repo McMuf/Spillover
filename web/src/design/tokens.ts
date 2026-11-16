@@ -31,10 +31,10 @@ export interface ColorTokens {
 
 export const color: Record<ThemeName, ColorTokens> = {
   dark: {
-    bg: "#090c12",
-    surface: "#11151d",
-    surfaceAlt: "#181e2a",
-    line: "#222a3a",
+    bg: "#000000",
+    surface: "#0b0b0c",
+    surfaceAlt: "#18181a",
+    line: "#2a2a2d",
     fg: "#f3f6fb",
     muted: "#98a2b5",
     accent: "#8fb2ff",

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Icon } from "./Icon";
 
 /** A rounded surface with a large heading and an optional freshness stamp, as on the overview cards. */
@@ -16,9 +16,9 @@ export function Card({
 }) {
   const headingId = id ?? `card-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <section aria-labelledby={headingId} className="rounded-[22px] border border-line bg-surface p-5">
+    <section aria-labelledby={headingId} className="rounded-xl border border-line bg-surface p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
-        <h2 id={headingId} className="text-[26px] font-extrabold leading-tight">
+        <h2 id={headingId} className="text-2xl font-bold leading-tight">
           {title}
         </h2>
         {stamp && <Stamp>{stamp}</Stamp>}
@@ -80,36 +80,42 @@ export function PillButton({
   );
 }
 
-/** Large underlined section tabs, like News / Feed / Markets. */
-export function SectionTabs() {
-  const items = [
-    { to: "/", label: "Claims", end: true },
-    { to: "/feed", label: "Feed", end: false },
-    { to: "/scoreboard", label: "Scoreboard", end: false },
-  ];
-  return (
-    <nav aria-label="Sections" className="mb-5 grid grid-cols-3 border-b border-line">
-      {items.map((i) => (
-        <NavLink
-          key={i.to}
-          to={i.to}
-          end={i.end}
-          className={({ isActive }) =>
-            `border-b-[3px] py-3.5 text-center text-lg font-bold ${isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"}`
-          }
-        >
-          {i.label}
-        </NavLink>
-      ))}
-    </nav>
-  );
-}
-
 /** A circular icon button for back arrows and similar. */
 export function BackButton({ to, label = "Back" }: { to: string; label?: string }) {
   return (
     <Link to={to} aria-label={label} className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-surface text-fg hover:bg-surface-alt">
       <Icon name="back" />
     </Link>
+  );
+}
+
+/** Underlined text tabs for filtering, like the category row on a market list. */
+export function FilterTabs<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: readonly T[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div role="group" aria-label={label} className="flex gap-6 overflow-x-auto border-b border-line">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          aria-pressed={value === o}
+          onClick={() => onChange(o)}
+          className={`-mb-px shrink-0 whitespace-nowrap border-b-2 py-3 text-[15px] font-semibold ${
+            value === o ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg"
+          }`}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
   );
 }

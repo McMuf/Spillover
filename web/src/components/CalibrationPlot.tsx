@@ -12,7 +12,7 @@ export function CalibrationPlot({ bins }: { bins: CalibrationBin[] }) {
   const used = bins.filter((b) => b.n > 0 && b.mean_confidence !== null && b.hit_rate !== null);
   if (used.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">
+      <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
         No graded outcomes with a stated confidence yet. A claim can state one with the optional{" "}
         <code className="font-mono">confidence</code> field.
       </p>

@@ -9,7 +9,7 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
   });
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Freeze the call");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Spillover tests it in public");
   await expect(page.getByTestId("synthetic-banner")).toBeVisible();
 
   const legend = page.getByTestId("node-legend");

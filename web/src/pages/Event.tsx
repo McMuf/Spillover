@@ -39,7 +39,7 @@ export default function EventPage() {
                 {ev.claims.map((c) => {
                   const claim = findClaim(site, c.claim_id)?.claim;
                   return (
-                    <li key={c.claim_id} className="rounded-[22px] border border-line bg-surface p-4 text-sm">
+                    <li key={c.claim_id} className="rounded-xl border border-line bg-surface p-4 text-sm">
                       <Link className="font-mono text-xs underline" to={`/claims/${c.claim_id}`}>{c.claim_id}</Link>
                       {claim && <p className="mt-1">{claim.statement.replace(/\s+/g, " ").trim()}</p>}
                       <p className="mt-1 text-xs text-muted">

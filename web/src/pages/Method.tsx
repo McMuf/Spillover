@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section aria-labelledby={id} className="space-y-3 rounded-[22px] border border-line bg-surface p-5">
+    <section aria-labelledby={id} className="space-y-3 rounded-xl border border-line bg-surface p-5">
       <h2 id={id} className="text-[22px] font-extrabold">
         {title}
       </h2>

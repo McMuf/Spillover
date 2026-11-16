@@ -3,7 +3,7 @@ import { CalibrationPlot } from "../components/CalibrationPlot";
 import { Identicon } from "../components/Identicon";
 import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
-import { Card, SectionTabs } from "../components/ui";
+import { Card } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { intervalText, pct, plainPct } from "../lib/format";
 
@@ -13,7 +13,6 @@ function Board({ site }: { site: SiteData }) {
   const placeboClaim = site.claims.find((c) => c.claim.event_type === "RANDOM_DATE");
   return (
     <div className="space-y-5">
-      <SectionTabs />
       <p className="text-sm text-muted">
         Generated from the outcome records, never hand-edited. Every number shows its sample size and interval. Small
         samples are flagged.
@@ -22,12 +21,12 @@ function Board({ site }: { site: SiteData }) {
       <Card title="Scoreboard" stamp={stamp} id="claims-h">
         <h2 className="sr-only">Registered claims</h2>
         {sb.claims.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">
+          <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
             No claims are registered yet, so there is no forward evidence to score. Draft claims are on the{" "}
             <Link className="underline" to="/">claims page</Link> with backtest-only results.
           </p>
         ) : (
-          <div tabIndex={0} role="region" aria-label="Scoreboard by claim (scrollable)" className="overflow-x-auto rounded-2xl border border-line">
+          <div tabIndex={0} role="region" aria-label="Scoreboard by claim (scrollable)" className="overflow-x-auto rounded-xl border border-line">
             <table className="w-full min-w-[34rem] text-left text-sm">
               <caption className="sr-only">Scoreboard by claim</caption>
               <thead className="bg-surface-alt text-xs text-muted">
@@ -74,7 +73,7 @@ function Board({ site }: { site: SiteData }) {
                     ["Supported", plainPct(c.share_supported)],
                     ["Hit rate", plainPct(c.hit_rate)],
                   ].map(([k, v]) => (
-                    <div key={k} className="rounded-2xl bg-surface-alt px-2 py-3">
+                    <div key={k} className="rounded-xl bg-surface-alt px-2 py-3">
                       <dt className="text-xs text-muted">{k}</dt>
                       <dd className="text-xl font-extrabold">{v}</dd>
                     </div>

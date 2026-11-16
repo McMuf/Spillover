@@ -44,6 +44,6 @@ test("the method page explains the numbers", async ({ page }) => {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
   await expect(page.getByText("Nothing on this site is investment advice.")).toBeVisible();
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Method" }).click();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "How it works" }).click();
   await expect(page).toHaveURL(/#\/method$/);
 });

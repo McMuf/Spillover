@@ -95,7 +95,7 @@ export default function GraphView({ model, label }: { model: GraphModel; label: 
   return (
     <div>
       {model.tooLarge ? (
-        <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">
+        <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
           This view has {model.nodes.length} nodes, more than the 40 a person can read. Use the table below.
         </p>
       ) : (
@@ -103,7 +103,7 @@ export default function GraphView({ model, label }: { model: GraphModel; label: 
           ref={ref}
           role="img"
           aria-label={`${label}. A list of the same nodes follows for keyboard and screen reader use.`}
-          className="h-[460px] w-full rounded-2xl border border-line bg-surface"
+          className="h-[460px] w-full rounded-xl border border-line bg-surface"
           data-testid="graph-canvas"
         />
       )}
@@ -114,7 +114,7 @@ export default function GraphView({ model, label }: { model: GraphModel; label: 
             <button
               type="button"
               onClick={() => setSelected(n)}
-              className="flex w-full items-center gap-2 rounded-2xl border border-line bg-surface px-3 py-2 text-left text-sm hover:bg-surface-alt"
+              className="flex w-full items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-left text-sm hover:bg-surface-alt"
             >
               <NodeShape type={n.type} size={18} />
               <span className="font-mono text-xs text-muted">{NODE_BY_KEY[n.type].tag}</span>

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Ready } from "../components/Ready";
 import { EMPTY_FORM, pullRequestUrl, toYaml, validateYaml, type ClaimForm } from "../lib/claimYaml";
 
-const FIELD = "mt-1 w-full rounded-2xl border border-line bg-surface-alt px-4 py-3 text-[15px] text-fg";
+const FIELD = "mt-1 w-full rounded-xl border border-line bg-surface-alt px-4 py-3 text-[15px] text-fg";
 
 function Form({ repo }: { repo: string }) {
   const [f, setF] = useState<ClaimForm>(EMPTY_FORM);
@@ -76,10 +76,10 @@ function Form({ repo }: { repo: string }) {
         <div className="space-y-4">
           <section aria-labelledby="yaml-h">
             <h2 id="yaml-h" className="mb-2 text-lg font-extrabold">Your claim file</h2>
-            <pre tabIndex={0} aria-label="Generated claim file (scrollable)" className="max-h-96 overflow-auto rounded-2xl border border-line bg-surface p-3 font-mono text-xs" data-testid="yaml-preview">{text}</pre>
+            <pre tabIndex={0} aria-label="Generated claim file (scrollable)" className="max-h-96 overflow-auto rounded-xl border border-line bg-surface p-3 font-mono text-xs" data-testid="yaml-preview">{text}</pre>
           </section>
 
-          <section aria-labelledby="valid-h" className="rounded-[22px] border border-line bg-surface p-5">
+          <section aria-labelledby="valid-h" className="rounded-xl border border-line bg-surface p-5">
             <h2 id="valid-h" className="mb-2 text-lg font-extrabold">Validation</h2>
             {problems.length === 0 ? (
               <p role="status" className="text-sm font-medium text-positive">✓ Valid against the claim schema.</p>
@@ -92,7 +92,7 @@ function Form({ repo }: { repo: string }) {
             )}
           </section>
 
-          <section aria-labelledby="feas-h" className="rounded-[22px] border border-line bg-surface p-5">
+          <section aria-labelledby="feas-h" className="rounded-xl border border-line bg-surface p-5">
             <h2 id="feas-h" className="mb-1 text-lg font-extrabold">Feasibility check</h2>
             <p className="text-sm text-muted">
               How many past events match and how many are independent is computed by the engine, which does not run in the

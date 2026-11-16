@@ -25,6 +25,8 @@ const PATHS = {
   scale: "M12 4v16M5 20h14M5 8h14M5 8l-2 6a3 3 0 0 0 4 0zM19 8l-2 6a3 3 0 0 0 4 0z",
   close: "M6 6l12 12M18 6 6 18",
   star: "M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.2 6.5 20.2l1-6.2L3 9.6l6.2-.9z",
+  currency: "M12 3v18M16 7.5c0-1.9-1.8-3-4-3s-4 1.1-4 3 1.8 2.6 4 3 4 1.1 4 3-1.8 3-4 3-4-1.1-4-3",
+  drop: "M12 3c3 4 6 7.3 6 10.5a6 6 0 0 1-12 0C6 10.3 9 7 12 3z",
 } as const;
 
 export type IconName = keyof typeof PATHS;

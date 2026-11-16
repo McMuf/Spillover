@@ -24,7 +24,14 @@ export function logoFor(symbol: string): string | undefined {
 const TILE: Record<string, string> = { AMZN: "#232f3e" };
 
 /** Symbols that are a concept rather than a company: drawn with an icon, never as initials. */
-const CONCEPT: Record<string, IconName> = { MKT: "trend", NONE: "calendar" };
+const CONCEPT: Record<string, IconName> = {
+  MKT: "trend",
+  NONE: "calendar",
+  USD: "currency",
+  USDJPY: "currency",
+  WTI: "drop",
+  BLS: "calendar", // the Bureau of Labor Statistics appears as the source of release dates
+};
 
 export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const box = { width: size, height: size };

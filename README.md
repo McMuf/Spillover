@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://mcmuf.github.io/Spillover/"><b>See the live demo</b></a> (synthetic data) ·
+  <a href="https://mcmuf.github.io/Spillover/"><b>See the live site</b></a> (real market data) ·
   <a href="#quick-start"><b>Run it locally</b></a>
 </p>
 
@@ -495,7 +495,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 
 **What it does.** After a window closes, joins each prediction to realized data, grades it, and updates claim statuses and the scoreboard.
 
-**How.** A pure function from (prediction, outcome, rules version) to a score record, written to `outcomes/`. Aggregation reads only those records. The rules version is stored in every score record. A prediction written after its window closed is refused, and a prediction that fails hash verification is never graded. Corrections are new records that point at the old one; the old record stays. Scoring rules 4 to 6 are applied when aggregating: scheduled-event overlaps are excluded, overlapping windows are collapsed, and p-values are adjusted across claims. Where a claim states a confidence, the scoreboard compares it with the realized hit rate (calibration); claims that state none are left out of that plot. A placebo claim that shows a significant result raises a visible alert. *Built and tested on fixtures; not yet run on live data, because live ingestion is not built.*
+**How.** A pure function from (prediction, outcome, rules version) to a score record, written to `outcomes/`. Aggregation reads only those records. The rules version is stored in every score record. A prediction written after its window closed is refused, and a prediction that fails hash verification is never graded. Corrections are new records that point at the old one; the old record stays. Scoring rules 4 to 6 are applied when aggregating: scheduled-event overlaps are excluded, overlapping windows are collapsed, and p-values are adjusted across claims. Where a claim states a confidence, the scoreboard compares it with the realized hit rate (calibration); claims that state none are left out of that plot. A placebo claim that shows a significant result raises a visible alert. *Live: the weekday scoring job grades against real FRED prices. The first forward windows close in December 2026, so no outcome has been graded yet.*
 
 **Why this design.**
 - *Pure functions:* trivially testable, and anyone can recompute the scoreboard from the repo and get the same numbers.
@@ -542,7 +542,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 | `site.yml` | push to `main`, weekdays after scoring | Pages deploy; the FRED key in one step that runs before any npm package | Build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
-`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` do nothing until you add the `FRED_API_KEY` secret and set the repository variable `INGEST_ENABLED` to `true`; that part costs nothing. Headline labeling is the only paid step (Claude API credit, roughly a cent per hundred headlines with Haiku) and has its own switch: add `ANTHROPIC_API_KEY`, add credit to that account, and set the variable `EXTRACT_HEADLINES` to `true`. Calendar and placebo claims never need it. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
+`check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` stay off until the `FRED_API_KEY` secret exists and the repository variable `INGEST_ENABLED` is `true`; that part costs nothing. On this repository both are set: ingestion has been running live since November 16, 2026. Headline labeling is the only paid step (Claude API credit, roughly a cent per hundred headlines with Haiku) and has its own switch: add `ANTHROPIC_API_KEY`, add credit to that account, and set the variable `EXTRACT_HEADLINES` to `true`. Calendar and placebo claims never need it. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
 
@@ -750,10 +750,10 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 
 | Milestone | Goal | Done when |
 |---|---|---|
-| **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
-| **M2: Ledger** *(built; not yet exercised on live data)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
+| **M1: Engine on fixtures** *(done; also runs on real data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
+| **M2: Ledger** *(live: forward predictions frozen since November 16, 2026; timestamp proofs are requested as they are frozen)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
-| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot and guide are built; the 20 starter claims are not* |
+| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot and guide are built. 7 claims are registered (5 tests plus 2 placebo versions); headline-based claims wait for headline labeling, and seed claim 2 for a stock price source.* |
 
 ### Seed claims
 
@@ -765,6 +765,17 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
 | 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified. The engine supports the two-factor baseline; needs crypto prices and an unlock calendar |
 | 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v2` (Nasdaq vs the S&P 500); `_v1` is superseded |
+
+**Registered starter claims** (November 16, 2026), all on free public data:
+
+| Claim | Says | Backtest on real data |
+|---|---|---|
+| `clm_fomc_abs_move_usd_v1` | Fed decision days move the broad dollar index more than usual | Clear in history; waits for 8 forward meetings |
+| `clm_fomc_nasdaq_beyond_spx_v1` | On Fed days the Nasdaq swings more than the S&P 500 explains | Leans yes; interval includes zero |
+| `clm_cpi_nasdaq_beyond_spx_v1` | On CPI days the Nasdaq swings more than the S&P 500 explains | Leans yes; interval includes zero |
+| `clm_jobs_abs_move_spx_v1` | Jobs-report days move the S&P 500 more than usual | Cannot tell from noise yet |
+
+Current numbers are on the [live site](https://mcmuf.github.io/Spillover/); the table above is a snapshot and the site is the record.
 
 Build order: claims **4** and **6** first, because they have plenty of events and validate the engine before anything interesting is tested on it. Event counts for claims 1, 2, 3 and 5 are rough estimates and must be counted from data before launch.
 

@@ -45,9 +45,12 @@ test("loads the site, opens a claim and reads its chain", async ({ page }) => {
   // Registered claims are open to challenge, so the "draft" notice must not appear.
   await expect(page.getByRole("note").filter({ hasText: "This claim is a draft" })).toHaveCount(0);
 
-  // Forward log is honest about being empty; nothing is backfilled.
+  // Forward log: real frozen predictions once the ledger has them; nothing is backfilled.
   await page.getByRole("tab", { name: /Forward log/ }).click();
-  await expect(page.getByText("Nothing here is backfilled.")).toBeVisible();
+  // Either the frozen predictions (with hashes) or the honest empty state; never invented rows.
+  await expect(
+    page.getByRole("region", { name: "Frozen forward predictions (scrollable)" }).or(page.getByText("Nothing here is backfilled.")),
+  ).toBeVisible();
 
   expect(errors).toEqual([]);
 });
@@ -69,12 +72,18 @@ test("submit form validates live and the scoreboard states what is missing", asy
     /github\.com\/McMuf\/Spillover\/new\/main\/claims\?filename=clm_demo_v1\.yaml/,
   );
 
+  // Every registered claim is listed with nothing graded yet. The count comes from the site data,
+  // so registering a new claim never breaks this test.
+  const site = (await (await page.request.get("/data/site.json")).json()) as {
+    scoreboard: { claims: { effective_events: number }[] };
+  };
+  const registered = site.scoreboard.claims.length;
+  expect(registered).toBeGreaterThanOrEqual(3);
   await page.goto("/#/scoreboard");
-  // The registered seed claims (FOMC control, placebo v1 and its v2 successor) are listed, with nothing graded yet.
   const table = page.getByRole("table", { name: "Scoreboard by claim" });
   await expect(table).toBeVisible();
-  await expect(table.getByRole("row")).toHaveCount(4); // header + three claims
-  await expect(table.getByText("Proposed")).toHaveCount(3);
-  await expect(table.getByText("0 of 8")).toHaveCount(3);
+  await expect(table.getByRole("row")).toHaveCount(registered + 1); // + header
+  await expect(table.getByText("Proposed")).toHaveCount(registered);
+  await expect(table.getByText("0 of 8")).toHaveCount(registered);
   await expect(page.getByText("No placebo claim has shown a significant result.")).toBeVisible();
 });

@@ -126,6 +126,9 @@ export function Shell() {
             <a className="underline hover:text-fg" href={`https://github.com/${repo}`}>
               Source on GitHub
             </a>
+            {" · "}Market data: FRED, Federal Reserve Bank of St. Louis (series from the Board of Governors
+            of the Federal Reserve System, the US Energy Information Administration, S&amp;P Dow Jones Indices
+            and Nasdaq)
             {" · "}build {__COMMIT__}
             {" · "}Charts powered by{" "}
             <a className="underline hover:text-fg" href="https://www.tradingview.com/" rel="noopener noreferrer">

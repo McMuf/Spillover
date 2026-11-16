@@ -7,6 +7,9 @@ engine can be checked against ground truth:
 * ``XLK``: beta 1.15 to the market, no event effects (target of the placebo claim).
 * ``SYN2``: beta 0.9 to the market with a -1.2% shock on ``SYN_SHOCK`` event days (tests only).
 * ``NASDAQ``: beta 1.2 to the market, no event effects (target of the v2 placebo claim).
+* ``USD``: an independent dollar index with 1.5x volatility on FOMC days.
+* ``CPI_RELEASE`` (second Tuesday) and ``JOBS_REPORT`` (first Friday) events, placed so they never
+  fall inside an FOMC window; no series reacts to them.
 
 Only derived daily returns are stored, never vendor price files.
 """
@@ -102,6 +105,24 @@ def generate(out_dir: Path) -> None:
 
     # Drawn last on purpose: adding it must not change any series generated before it.
     nasdaq = 0.0001 + 1.2 * mkt + 0.008 * _unit_t(rng, N_DAYS)
+    # Same rule: each later series is drawn after every earlier one.
+    usd_vol = np.full(N_DAYS, 0.004)
+    usd_vol[fomc_idx] *= 1.5
+    usd = usd_vol * _unit_t(rng, N_DAYS)
+
+    def nth_weekday(year: int, month: int, weekday: int, nth: int) -> date:
+        d = date(year, month, 1)
+        while d.weekday() != weekday:
+            d += timedelta(days=1)
+        return d + timedelta(days=7 * (nth - 1))
+
+    months = [(y, m) for y in range(START.year, cal[-1].year + 1) for m in range(1, 13)]
+    cpi_idx = sorted(
+        i for y, m in months if (i := index_of.get(nth_weekday(y, m, 1, 2))) is not None
+    )
+    jobs_idx = sorted(
+        i for y, m in months if (i := index_of.get(nth_weekday(y, m, 4, 1))) is not None
+    )
 
     prices = pl.concat(
         [
@@ -112,6 +133,7 @@ def generate(out_dir: Path) -> None:
                 ("XLK", xlk),
                 ("SYN2", syn2),
                 ("NASDAQ", nasdaq),
+                ("USD", usd),
             )
         ]
     ).with_columns(pl.col("date").cast(pl.Date), pl.col("ret").cast(pl.Float64))
@@ -132,7 +154,9 @@ def generate(out_dir: Path) -> None:
     events = pl.DataFrame(
         rows("FOMC_DECISION", "FED", fomc_idx, True, "fomc")
         + rows("RANDOM_DATE", "NONE", random_idx, False, "rnd")
-        + rows("SYN_SHOCK", "SYNCO", shock_idx, False, "shock"),
+        + rows("SYN_SHOCK", "SYNCO", shock_idx, False, "shock")
+        + rows("CPI_RELEASE", "BLS", cpi_idx, True, "cpi_release")
+        + rows("JOBS_REPORT", "BLS", jobs_idx, True, "jobs_report"),
         schema={
             "event_id": pl.String,
             "event_type": pl.String,

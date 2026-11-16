@@ -213,7 +213,8 @@ def test_a_replication_is_run_by_the_engine_and_recorded_with_a_hash(
     result = run_replication(rep, claim, market, n_boot=300)
     assert result.replication_id == rep.id and result.claim_id == claim.id
     assert result.applied_changes == {"window_end": "+3_trading_days"}
-    assert result.data_synthetic is True and result.n_effective > 15
+    # Enough independent events to estimate, after scheduled-release overlaps are dropped.
+    assert result.data_synthetic is True and result.n_effective >= 10
     assert result.mean is not None and result.mean < 0, (
         "the injected shock persists in the longer window"
     )

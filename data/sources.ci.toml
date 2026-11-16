@@ -28,8 +28,38 @@ symbol = "NASDAQ"
 provider = "fred"
 id = "NASDAQCOM"
 
+# Public-domain series from US government agencies ("public domain: citation requested" on FRED).
+# Source credit is shown in the site footer and the README.
+[[series]]
+symbol = "USD"
+provider = "fred"
+id = "DTWEXBGS"  # Nominal Broad US Dollar Index, Board of Governors of the Federal Reserve System
+
+[[series]]
+symbol = "USDJPY"
+provider = "fred"
+id = "DEXJPUS"  # Japanese yen per US dollar, Board of Governors of the Federal Reserve System
+
+[[series]]
+symbol = "WTI"
+provider = "fred"
+id = "DCOILWTICO"  # West Texas Intermediate crude oil spot price, US Energy Information Administration
+
 [[events]]
 type = "fomc"
+
+# Scheduled US macro releases, from FRED's release calendar (same key; BLS blocks scripts).
+[[events]]
+type = "fred_release"
+release_id = 10  # Consumer Price Index
+event_type = "CPI_RELEASE"
+entity = "BLS"
+
+[[events]]
+type = "fred_release"
+release_id = 50  # Employment Situation (the jobs report)
+event_type = "JOBS_REPORT"
+entity = "BLS"
 
 [[events]]
 type = "store"

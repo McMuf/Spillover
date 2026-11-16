@@ -594,6 +594,18 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 - Every data source, its terms and how to supply your own key are listed in the source table kept with the data adapters.
 - Contributors who bring a new data source must document its terms in the same PR.
 
+**Live data sources** (the configuration the scheduled jobs use, `data/sources.ci.toml`), all read through [FRED](https://fred.stlouisfed.org/), Federal Reserve Bank of St. Louis:
+
+| Series | What | Original source | Terms on FRED |
+|---|---|---|---|
+| `SP500` | S&P 500 index | S&P Dow Jones Indices | Copyright notice on the series page; only derived results are published |
+| `NASDAQCOM` | Nasdaq Composite | Nasdaq, Inc. | Copyright notice on the series page; only derived results are published |
+| `DTWEXBGS` | Broad US dollar index | Board of Governors of the Federal Reserve System | Public domain, citation requested |
+| `DEXJPUS` | Yen per US dollar | Board of Governors of the Federal Reserve System | Public domain, citation requested |
+| `DCOILWTICO` | WTI crude oil spot price | US Energy Information Administration | Public domain, citation requested |
+| Release calendars 10 and 50 | CPI and jobs report dates | Bureau of Labor Statistics schedules | Dates only |
+| FOMC calendar | Fed decision dates | federalreserve.gov | Public domain (US government work) |
+
 **Why Apache-2.0 and not MIT?** The explicit patent grant and contribution terms make it safer for companies and individuals to use and contribute. **Why DCO and not a CLA?** A one-line sign-off lowers friction for first-time contributors and keeps copyright with the author.
 
 ## Quick start

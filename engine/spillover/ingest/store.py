@@ -22,7 +22,13 @@ from spillover.eventstore import (
 from spillover.ingest.config import Config, EventsSpec, SeriesSpec
 from spillover.ingest.fomc import FOMC_URL, fetch_fomc
 from spillover.ingest.http import Fetcher
-from spillover.ingest.prices import Levels, PriceError, fred_levels, read_csv_levels
+from spillover.ingest.prices import (
+    Levels,
+    PriceError,
+    fred_levels,
+    fred_release_dates,
+    read_csv_levels,
+)
 from spillover.placebo_events import (
     BACKTEST_ONLY_PREFIX,
     PLACEBO_DIR,
@@ -199,6 +205,7 @@ def build_events(
     fetch: Fetcher,
     returns: Mapping[str, SeriesReturns] | None = None,
     history: tuple[date, date] | None = None,
+    fred_key: str | None = None,
 ) -> tuple[pl.DataFrame, list[str], list[str]]:
     """All configured events. ``history`` = (data start, today) adds past placebo months."""
     frames: list[pl.DataFrame] = []
@@ -246,6 +253,28 @@ def build_events(
                         schema=EVENT_SCHEMA,
                     )
                 )
+        elif spec.type == "fred_release":
+            assert spec.release_id and spec.event_type and spec.entity
+            if not fred_key:
+                raise IngestError(f"release {spec.release_id}: set {FRED_KEY_ENV} to read it")
+            start = history[0] if history else date(1900, 1, 1)
+            dates = [d for d in fred_release_dates(spec.release_id, fred_key, fetch) if d >= start]
+            url = f"https://fred.stlouisfed.org/releases/calendar?rid={spec.release_id}"
+            sources.append(url)
+            frames.append(
+                pl.DataFrame(
+                    {
+                        "event_id": [f"{spec.event_type.lower()}_{d.isoformat()}" for d in dates],
+                        "event_type": [spec.event_type] * len(dates),
+                        "entity": [spec.entity] * len(dates),
+                        "date": dates,
+                        "scheduled": [True] * len(dates),
+                        "source": [url] * len(dates),
+                        "extractor_version": ["none"] * len(dates),
+                    },
+                    schema=EVENT_SCHEMA,
+                )
+            )
         elif spec.type == "price_moves":
             assert spec.symbol is not None
             if returns is None or spec.symbol not in returns:
@@ -295,7 +324,11 @@ def build_cache(
     days = sorted({d for ds, _ in per_series.values() for d in ds})
     missing = {sym: len(days) - len(ds) for sym, (ds, _) in per_series.items()}
     events, skipped, event_sources = build_events(
-        config.events, fetch, per_series, history=(config.data.start, today)
+        config.events,
+        fetch,
+        per_series,
+        history=(config.data.start, today),
+        fred_key=env.get(FRED_KEY_ENV, "").strip() or None,
     )
 
     # Long format, each series on its own days; the loader fills the gaps with "did not trade".

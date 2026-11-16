@@ -72,6 +72,18 @@ TAXONOMY: tuple[EventType, ...] = (
         extractable=False,
     ),
     EventType(
+        "CPI_RELEASE",
+        "The US Consumer Price Index report is published (8:30 a.m. New York time, before the "
+        "stock market opens). Comes from the release calendar on FRED.",
+        extractable=False,
+    ),
+    EventType(
+        "JOBS_REPORT",
+        "The US Employment Situation report (payrolls, unemployment rate) is published (8:30 "
+        "a.m. New York time). Comes from the release calendar on FRED.",
+        extractable=False,
+    ),
+    EventType(
         "LARGE_MOVE_UP",
         "The named instrument's daily return on its own exchange is above +3 standard deviations "
         "of its previous 60 trading days. Derived from prices, never from headlines.",

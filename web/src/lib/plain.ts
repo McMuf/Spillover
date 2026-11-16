@@ -15,6 +15,10 @@ const CATEGORY: Record<string, string> = {
   REGULATORY_ACTION: "Regulation",
   EXEC_DEPARTURE: "Leadership",
   FOMC_DECISION: "Fed & Macro",
+  CPI_RELEASE: "Fed & Macro",
+  JOBS_REPORT: "Fed & Macro",
+  LARGE_MOVE_UP: "Price moves",
+  LARGE_MOVE_DOWN: "Price moves",
   RANDOM_DATE: "Control test",
 };
 
@@ -35,6 +39,10 @@ const EVENT_LABEL: Record<string, string> = {
   EXEC_DEPARTURE: "a CEO or CFO leaves",
   FOMC_DECISION: "the Federal Reserve announces an interest-rate decision",
   RANDOM_DATE: "nothing in particular happens (a randomly chosen day)",
+  CPI_RELEASE: "the monthly US inflation report (CPI) comes out",
+  JOBS_REPORT: "the monthly US jobs report comes out",
+  LARGE_MOVE_UP: "the named stock jumps far more than usual",
+  LARGE_MOVE_DOWN: "the named stock drops far more than usual",
 };
 
 export function eventLabel(eventType: string): string {
@@ -55,6 +63,10 @@ const EVENT_SHORT: Record<string, string> = {
   EXEC_DEPARTURE: "CEO and CFO exits",
   FOMC_DECISION: "Fed rate decisions",
   RANDOM_DATE: "random days",
+  CPI_RELEASE: "inflation reports",
+  JOBS_REPORT: "jobs reports",
+  LARGE_MOVE_UP: "big up days",
+  LARGE_MOVE_DOWN: "big down days",
 };
 
 /** How a symbol reads mid-sentence. Indices and funds take "the". */
@@ -63,6 +75,9 @@ const SHORT_NAME: Record<string, string> = {
   NASDAQ: "the Nasdaq",
   XLK: "the tech-sector ETF",
   MKT: "the market",
+  USD: "the dollar",
+  USDJPY: "the dollar–yen rate",
+  WTI: "oil",
 };
 
 export function shortName(symbol: string): string {
@@ -149,7 +164,7 @@ export function byTrending(claims: SiteClaim[]): SiteClaim[] {
   return [...claims].sort((a, b) => trendingScore(b) - trendingScore(a) || a.claim.id.localeCompare(b.claim.id));
 }
 
-const ACRONYMS: Record<string, string> = { fomc: "FOMC", fcf: "FCF", capex: "Capex", ceo: "CEO", cfo: "CFO" };
+const ACRONYMS: Record<string, string> = { fomc: "FOMC", cpi: "CPI", fcf: "FCF", capex: "Capex", ceo: "CEO", cfo: "CFO" };
 
 export function eventTitle(e: Pick<SiteEvent, "event_type">): string {
   const words = e.event_type.split("_").map((w) => w.toLowerCase());
@@ -166,6 +181,8 @@ export function entityName(e: Pick<SiteEvent, "entities" | "event_type">): strin
 /** A headline for an event card. */
 export function eventHeadline(e: Pick<SiteEvent, "entities" | "event_type">): string {
   if (e.event_type === "FOMC_DECISION") return "Fed announces a rate decision";
+  if (e.event_type === "CPI_RELEASE") return "US inflation report (CPI) released";
+  if (e.event_type === "JOBS_REPORT") return "US jobs report released";
   if (e.event_type === "RANDOM_DATE") return "Placebo day: nothing should happen";
   return `${entityName(e)}: ${eventTitle(e).toLowerCase()}`;
 }
@@ -173,6 +190,8 @@ export function eventHeadline(e: Pick<SiteEvent, "entities" | "event_type">): st
 /** One plain sentence about an event, for the feed. */
 export function eventSentence(e: Pick<SiteEvent, "entities" | "event_type" | "scheduled">): string {
   if (e.event_type === "FOMC_DECISION") return "The Federal Reserve announced its interest-rate decision. Scheduled in advance on the Fed's calendar.";
+  if (e.event_type === "CPI_RELEASE") return "The monthly US inflation report (Consumer Price Index) came out at 8:30 a.m. New York time, before stocks open.";
+  if (e.event_type === "JOBS_REPORT") return "The monthly US jobs report (payrolls and unemployment) came out at 8:30 a.m. New York time.";
   if (e.event_type === "RANDOM_DATE") return "A randomly chosen control day. The engine should find no effect here; if it does, something is broken.";
   return `${capitalize(eventLabel(e.event_type))}${e.scheduled ? " (scheduled)" : ""}.`;
 }

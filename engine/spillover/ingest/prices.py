@@ -50,6 +50,38 @@ def fred_levels(series_id: str, api_key: str, start: date, fetch: Fetcher) -> Le
     return parse_fred(fetch(f"{FRED_URL}?{query}"), series_id)
 
 
+FRED_RELEASE_DATES_URL = "https://api.stlouisfed.org/fred/release/dates"
+
+
+def parse_release_dates(payload: str, release_id: int) -> list[date]:
+    """Dates on which a FRED release (CPI, the jobs report...) came out or is scheduled to."""
+    try:
+        rows = json.loads(payload)["release_dates"]
+        dates = sorted({date.fromisoformat(str(r["date"])) for r in rows})
+    except (ValueError, KeyError, TypeError):
+        raise PriceError(f"FRED release {release_id}: unexpected response") from None
+    if not dates:
+        raise PriceError(f"FRED release {release_id}: no release dates returned")
+    return dates
+
+
+def fred_release_dates(release_id: int, api_key: str, fetch: Fetcher) -> list[date]:
+    query = urllib.parse.urlencode(
+        {
+            "release_id": release_id,
+            "api_key": api_key,
+            "file_type": "json",
+            # The whole real-time history, and dates that are scheduled but have no data yet.
+            "realtime_start": "1776-07-04",
+            "realtime_end": "9999-12-31",
+            "include_release_dates_with_no_data": "true",
+            "sort_order": "asc",
+            "limit": 10000,
+        }
+    )
+    return parse_release_dates(fetch(f"{FRED_RELEASE_DATES_URL}?{query}"), release_id)
+
+
 _PRICE_COLUMNS = ("adj close", "adj_close", "close", "price")
 
 

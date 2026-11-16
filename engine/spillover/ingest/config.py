@@ -42,12 +42,17 @@ class SeriesSpec(_Strict):
 
 
 class EventsSpec(_Strict):
-    type: Literal["fomc", "csv", "store", "placebo", "price_moves"]
+    type: Literal["fomc", "csv", "store", "placebo", "price_moves", "fred_release"]
     # csv: the file; store: the events/ directory (default events); placebo: events/placebo
     path: Path | None = None
     confirmed: Path | None = None  # store: human-confirmed low-confidence events
     # price_moves: the configured series to watch for unusually large daily moves
     symbol: str | None = None
+    # fred_release: a FRED release id (10 = CPI, 50 = the jobs report), the event type its dates
+    # become, and the entity they are about. Release dates are scheduled in advance.
+    release_id: int | None = None
+    event_type: str | None = None
+    entity: str | None = None
 
     @model_validator(mode="after")
     def _fields(self) -> Self:
@@ -55,6 +60,12 @@ class EventsSpec(_Strict):
             raise ValueError("events of type 'csv' need 'path'")
         if self.type == "price_moves" and not self.symbol:
             raise ValueError("events of type 'price_moves' need 'symbol' (a configured series)")
+        if self.type == "fred_release" and not (
+            self.release_id and self.event_type and self.entity
+        ):
+            raise ValueError(
+                "events of type 'fred_release' need 'release_id', 'event_type', 'entity'"
+            )
         return self
 
 

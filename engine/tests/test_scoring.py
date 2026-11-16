@@ -62,6 +62,18 @@ def shock_events(market: MarketData) -> list[tuple[str, date]]:
     return list(zip(ev["event_id"].to_list(), ev["date"].to_list(), strict=True))
 
 
+def clear_shock_events(market: MarketData, end_offset: int = 1) -> list[tuple[str, date]]:
+    """Shock events whose window touches no scheduled release (so the overlap rule keeps them)."""
+    ev = market.events
+    sched = {market.day_index(d) for d in ev.filter(ev["scheduled"])["date"].to_list()}
+    out = []
+    for event_id, when in shock_events(market):
+        t0 = market.day_index(when)
+        if t0 is not None and not any(t0 <= s <= t0 + end_offset for s in sched if s is not None):
+            out.append((event_id, when))
+    return out
+
+
 def make_outcome(**kw: Any) -> Outcome:
     start = kw.pop("start", date(2026, 3, 2))
     base: dict[str, Any] = {
@@ -293,7 +305,7 @@ def test_scoreboard_proposed_until_enough_events_and_drafts_are_hidden(
     claim = make_claim(tmp_path)
     draft = make_claim(tmp_path, id="clm_draft_v1", registered_at="set_by_ci_on_merge")
     preds, outs = tmp_path / "predictions", tmp_path / "outcomes"
-    for event_id, when in shock_events(market)[:3]:
+    for event_id, when in clear_shock_events(market)[:3]:
         freeze(claim, preds, event_id, when)
     grade_all(preds, outs, market, NOW)
 

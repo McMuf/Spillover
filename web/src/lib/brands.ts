@@ -35,6 +35,8 @@ export const NAME_BY_SYMBOL: Readonly<Record<string, string>> = {
   SPOT: "Spotify", SNAP: "Snap", RDDT: "Reddit", ZM: "Zoom", SNOW: "Snowflake", DDOG: "Datadog", NET: "Cloudflare",
   WFC: "Wells Fargo", BAC: "Bank of America", GS: "Goldman Sachs", BTC: "Bitcoin", ETH: "Ethereum",
   MSFT: "Microsoft", AMZN: "Amazon", ORCL: "Oracle", CRM: "Salesforce", FED: "Federal Reserve",
+  BLS: "Bureau of Labor Statistics", USD: "US dollar (broad index)", USDJPY: "Dollar–yen rate",
+  WTI: "WTI crude oil",
 };
 
 export function brandFor(symbol: string): SimpleIcon | undefined {

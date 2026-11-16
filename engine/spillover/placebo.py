@@ -36,6 +36,7 @@ def placebo_rejection_rate(
     seed: int = DEFAULT_SEED,
 ) -> float:
     """Fraction of random-date trials whose bootstrap p-value falls below ``alpha``."""
+    data = data.restrict([symbol, factor] if baseline == "factor_only" else [symbol])
     y = data.series(symbol)
     x = data.series(factor) if baseline == "factor_only" else None
     lo = EST_GAP + EST_LEN

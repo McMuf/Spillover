@@ -233,6 +233,7 @@ CHART_POST_EXTRA = 10  # trading days shown after the event window closes
 
 def mean_window_path(claim: Claim, data: MarketData, stats: list[EventStat]) -> WindowPath | None:
     """Mean cumulative abnormal path for the evidence chart, or None if no event has full range."""
+    data = data.restrict(claim.symbols)
     y = data.instrument_series(claim.instrument.symbol, claim.instrument.basket)
     x = data.factor_matrix(claim.factor_names) if claim.baseline == "factor_only" else None
     end = claim.window.end_offset
@@ -273,6 +274,9 @@ def run_backtest(
             "it needs index-weight data. Remove 'decompose' or wait for that milestone."
         )
 
+    # The claim's own calendar: the days its instrument and factors all traded. An event dated on
+    # another market's day (a Seoul close) lands on the first of these days on or after it.
+    data = data.restrict(claim.symbols)
     y = data.instrument_series(claim.instrument.symbol, claim.instrument.basket)
     x = data.factor_matrix(claim.factor_names) if claim.baseline == "factor_only" else None
     end_offset = claim.window.end_offset

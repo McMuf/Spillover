@@ -66,6 +66,21 @@ type = "store"
 type = "placebo"
 path = "events/placebo"
 
+# Events from price moves: a day on which a series moved more than 3 standard deviations of its
+# previous 60 trading days becomes LARGE_MOVE_UP or LARGE_MOVE_DOWN (the rule is fixed in the
+# taxonomy, so it cannot be tuned after the fact). `symbol` must be a configured [[series]].
+# Each series keeps its own trading days, so a Korean stock with Korean holidays can sit next to US
+# stocks with US holidays; a claim is measured on the days its own instrument and factors traded.
+# Example for seed claim 2 (needs a price source for SK Hynix whose terms you have checked):
+# [[series]]
+# symbol = "SKHYNIX"
+# provider = "csv"
+# path = "data/raw/000660.KS.csv"
+#
+# [[events]]
+# type = "price_moves"
+# symbol = "SKHYNIX"
+
 # --- Headlines -> events ----------------------------------------------------------------------
 # `uv run spillover ingest-headlines` fetches these feeds and keeps only each item's title, link,
 # source name, id and publication time (never article text). `terms` is required: say why you may

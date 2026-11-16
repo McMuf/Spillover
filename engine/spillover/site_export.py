@@ -28,11 +28,17 @@ from spillover.eventstudy import (
     run_backtest,
 )
 from spillover.lanes import describe_changes, lane_files, load_challenge, load_replication
-from spillover.ledger import RULES_VERSION, engine_version, load_prediction, prediction_files
+from spillover.ledger import (
+    RULES_VERSION,
+    Prediction,
+    engine_version,
+    load_prediction,
+    prediction_files,
+)
 from spillover.models import Claim
 from spillover.replicate import load_result, result_path
 from spillover.scoreboard import build_scoreboard
-from spillover.scoring import load_outcome, outcome_files, window_closed
+from spillover.scoring import load_outcome, outcome_files, prediction_symbols, window_closed
 
 REPO = "McMuf/Spillover"
 
@@ -311,6 +317,14 @@ def _chart(w: WindowPath) -> Chart:
     )
 
 
+def _own_calendar(data: MarketData, pred: Prediction) -> MarketData:
+    """The prediction's own trading calendar, or the shared one if its prices are not cached."""
+    try:
+        return data.restrict(prediction_symbols(pred))
+    except DataError:
+        return data
+
+
 def _forward_log(
     claim: Claim, data: MarketData, predictions_root: Path, outcomes_root: Path
 ) -> list[ForwardRow]:
@@ -327,7 +341,7 @@ def _forward_log(
         outcome = graded.get(pred.event_id)
         if outcome is not None:
             status: Literal["open", "closed", "graded"] = "graded"
-        elif window_closed(data, pred.event_date, pred.window.end_offset):
+        elif window_closed(_own_calendar(data, pred), pred.event_date, pred.window.end_offset):
             status = "closed"
         else:
             status = "open"

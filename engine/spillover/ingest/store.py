@@ -24,6 +24,7 @@ from spillover.ingest.fomc import FOMC_URL, fetch_fomc
 from spillover.ingest.http import Fetcher
 from spillover.ingest.prices import Levels, PriceError, fred_levels, read_csv_levels
 from spillover.placebo_events import PLACEBO_DIR, placebo_files
+from spillover.price_events import price_move_events
 
 MIN_DAYS = 200  # an estimation window is 130 days; fewer than this cannot test anything
 FRED_KEY_ENV = "FRED_API_KEY"
@@ -52,7 +53,8 @@ class IngestSummary:
     last: date
     n_days: int
     symbols: list[str]
-    dropped_days: dict[str, int]
+    # For each series, how many days of the shared calendar it did not trade (its own holidays).
+    missing_days: dict[str, int]
     n_events: int
     skipped_events: list[str]
 
@@ -72,10 +74,50 @@ def _levels_for(spec: SeriesSpec, config: Config, env: Mapping[str, str], fetch:
     return read_csv_levels(spec.path)
 
 
+SeriesReturns = tuple[list[date], list[float]]
+
+
+def own_calendar_returns(
+    levels: dict[str, Levels], start: date, max_abs_return: float
+) -> dict[str, SeriesReturns]:
+    """Simple daily returns for each series on its OWN trading days.
+
+    Markets keep different holidays, so no day is dropped here: the engine later lines up exactly
+    the series a claim needs (``MarketData.restrict``), compounding across any day one of them
+    skipped, which gives the same numbers as computing returns on their shared days.
+    """
+    trimmed = {s: {d: v for d, v in lv.items() if d >= start} for s, lv in levels.items()}
+    out: dict[str, SeriesReturns] = {}
+    for symbol, lv in trimmed.items():
+        if any(v <= 0 for v in lv.values()):
+            bad = min(d for d, v in lv.items() if v <= 0)
+            raise PriceError(f"{symbol}: non-positive price on {bad}; refusing to compute returns")
+        days = sorted(lv)
+        if len(days) < MIN_DAYS:
+            raise IngestError(
+                f"{symbol}: only {len(days)} trading days since {start}; need at least {MIN_DAYS}. "
+                "Check the start date and the source."
+            )
+        series = [lv[d] / lv[p] - 1.0 for p, d in zip(days[:-1], days[1:], strict=True)]
+        worst = max(series, key=abs)
+        if abs(worst) > max_abs_return:
+            when = days[1:][series.index(worst)]
+            raise PriceError(
+                f"{symbol}: a one-day move of {worst:+.1%} on {when} exceeds {max_abs_return:.0%}. "
+                "That is usually unadjusted split or dividend data; "
+                "fix the source or raise max_abs_return."
+            )
+        out[symbol] = (days[1:], series)
+    return out
+
+
 def aligned_returns(
     levels: dict[str, Levels], start: date, max_abs_return: float
 ) -> tuple[list[date], dict[str, list[float]], dict[str, int]]:
-    """Common trading days across all series, then simple daily returns on that shared calendar."""
+    """Common trading days across all series, then simple daily returns on that shared calendar.
+
+    Kept as the reference the engine's per-claim alignment is tested against.
+    """
     trimmed = {s: {d: v for d, v in lv.items() if d >= start} for s, lv in levels.items()}
     for symbol, lv in trimmed.items():
         bad = [d for d, v in lv.items() if v <= 0]
@@ -148,7 +190,7 @@ def read_events_csv(path: Path) -> pl.DataFrame:
 
 
 def build_events(
-    specs: list[EventsSpec], fetch: Fetcher
+    specs: list[EventsSpec], fetch: Fetcher, returns: Mapping[str, SeriesReturns] | None = None
 ) -> tuple[pl.DataFrame, list[str], list[str]]:
     frames: list[pl.DataFrame] = []
     skipped: list[str] = []
@@ -177,6 +219,15 @@ def build_events(
             files = placebo_files(root)
             sources.append(str(root))
             frames.extend(read_events_csv(f) for f in files)
+        elif spec.type == "price_moves":
+            assert spec.symbol is not None
+            if returns is None or spec.symbol not in returns:
+                raise IngestError(
+                    f"price_moves watches {spec.symbol!r}, which is not a configured series"
+                )
+            days, series = returns[spec.symbol]
+            sources.append(f"price moves of {spec.symbol}")
+            frames.append(price_move_events(spec.symbol, days, series))
         elif spec.type == "store":
             root = spec.path or EVENTS_DIR
             built = events_frame(
@@ -209,17 +260,20 @@ def build_cache(
 ) -> IngestSummary:
     real = [s for s in config.series if s.provider != "alias"]
     levels = {s.symbol: _levels_for(s, config, env, fetch) for s in real}
-    days, returns, dropped = aligned_returns(levels, config.data.start, config.data.max_abs_return)
+    per_series = own_calendar_returns(levels, config.data.start, config.data.max_abs_return)
     for s in config.series:
         if s.provider == "alias":
             assert s.of is not None
-            returns[s.symbol] = returns[s.of]
-    events, skipped, event_sources = build_events(config.events, fetch)
+            per_series[s.symbol] = per_series[s.of]
+    days = sorted({d for ds, _ in per_series.values() for d in ds})
+    missing = {sym: len(days) - len(ds) for sym, (ds, _) in per_series.items()}
+    events, skipped, event_sources = build_events(config.events, fetch, per_series)
 
+    # Long format, each series on its own days; the loader fills the gaps with "did not trade".
     prices = pl.concat(
         [
-            pl.DataFrame({"date": days, "symbol": sym, "ret": series})
-            for sym, series in returns.items()
+            pl.DataFrame({"date": ds, "symbol": sym, "ret": series})
+            for sym, (ds, series) in per_series.items()
         ]
     ).with_columns(pl.col("date").cast(pl.Date), pl.col("ret").cast(pl.Float64))
 
@@ -244,5 +298,5 @@ def build_cache(
     }
     (out / "MANIFEST.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return IngestSummary(
-        out, days[0], days[-1], len(days), sorted(returns), dropped, events.height, skipped
+        out, days[0], days[-1], len(days), sorted(per_series), missing, events.height, skipped
     )

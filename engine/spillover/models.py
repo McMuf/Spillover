@@ -167,6 +167,11 @@ class Claim(_Strict):
         return list(self.factors) if self.factors else [self.factor]
 
     @property
+    def symbols(self) -> list[str]:
+        """Every series whose prices this claim needs: the instrument (or basket) and factors."""
+        return [*self.instrument.members, *self.factor_names]
+
+    @property
     def factor_label(self) -> str:
         """Factors as one string, "BTC+ETH", as stored in ledger records."""
         return "+".join(self.factor_names) if self.factor_names else self.factor

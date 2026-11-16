@@ -42,15 +42,19 @@ class SeriesSpec(_Strict):
 
 
 class EventsSpec(_Strict):
-    type: Literal["fomc", "csv", "store", "placebo"]
+    type: Literal["fomc", "csv", "store", "placebo", "price_moves"]
     # csv: the file; store: the events/ directory (default events); placebo: events/placebo
     path: Path | None = None
     confirmed: Path | None = None  # store: human-confirmed low-confidence events
+    # price_moves: the configured series to watch for unusually large daily moves
+    symbol: str | None = None
 
     @model_validator(mode="after")
     def _fields(self) -> Self:
         if self.type == "csv" and self.path is None:
             raise ValueError("events of type 'csv' need 'path'")
+        if self.type == "price_moves" and not self.symbol:
+            raise ValueError("events of type 'price_moves' need 'symbol' (a configured series)")
         return self
 
 

@@ -183,6 +183,8 @@ Reading it aloud: *"When a Magnificent 7 company's free cash flow turns negative
 
 The `decompose` field matters. If one member is 20% of an index and drops 5%, the index mechanically falls about 1% with no spillover at all. Spillover separates **mechanical weight** from **spillover**, so a claim cannot get credit for arithmetic. *Not implemented yet: it needs index-weight data, and the engine refuses a claim that sets it rather than guess.*
 
+**Events from price moves.** Some claims are triggered by a market move, not a headline. With an `[[events]] type = "price_moves"` entry in the data config, a day on which a series moved more than **3 standard deviations of its previous 60 trading days** becomes a `LARGE_MOVE_UP` or `LARGE_MOVE_DOWN` event for that symbol. The rule lives in the taxonomy, not in the claim, so nobody can pick a threshold after seeing which one works, and it uses only data before the day, so the event is known as soon as that close is. **Different holidays are handled:** each series keeps its own trading days, and a claim is measured only on the days its own instrument and factors all traded, with returns compounded across any day one of them skipped (which equals computing returns on the shared days). An event dated on one exchange's trading day starts on the claim market's first session on or after that date; for Seoul and New York that is the same calendar date, because Seoul closes hours before New York opens.
+
 Two optional fields widen what a claim can test:
 
 - **Baskets.** `instrument: {venue: us_equity, symbol: AI_SUPPLIERS, basket: [NVDA, AVGO, MU, ANET]}` tests an equal-weighted basket (2 to 50 members, rebalanced daily): its daily return is the average of its members' returns.
@@ -746,7 +748,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | # | Claim | Role | Notes |
 |---|---|---|---|
 | 1 | Hyperscaler capex raise leads a supplier basket higher over day 0 to +5 | Core | Rough event count, to be verified. The engine supports the basket; events come from headlines, so this waits on live ingestion |
-| 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag |
+| 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag. The engine supports it: events come from price moves (`LARGE_MOVE_UP` / `LARGE_MOVE_DOWN`, beyond 3 standard deviations of the previous 60 days, fixed in the taxonomy) and each market keeps its own holidays. Needs a price source for SK Hynix and the US names whose terms you have checked |
 | 3 | Mag-7 negative free-cash-flow headline hits MAGS beyond the company's weight | Thin | Few events; tests the weight decomposition |
 | 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
 | 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified. The engine supports the two-factor baseline; needs crypto prices and an unlock calendar |

@@ -18,7 +18,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from spillover.data import MarketData
+from spillover.data import DataError, MarketData
 from spillover.eventstudy import matching_events
 from spillover.models import Claim, Instrument, Window, superseded_ids
 
@@ -214,6 +214,13 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
             continue
         if claim.id in replaced:
             continue
+        # Judge "is the window still open" on the claim's own trading calendar. If its prices are
+        # not in the cache at all, fall back to the shared calendar: freezing a forward prediction
+        # never needs the instrument's prices, only grading does.
+        try:
+            cdata = data.restrict(claim.symbols)
+        except DataError:
+            cdata = data
         events = matching_events(claim, data)
         # Events from the extractor carry its version; calendar and CSV events carry "none".
         versions: dict[str, str] = (
@@ -230,7 +237,7 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
         ):
             if when <= registered.date():
                 before += 1
-            elif not window_is_open(data, when, claim.window.end_offset):
+            elif not window_is_open(cdata, when, claim.window.end_offset):
                 closed += 1
             else:
                 pred = build_prediction(

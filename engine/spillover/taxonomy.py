@@ -12,6 +12,11 @@ from dataclasses import dataclass
 
 NONE = "NONE"
 
+# The fixed rule for price-move events. It is part of the event definition, so a claim cannot pick a
+# threshold after seeing which one "works". Changing either number is a rules change.
+MOVE_LOOKBACK = 60  # trading days of the stock's own history used to measure its normal volatility
+MOVE_SIGMA = 3.0  # a move counts when it exceeds this many standard deviations of that history
+
 
 @dataclass(frozen=True)
 class EventType:
@@ -64,6 +69,18 @@ TAXONOMY: tuple[EventType, ...] = (
     EventType(
         "RANDOM_DATE",
         "A randomly chosen date. The permanent placebo control.",
+        extractable=False,
+    ),
+    EventType(
+        "LARGE_MOVE_UP",
+        "The named instrument's daily return on its own exchange is above +3 standard deviations "
+        "of its previous 60 trading days. Derived from prices, never from headlines.",
+        extractable=False,
+    ),
+    EventType(
+        "LARGE_MOVE_DOWN",
+        "The named instrument's daily return on its own exchange is below -3 standard deviations "
+        "of its previous 60 trading days. Derived from prices, never from headlines.",
         extractable=False,
     ),
 )

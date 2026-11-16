@@ -111,8 +111,15 @@ def window_closed(data: MarketData, event_date: date, end_offset: int) -> bool:
     return day0 is not None and day0 + end_offset <= len(data.dates) - 1
 
 
+def prediction_symbols(pred: Prediction) -> list[str]:
+    """Every series a frozen prediction needs: its instrument (or basket) and its factors."""
+    factors = pred.factor.split("+") if pred.baseline == "factor_only" else []
+    return [*pred.instrument.members, *factors]
+
+
 def grade_prediction(pred: Prediction, data: MarketData, now: datetime) -> Outcome | None:
     """Score one prediction, or return None if its window has not closed in the data yet."""
+    data = data.restrict(prediction_symbols(pred))  # the prediction's own trading calendar
     end_offset = pred.window.end_offset
     day0 = data.day_index(pred.event_date)
     if day0 is None or day0 + end_offset > len(data.dates) - 1:

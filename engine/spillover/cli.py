@@ -500,10 +500,11 @@ def ingest(
         f"({summary.first} to {summary.last}), series {', '.join(summary.symbols)}, "
         f"{summary.n_events} event(s)"
     )
-    for symbol, n in summary.dropped_days.items():
+    for symbol, n in summary.missing_days.items():
         if n:
             typer.echo(
-                f"  note: {symbol} had {n} day(s) missing from another series; dropped from all"
+                f"  note: {symbol} did not trade on {n} of those day(s) (its own holidays); "
+                "each claim is measured only on the days its own series traded"
             )
     for line in summary.skipped_events:
         typer.echo(f"  note: {line}")

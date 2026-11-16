@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -22,6 +22,13 @@ class DataError(RuntimeError):
 
 @dataclass(frozen=True)
 class MarketData:
+    """Daily returns on the union of every symbol's trading days.
+
+    A NaN means that symbol did not trade that day (a holiday on its own exchange). Analyses never
+    use the union directly: they take ``restrict(symbols)``, the days on which all of their symbols
+    traded, with each symbol's returns compounded across the days it skips.
+    """
+
     root: Path
     synthetic: bool
     dates: list[date]
@@ -40,6 +47,36 @@ class MarketData:
             raise DataError(
                 f"no return series for {symbol!r} in {self.root} (available: {known})"
             ) from None
+
+    def restrict(self, symbols: Iterable[str]) -> MarketData:
+        """The calendar on which every one of ``symbols`` traded, with returns that stay exact.
+
+        On a kept day, each symbol's return covers everything since the previous kept day: its own
+        daily returns in between are compounded, which equals the price ratio across that span.
+        When no symbol has a gap, this returns ``self`` unchanged, so single-calendar data gives
+        bit-identical results.
+        """
+        names = list(dict.fromkeys(symbols))
+        cols = [self.series(s) for s in names]
+        if not cols:
+            return self
+        traded = ~np.isnan(np.vstack(cols))
+        keep = np.flatnonzero(traded.all(axis=0))
+        if len(keep) == len(self.dates):
+            return self
+        returns: dict[str, FloatArray] = {}
+        for name, r in zip(names, cols, strict=True):
+            growth = np.log1p(np.where(np.isnan(r), 0.0, r))
+            cum = np.concatenate(([0.0], np.cumsum(growth)))  # cum[i + 1] = log growth to day i
+            prev = np.concatenate(([keep[0] - 1], keep[:-1])) if len(keep) else keep
+            returns[name] = np.expm1(cum[keep + 1] - cum[prev + 1])
+        return MarketData(
+            root=self.root,
+            synthetic=self.synthetic,
+            dates=[self.dates[i] for i in keep],
+            returns=returns,
+            events=self.events,
+        )
 
     def instrument_series(self, symbol: str, basket: Sequence[str] | None = None) -> FloatArray:
         """Daily returns of an instrument; for a basket, the equal-weighted mean of its members."""
@@ -79,9 +116,8 @@ def load_market_data(root: Path) -> MarketData:
     prices = _read(root / "prices.parquet")
     events = _read(root / "events.parquet")
 
+    # Symbols may trade on different calendars (different holidays); a missing day becomes NaN.
     wide = prices.pivot(on="symbol", index="date", values="ret").sort("date")
-    if wide.null_count().to_numpy().sum() > 0:
-        raise DataError("every symbol must have a return for every trading day")
 
     manifest_path = root / "MANIFEST.json"
     synthetic = False
@@ -93,6 +129,6 @@ def load_market_data(root: Path) -> MarketData:
         root=root,
         synthetic=synthetic,
         dates=wide["date"].to_list(),
-        returns={s: wide[s].to_numpy().astype(np.float64) for s in symbols},
+        returns={s: wide[s].fill_null(float("nan")).to_numpy().astype(np.float64) for s in symbols},
         events=events,
     )

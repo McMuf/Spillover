@@ -539,7 +539,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 | `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Reads the PR's changed files through the GitHub API as plain text, validates them with trusted code from `main`, and posts or updates one comment. Everything taken from the PR is shown inertly (code spans, length-limited) and the bot only edits its own comment |
 | `ingest.yml` | schedule on `main` | secrets for data keys; write to `main` | Build the price cache, draw placebo dates, freeze predictions, and (only if `EXTRACT_HEADLINES` is set) fetch headlines and extract events. **Off by default** (repository variable `INGEST_ENABLED`) |
 | `score.yml` | schedule on `main` | `FRED_API_KEY` secret; write to `main` | Grade closed windows against real prices, rebuild scoreboard data. Same off-by-default switch |
-| `site.yml` | push to `main` | Pages deploy | Build and deploy the static site |
+| `site.yml` | push to `main`, weekdays after scoring | Pages deploy; the FRED key in one step that runs before any npm package | Build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
 `check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` do nothing until you add the `FRED_API_KEY` secret and set the repository variable `INGEST_ENABLED` to `true`; that part costs nothing. Headline labeling is the only paid step (Claude API credit, roughly a cent per hundred headlines with Haiku) and has its own switch: add `ANTHROPIC_API_KEY`, add credit to that account, and set the variable `EXTRACT_HEADLINES` to `true`. Calendar and placebo claims never need it. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
@@ -740,7 +740,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 |---|---|---|
 | **M1: Engine on fixtures** *(built, on synthetic data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** *(built; not yet exercised on live data)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
-| **M3: Web** *(built on synthetic data; deploys once Pages is enabled)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
+| **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot and guide are built; the 20 starter claims are not* |
 
 ### Seed claims

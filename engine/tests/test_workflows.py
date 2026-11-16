@@ -151,3 +151,23 @@ def test_the_paid_headline_step_has_its_own_switch_and_is_the_only_one_with_the_
             assert "vars.EXTRACT_HEADLINES == 'true'" in str(st.get("if", ""))
         else:
             assert not uses_claude, st.get("name")
+
+
+def test_the_site_reads_secrets_only_before_any_npm_package_runs() -> None:
+    """A malicious package installed by pnpm must never run before a step that holds a key."""
+    wf = load(ROOT / ".github" / "workflows" / "site.yml")
+    build = wf["jobs"]["build"]["steps"]
+    pnpm_at = next(
+        i for i, st in enumerate(build) if "pnpm" in st.get("run", "") + str(st.get("uses", ""))
+    )
+    for i, st in enumerate(build):
+        if SECRET.search(str(st.get("env", {})) + str(st.get("with", {}))):
+            assert i < pnpm_at, f"step {st.get('name')} holds a secret after pnpm runs"
+
+
+def test_the_site_falls_back_to_synthetic_data_when_ingest_is_off() -> None:
+    wf = load(ROOT / ".github" / "workflows" / "site.yml")
+    export = next(st for st in wf["jobs"]["build"]["steps"] if "export-site" in st.get("run", ""))
+    assert "fixtures/synthetic" in export["env"]["SPILLOVER_DATA"]
+    cache = next(st for st in wf["jobs"]["build"]["steps"] if st.get("id") == "cache")
+    assert "vars.INGEST_ENABLED == 'true'" in cache["if"]

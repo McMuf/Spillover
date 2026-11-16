@@ -110,8 +110,12 @@ def test_a_pre_registered_draw_becomes_a_frozen_forward_prediction(tmp_path: Pat
         f'[[events]]\ntype = "placebo"\npath = "{root}"\n'
     )
     summary = build_cache(load_config(sources), lambda url: "", {}, date(2024, 12, 1))
-    assert summary.n_events == 6
     data = load_market_data(summary.out)
+    ev = data.events
+    committed = ev.filter(~ev["event_id"].str.starts_with("rnd_bt_"))
+    assert committed.height == 6
+    # Past months are drawn too (for backtests), including one whose dates are past the price data.
+    assert ev.height > 6
 
     claim = load_claim(
         write(
@@ -125,7 +129,19 @@ def test_a_pre_registered_draw_becomes_a_frozen_forward_prediction(tmp_path: Pat
     )
     result = predict([claim], data, tmp_path / "predictions", datetime(2024, 12, 1, 12, tzinfo=UTC))
     assert len(result.written) == 6, (
-        "every pre-registered date freezes a prediction before it happens"
+        "every pre-registered date freezes a prediction before it happens, "
+        "and no after-the-fact backtest draw ever does"
     )
     ids = {json.loads(p.read_text())["event_id"] for p in result.written}
     assert all(i.startswith("rnd_") for i in ids)
+
+
+def test_past_month_draws_are_blind_complete_and_skip_committed_months() -> None:
+    from spillover.placebo_events import historical_draws, month_draw
+
+    got = historical_draws(date(2024, 1, 10), date(2024, 4, 2), have={(2024, 2)})
+    months = {(d.year, d.month) for d in got}
+    assert months == {(2024, 1), (2024, 3)}, "committed Feb is skipped; April has not ended"
+    assert all(d >= date(2024, 1, 10) for d in got)
+    # The same month always gives the same dates: nothing depends on prices or on today.
+    assert [d for d in got if d.month == 3] == month_draw(2024, 3, 4)

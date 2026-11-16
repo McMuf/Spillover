@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from spillover.data import DataError, MarketData
 from spillover.eventstudy import matching_events
 from spillover.models import Claim, Instrument, Window, superseded_ids
+from spillover.placebo_events import BACKTEST_ONLY_PREFIX
 
 RULES_VERSION = "0.1"
 # No headline extractor exists yet; events are supplied directly with their type already set.
@@ -235,6 +236,8 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
         for event_id, when in zip(
             events["event_id"].to_list(), events["date"].to_list(), strict=True
         ):
+            if event_id.startswith(BACKTEST_ONLY_PREFIX):
+                continue  # drawn after the fact for backtests; never a forward event
             if when <= registered.date():
                 before += 1
             elif not window_is_open(cdata, when, claim.window.end_offset):

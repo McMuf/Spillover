@@ -118,3 +118,25 @@ def test_cli_export_site_writes_valid_json(tmp_path: Path) -> None:
     # Registered claims appear on the scoreboard as Proposed, with nothing graded yet.
     assert {r.status for r in parsed.scoreboard.claims} == {"Proposed"}
     assert all(r.effective_events == 0 for r in parsed.scoreboard.claims)
+
+
+def test_a_superseded_unpriced_claim_says_so_plainly(market: MarketData, tmp_path: Path) -> None:
+    """Published text names what is missing and what replaced it, never a server path."""
+    common = {
+        "event_type": "RANDOM_DATE",
+        "trigger_entities": ["NONE"],
+        "registered_at": "2025-01-01T00:00:00Z",
+    }
+    old = write(
+        tmp_path, id="clm_x_v1", instrument={"venue": "us_equity", "symbol": "ZZZ"}, **common
+    )
+    new = write(
+        tmp_path, id="clm_x_v2", instrument={"venue": "us_index", "symbol": "SPX"}, **common
+    )
+    claims = [(load_claim(p), p.read_text()) for p in (old, new)]
+    site = build_site_data(claims, market, tmp_path / "p", tmp_path / "o", n_boot=200)
+    v1 = next(c for c in site.claims if c.claim.id == "clm_x_v1")
+    assert v1.backtest is None and v1.backtest_error is not None
+    assert v1.backtest_error.startswith("Superseded by clm_x_v2")
+    assert "No price data for ZZZ" in v1.backtest_error
+    assert str(market.root) not in v1.backtest_error and "/" not in v1.backtest_error

@@ -81,5 +81,32 @@ def ensure_future_draws(
     return created
 
 
+# Past-month draws carry this id prefix. They exist only for backtests: `predict` refuses them.
+BACKTEST_ONLY_PREFIX = "rnd_bt_"
+
+
+def historical_draws(
+    start: date,
+    today: date,
+    have: set[tuple[int, int]],
+    per_month: int = 4,
+    seed: str = PLACEBO_SEED,
+) -> list[date]:
+    """Placebo dates for whole months that are already over, for backtests only.
+
+    The draw depends only on the public seed and the month, never on prices, so drawing a past
+    month now is as blind as drawing it then. These dates are not committed and can never become
+    forward predictions: every one of them is before any claim's registration and its window has
+    closed. Months that already have a committed file (``have``) are skipped.
+    """
+    out: list[date] = []
+    year, month = start.year, start.month
+    while (year, month) < (today.year, today.month):
+        if (year, month) not in have:
+            out.extend(d for d in month_draw(year, month, per_month, seed) if d >= start)
+        year, month = _next_month(year, month)
+    return out
+
+
 def placebo_files(root: Path) -> list[Path]:
     return sorted(root.glob("????-??.csv")) if root.exists() else []

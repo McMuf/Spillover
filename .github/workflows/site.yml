@@ -2,9 +2,17 @@ name: site
 
 # Builds the static site from the engine's output and deploys it to GitHub Pages.
 # One-time setup: repository Settings > Pages > Build and deployment > Source: GitHub Actions.
+#
+# With INGEST_ENABLED on, the site shows REAL results: it builds the price cache from FRED first
+# (derived returns only, never committed or published as prices). Otherwise it shows the synthetic
+# demo data, with the banner that says so.
 on:
   push:
     branches: [main]
+  # Daily refresh after the weekday scoring job. Commits the bot pushes (new predictions, grades)
+  # do not trigger workflows, so without this the site would not show them.
+  schedule:
+    - cron: "15 23 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -33,6 +41,23 @@ jobs:
           python-version: "3.12"
           enable-cache: true
 
+      - name: Install the engine
+        run: uv sync
+
+      # Real data first, and before any npm package is installed: nothing from the JavaScript
+      # toolchain has run yet, so it cannot tamper with the step that holds the FRED key.
+      - name: Build the real price cache (derived returns only)
+        id: cache
+        if: ${{ vars.INGEST_ENABLED == 'true' }}
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: uv run spillover ingest --config data/sources.ci.toml
+
+      - name: Export the site data from the engine
+        env:
+          SPILLOVER_DATA: ${{ steps.cache.outcome == 'success' && 'data/cache' || 'fixtures/synthetic' }}
+        run: uv run spillover export-site
+
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           package_json_file: web/package.json
@@ -43,13 +68,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
-      - name: Install
-        run: |
-          uv sync
-          pnpm --dir web install --frozen-lockfile
-
-      - name: Export the site data from the engine
-        run: uv run spillover export-site
+      - name: Install the website toolchain
+        run: pnpm --dir web install --frozen-lockfile
 
       - name: Build
         run: pnpm --dir web build

@@ -35,7 +35,7 @@ from spillover.ledger import (
     load_prediction,
     prediction_files,
 )
-from spillover.models import Claim
+from spillover.models import Claim, superseded_ids
 from spillover.replicate import load_result, result_path
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import load_outcome, outcome_files, prediction_symbols, window_closed
@@ -438,11 +438,18 @@ def build_site_data(
     stat_values: dict[tuple[str, str], float] = {}
     event_to_claims: dict[str, list[str]] = {}
 
+    replaced = superseded_ids([c for c, _ in claims])
+    latest = {c.id.rsplit("_v", 1)[0]: c.id for c, _ in sorted(claims, key=lambda p: p[0].version)}
+
     for claim, text in sorted(claims, key=lambda p: p[0].id):
         backtest: Backtest | None = None
         chart: Chart | None = None
         error: str | None = None
+        missing = [s for s in claim.symbols if s not in data.returns]
         try:
+            if missing:
+                # Said plainly, without server paths: this text is published on the website.
+                raise DataError(f"No price data for {', '.join(missing)} in this dataset.")
             report = run_backtest(claim, data, n_boot=n_boot, seed=seed)
             backtest = _backtest(report)
             path = mean_window_path(claim, data, report.events)
@@ -450,7 +457,12 @@ def build_site_data(
             for e in report.events:
                 stat_values[(claim.id, e.event_id)] = e.value
         except DataError as exc:
-            error = str(exc)
+            error = str(exc).replace(str(data.root), "the data")
+        if claim.id in replaced:
+            newer = latest[claim.id.rsplit("_v", 1)[0]]
+            error = f"Superseded by {newer}; it keeps its record but collects no new evidence. " + (
+                error or ""
+            )
 
         ids = matching_events(claim, data)["event_id"].to_list()
         for event_id in ids:

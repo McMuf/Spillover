@@ -23,7 +23,12 @@ from spillover.ingest.config import Config, EventsSpec, SeriesSpec
 from spillover.ingest.fomc import FOMC_URL, fetch_fomc
 from spillover.ingest.http import Fetcher
 from spillover.ingest.prices import Levels, PriceError, fred_levels, read_csv_levels
-from spillover.placebo_events import PLACEBO_DIR, placebo_files
+from spillover.placebo_events import (
+    BACKTEST_ONLY_PREFIX,
+    PLACEBO_DIR,
+    historical_draws,
+    placebo_files,
+)
 from spillover.price_events import price_move_events
 
 MIN_DAYS = 200  # an estimation window is 130 days; fewer than this cannot test anything
@@ -190,8 +195,12 @@ def read_events_csv(path: Path) -> pl.DataFrame:
 
 
 def build_events(
-    specs: list[EventsSpec], fetch: Fetcher, returns: Mapping[str, SeriesReturns] | None = None
+    specs: list[EventsSpec],
+    fetch: Fetcher,
+    returns: Mapping[str, SeriesReturns] | None = None,
+    history: tuple[date, date] | None = None,
 ) -> tuple[pl.DataFrame, list[str], list[str]]:
+    """All configured events. ``history`` = (data start, today) adds past placebo months."""
     frames: list[pl.DataFrame] = []
     skipped: list[str] = []
     sources: list[str] = []
@@ -219,6 +228,24 @@ def build_events(
             files = placebo_files(root)
             sources.append(str(root))
             frames.extend(read_events_csv(f) for f in files)
+            if history is not None:
+                have = {(int(f.stem[:4]), int(f.stem[5:7])) for f in files}
+                past = historical_draws(history[0], history[1], have)
+                frames.append(
+                    pl.DataFrame(
+                        {
+                            "event_id": [f"{BACKTEST_ONLY_PREFIX}{d.isoformat()}" for d in past],
+                            "event_type": ["RANDOM_DATE"] * len(past),
+                            "entity": ["NONE"] * len(past),
+                            "date": past,
+                            "scheduled": [False] * len(past),
+                            "source": ["placebo draw for a past month (backtests only)"]
+                            * len(past),
+                            "extractor_version": ["none"] * len(past),
+                        },
+                        schema=EVENT_SCHEMA,
+                    )
+                )
         elif spec.type == "price_moves":
             assert spec.symbol is not None
             if returns is None or spec.symbol not in returns:
@@ -267,7 +294,9 @@ def build_cache(
             per_series[s.symbol] = per_series[s.of]
     days = sorted({d for ds, _ in per_series.values() for d in ds})
     missing = {sym: len(days) - len(ds) for sym, (ds, _) in per_series.items()}
-    events, skipped, event_sources = build_events(config.events, fetch, per_series)
+    events, skipped, event_sources = build_events(
+        config.events, fetch, per_series, history=(config.data.start, today)
+    )
 
     # Long format, each series on its own days; the loader fills the gaps with "did not trade".
     prices = pl.concat(

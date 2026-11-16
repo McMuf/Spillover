@@ -5,7 +5,7 @@ import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
 import { Card } from "../components/ui";
 import type { SiteData } from "../generated/site";
-import { intervalText, pct, plainPct } from "../lib/format";
+import { dirText, intervalText, pct, plainPct } from "../lib/format";
 
 function Board({ site }: { site: SiteData }) {
   const sb = site.scoreboard;
@@ -44,7 +44,7 @@ function Board({ site }: { site: SiteData }) {
                   <tr key={r.claim_id} className="border-t border-line">
                     <td className="px-3 py-3"><Link className="font-mono text-xs underline" to={`/claims/${r.claim_id}`}>{r.claim_id}</Link>{r.placebo && <span className="ml-2 text-xs text-muted">placebo</span>}</td>
                     <td className="px-3 py-3"><StatusBadge status={r.status} /></td>
-                    <td className="px-3 py-3">{pct(r.mean)} <span className="text-muted">{intervalText(r.ci_lo, r.ci_hi)}</span></td>
+                    <td className="px-3 py-3"><span className={`font-semibold ${dirText(r.mean)}`}>{pct(r.mean)}</span> <span className="text-muted">{intervalText(r.ci_lo, r.ci_hi)}</span></td>
                     <td className="px-3 py-3">{r.effective_events} of {r.min_events}</td>
                     <td className="px-3 py-3">{r.beat_baseline ? "yes" : "no"}</td>
                     <td className="px-3 py-3">{r.q_value === null ? "n/a" : r.q_value.toFixed(3)}</td>
@@ -101,7 +101,7 @@ function Board({ site }: { site: SiteData }) {
         {placeboClaim?.backtest && (
           <p className="mt-2 text-xs text-muted">
             Backtest of <Link className="font-mono underline" to={`/claims/${placeboClaim.claim.id}`}>{placeboClaim.claim.id}</Link>:{" "}
-            {pct(placeboClaim.backtest.mean)} {intervalText(placeboClaim.backtest.ci_lo, placeboClaim.backtest.ci_hi)}, n={placeboClaim.backtest.n_effective}.
+            <span className={dirText(placeboClaim.backtest.mean)}>{pct(placeboClaim.backtest.mean)}</span> {intervalText(placeboClaim.backtest.ci_lo, placeboClaim.backtest.ci_hi)}, n={placeboClaim.backtest.n_effective}.
           </p>
         )}
       </Card>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { citation, claimVersion, intervalText, pct, plainPct, shortHash, venueLabel, windowLabel } from "./format";
+import { citation, direction, dirText, claimVersion, intervalText, pct, plainPct, shortHash, venueLabel, windowLabel } from "./format";
 
 describe("format", () => {
   it("formats signed percents and never turns missing into zero", () => {
@@ -33,5 +33,16 @@ describe("format", () => {
     expect(shortHash("abcdef0123456789", 6)).toBe("abcdef");
     expect(venueLabel("us_equity")).toBe("us equity");
     expect(windowLabel(2)).toBe("day 0 to +1");
+  });
+});
+
+describe("direction", () => {
+  it("is up, down or flat, and missing values are flat", () => {
+    expect(direction(0.0083)).toBe("up");
+    expect(direction(-0.0005)).toBe("down");
+    expect(direction(0)).toBe("flat");
+    expect(direction(null)).toBe("flat");
+    expect(dirText(0.01)).toBe("text-positive");
+    expect(dirText(-0.01)).toBe("text-negative");
   });
 });

@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { BackButton, Card } from "../components/ui";
 import { Ready, Row } from "../components/Ready";
 import { findClaim, findEvent } from "../lib/data";
-import { pct } from "../lib/format";
+import { dirText, pct } from "../lib/format";
 
 export default function EventPage() {
   const { id } = useParams();
@@ -43,7 +43,7 @@ export default function EventPage() {
                       <Link className="font-mono text-xs underline" to={`/claims/${c.claim_id}`}>{c.claim_id}</Link>
                       {claim && <p className="mt-1">{claim.statement.replace(/\s+/g, " ").trim()}</p>}
                       <p className="mt-1 text-xs text-muted">
-                        {c.effective ? `Statistic ${pct(c.value)}` : "Not counted: dropped by the history, overlap or scheduled-event rules"}
+                        {c.effective ? <>Statistic <span className={`font-semibold ${dirText(c.value)}`}>{pct(c.value)}</span></> : "Not counted: dropped by the history, overlap or scheduled-event rules"}
                       </p>
                     </li>
                   );

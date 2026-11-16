@@ -19,23 +19,24 @@ export interface ColorTokens {
   line: string;
   fg: string;
   muted: string;
-  /** The single accent: active tab, highlighted names, links, chart lines, the active filter. */
+  /** The highlight color (blue): active tab, highlighted names, links, chart lines, the active filter. */
   accent: string;
   onAccent: string;
-  /** Main call-to-action buttons. */
+  /** Main call-to-action buttons (a deeper blue, with white text). */
   primary: string;
   onPrimary: string;
-  /** Realized, favorable outcome only. */
+  /** Up: a market number above zero, or a graded hit. */
   positive: string;
-  /** Realized, unfavorable outcome only. */
+  /** Down: a market number below zero, or a graded miss. */
   negative: string;
   noticeBg: string;
   noticeFg: string;
 }
 
 /**
- * Black page, flat near-black surfaces, one lavender-blue accent. Hierarchy comes from type and
- * spacing, not from color, gradients or outlines.
+ * Black page and flat near-black surfaces. Green and red mean direction (up and down), as on any
+ * market screen; blue is the one highlight color, chosen because it stays distinct from both for
+ * readers with red-green color blindness. Every colored number also carries its sign (+ or −).
  */
 export const color: Record<ThemeName, ColorTokens> = {
   dark: {
@@ -45,12 +46,12 @@ export const color: Record<ThemeName, ColorTokens> = {
     line: "#262626",
     fg: "#f5f5f5",
     muted: "#8e8e8e",
-    accent: "#9aabff",
-    onAccent: "#0a0a0a",
-    primary: "#f5f5f5",
-    onPrimary: "#0a0a0a",
-    positive: "#3ecf8e",
-    negative: "#ff6b4a",
+    accent: "#4c9aff",
+    onAccent: "#00122b",
+    primary: "#2563eb",
+    onPrimary: "#ffffff",
+    positive: "#22c55e",
+    negative: "#ff4d5e",
     noticeBg: "#111111",
     noticeFg: "#c9c9c9",
   },

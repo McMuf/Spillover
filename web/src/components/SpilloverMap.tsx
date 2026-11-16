@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { SiteClaim } from "../generated/site";
-import { pct } from "../lib/format";
+import { dirText, pct } from "../lib/format";
 import { spilloverMatrix } from "../lib/paths";
 import { Logo } from "./Logo";
 
@@ -62,7 +62,7 @@ export function SpilloverMap({ claims }: { claims: SiteClaim[] }) {
                               to={`/claims/${h.claim.id}`}
                               className="block rounded-xl bg-surface-alt px-3 py-2 hover:bg-line"
                             >
-                              <span className="block text-[15px] font-bold tabular-nums">{h.backtest ? pct(h.backtest.mean) : "n/a"}</span>
+                              <span className={`block text-[15px] font-bold tabular-nums ${dirText(h.backtest?.mean)}`}>{h.backtest ? pct(h.backtest.mean) : "n/a"}</span>
                               <span className="block text-xs text-muted">
                                 {MARK[h.status]}
                                 {h.backtest ? ` · n=${h.backtest.n_effective}` : ""}

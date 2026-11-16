@@ -199,7 +199,8 @@ The graph is the product's face, so it follows one rule: **if a shape could mean
 ### Edge rules
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
-- **Red and green are reserved for realized outcomes.** Predictions, claims and estimates use neutral colors. If you see green, something already happened.
+- **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
+- **Blue is the one highlight color** for links, the active tab, names picked out in headlines and chart lines. Blue stays distinct from green and red for readers with red-green color blindness.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
 - **Index membership is its own edge type** (`weight`), drawn differently from `spillover`, so mechanical effects and real effects never share a line.
 - **The graph is capped at about 40 nodes** per view. Past that, the view collapses into a table. A graph nobody can read is decoration.
@@ -212,14 +213,14 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 ## Screens and user experience
 
 > [!NOTE]
-> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: generous white space, hairline cards, tabular numerals, dark and light themes, a sticky action area on mobile and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, icons or screenshots.
+> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a black page, flat panels, tabular numerals, one dark theme and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
 
 ### Design principles
 
 1. **Evidence before opinion.** Every number has its sample size next to it.
 2. **Two seconds to the verdict.** Each claim card leads with a status badge, the one-line statement and the evidence meter.
 3. **Time is a first-class axis.** Charts mark the event with a vertical dashed line and shade the estimation and event windows.
-4. **Neutral until realized.** Red and green only after the window closes.
+4. **Direction, not judgment.** Green and red say which way a number moved; whether a claim was right is said in words (Supported, Not supported, Inconclusive) and only after the window closes.
 5. **Mobile first.** Most hobbyists will check this on a phone. Desktop gets a side sheet; mobile gets a bottom sheet.
 6. **Accessible by default.** WCAG AA contrast, keyboard-reachable graph, text alternatives for every chart (a table view is always one tab away).
 7. **No dark patterns.** No streaks, no "hot claims," no red-dot urgency. This is a research tool.
@@ -876,4 +877,4 @@ spillover/
 
 Code is released under the [Apache License 2.0](LICENSE). Claims and data are released under [CC-BY-4.0](#data-licensing-and-sources). See [`NOTICE`](NOTICE) for attributions, including the required **TradingView Lightweight Charts** attribution.
 
-Spillover is an independent project. It is **not affiliated with, endorsed by or sponsored by** any exchange, broker, trading app, data vendor or company named in claims or documentation. Names and tickers appear only to identify the instruments being studied. **Nothing in this repository is investment advice.**
+Spillover is an independent project. It is **not affiliated with, endorsed by or sponsored by** any exchange, broker, trading app, data vendor or company named in claims or documentation. Names, tickers and logos appear only to identify the instruments and organizations being studied; logos are trademarks of their owners, and the source and license of each bundled logo is listed in [`web/src/assets/logos/SOURCES.json`](web/src/assets/logos/SOURCES.json). **Nothing in this repository is investment advice.**

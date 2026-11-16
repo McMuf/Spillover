@@ -1,5 +1,5 @@
 /**
- * A flat area chart: one accent line over a faint fill of the same color (no gradient), with an
+ * A flat area chart: one line over a faint fill of the same color (no gradient), with an
  * optional dashed marker for the event day. Decorative: the numbers beside it carry the meaning.
  */
 export function areaPaths(values: number[], width: number, height: number, pad = 4): { line: string; area: string } {
@@ -13,16 +13,28 @@ export function areaPaths(values: number[], width: number, height: number, pad =
   return { line, area: `${line} L${width} ${height} L0 ${height} Z` };
 }
 
-export function AreaChart({ values, markIndex, height = 140 }: { values: number[]; markIndex?: number; height?: number }) {
+export function AreaChart({
+  values,
+  markIndex,
+  height = 140,
+  tone = "accent",
+}: {
+  values: number[];
+  markIndex?: number;
+  height?: number;
+  /** Green when the effect is up, red when it is down; blue when direction does not apply. */
+  tone?: "accent" | "up" | "down";
+}) {
+  const stroke = { accent: "var(--c-accent)", up: "var(--c-positive)", down: "var(--c-negative)" }[tone];
   const W = 600;
   const { line, area } = areaPaths(values, W, height);
   if (!line) return <div style={{ height }} aria-hidden="true" />;
   const mx = markIndex !== undefined && markIndex >= 0 ? (markIndex / (values.length - 1)) * W : null;
   return (
     <svg viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" width="100%" height={height} aria-hidden="true" focusable="false" className="block">
-      <path d={area} fill="var(--c-accent)" fillOpacity="0.1" />
+      <path d={area} fill={stroke} fillOpacity="0.12" />
       {mx !== null && <line x1={mx} x2={mx} y1="0" y2={height} stroke="var(--c-muted)" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />}
-      <path d={line} fill="none" stroke="var(--c-accent)" strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <path d={line} fill="none" stroke={stroke} strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }

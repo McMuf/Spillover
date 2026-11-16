@@ -1,4 +1,5 @@
 import { luminance } from "../design/tokens";
+import { Icon, type IconName } from "./Icon";
 import { brandFor } from "../lib/brands";
 
 /**
@@ -19,11 +20,30 @@ export function logoFor(symbol: string): string | undefined {
   return BY_SYMBOL.get(symbol.toUpperCase());
 }
 
+/** Marks that sit better on a dark tile than on white (the rest get a white tile, like an app icon). */
+const TILE: Record<string, string> = { AMZN: "#232f3e" };
+
+/** Symbols that are a concept rather than a company: drawn with an icon, never as initials. */
+const CONCEPT: Record<string, IconName> = { MKT: "trend", NONE: "calendar" };
+
 export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const box = { width: size, height: size };
-  const url = logoFor(symbol);
+  const key = symbol.toUpperCase();
+  const url = logoFor(key);
   if (url) {
-    return <img src={url} alt="" aria-hidden="true" style={box} className="shrink-0 rounded-full bg-white object-contain p-1" />;
+    return (
+      <span aria-hidden="true" style={{ ...box, background: TILE[key] ?? "#ffffff" }} className="grid shrink-0 place-items-center overflow-hidden rounded-full">
+        <img src={url} alt="" style={{ width: "62%", height: "62%" }} className="object-contain" />
+      </span>
+    );
+  }
+  const concept = CONCEPT[key];
+  if (concept) {
+    return (
+      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center rounded-full bg-surface-alt text-accent">
+        <Icon name={concept} size={Math.round(size * 0.5)} />
+      </span>
+    );
   }
   const brand = brandFor(symbol);
   if (brand) {
@@ -38,7 +58,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
       </span>
     );
   }
-  // No mark available (indices, ETFs, unknown names): quiet initials, never a made-up color.
+  // No mark on file for this symbol: quiet initials. Add a file to src/assets/logos/ to replace them.
   return (
     <span
       aria-hidden="true"

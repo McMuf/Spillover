@@ -17,7 +17,7 @@ import type { SiteClaim, SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { findClaim } from "../lib/data";
 import { embedSnippet } from "../lib/embed";
-import { citation, claimVersion, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
+import { citation, claimVersion, direction, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
 
@@ -109,7 +109,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
           {b ? (
             <>
               <Row label="Backtest estimate">
-                {pct(b.mean)} <span className="text-muted">{intervalText(b.ci_lo, b.ci_hi)}</span>
+                <span className={dirText(b.mean)}>{pct(b.mean)}</span> <span className="text-muted">{intervalText(b.ci_lo, b.ci_hi)}</span>
               </Row>
               <Row label="Backtest sample">
                 n={b.n_effective} effective of {b.n_matched} matched
@@ -215,7 +215,7 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
             </div>
             {m.main && b && (
               <div className="text-right">
-                <p className="text-[17px] font-bold tabular-nums">{pct(b.mean)}</p>
+                <p className={`text-[17px] font-bold tabular-nums ${dirText(b.mean)}`}>{pct(b.mean)}</p>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest · n={b.n_effective}</p>
               </div>
             )}
@@ -226,7 +226,7 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
             </span>
             {m.idea}
           </p>
-          {m.main && chart && <AreaChart values={chart.mean} markIndex={chart.days.indexOf(0)} height={170} />}
+          {m.main && chart && <AreaChart values={chart.mean} markIndex={chart.days.indexOf(0)} height={170} tone={direction(b?.mean) === "down" ? "down" : direction(b?.mean) === "up" ? "up" : "accent"} />}
           {m.main && (
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setTab("evidence")} className="rounded-full bg-primary py-2.5 font-bold text-on-primary hover:opacity-90">
@@ -398,7 +398,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
                 {[item, placebo].map((s) => (
                   <tr key={s.claim.id} className="border-t border-line">
                     <td className="px-4 py-2.5 font-mono text-xs">{s.claim.id}</td>
-                    <td className="px-4 py-2.5">{pct(s.backtest?.mean)}</td>
+                    <td className={`px-4 py-2.5 font-semibold ${dirText(s.backtest?.mean)}`}>{pct(s.backtest?.mean)}</td>
                     <td className="px-4 py-2.5">{intervalText(s.backtest?.ci_lo ?? null, s.backtest?.ci_hi ?? null)}</td>
                     <td className="px-4 py-2.5">{s.backtest?.n_effective}</td>
                   </tr>
@@ -428,8 +428,8 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
                 <tr key={e.event_id} className="border-t border-line">
                   <td className="px-4 py-2">{e.event_date}</td>
                   <td className="px-4 py-2"><Link className="font-mono text-xs text-accent hover:underline" to={`/events/${e.event_id}`}>{e.event_id}</Link></td>
-                  <td className="px-4 py-2">{pct(e.car)}</td>
-                  <td className="px-4 py-2">{pct(e.value)}</td>
+                  <td className={`px-4 py-2 ${dirText(e.car)}`}>{pct(e.car)}</td>
+                  <td className={`px-4 py-2 ${dirText(e.value)}`}>{pct(e.value)}</td>
                 </tr>
               ))}
             </tbody>
@@ -511,7 +511,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             {b ? (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest estimate</p>
-                <p className="mt-1 text-4xl font-extrabold tabular-nums">{pct(b.mean)}</p>
+                <p className={`mt-1 text-4xl font-extrabold tabular-nums ${dirText(b.mean)}`}>{pct(b.mean)}</p>
                 <p className="mt-1 text-xs text-muted">
                   n={b.n_effective} · {intervalText(b.ci_lo, b.ci_hi)}
                   {b.data_synthetic && " · synthetic data"}

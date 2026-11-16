@@ -45,3 +45,16 @@ export function claimVersion(id: string): number {
 export function citation(claimId: string, version: number, commit: string, repo: string): string {
   return `Spillover claim ${claimId} (v${version}), commit ${commit}, https://github.com/${repo}`;
 }
+
+export type Direction = "up" | "down" | "flat";
+
+/** Up, down or flat, for coloring a market number green, red or grey. Missing values are flat. */
+export function direction(x: number | null | undefined): Direction {
+  if (x === null || x === undefined || Number.isNaN(x) || Math.abs(x) < 5e-5) return "flat";
+  return x > 0 ? "up" : "down";
+}
+
+/** Text color for a market number by its sign. */
+export function dirText(x: number | null | undefined): string {
+  return { up: "text-positive", down: "text-negative", flat: "text-muted" }[direction(x)];
+}

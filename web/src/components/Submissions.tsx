@@ -1,5 +1,5 @@
 import type { ChallengeOut, ReplicationOut } from "../generated/site";
-import { intervalText, pct } from "../lib/format";
+import { intervalText, pct, dirText } from "../lib/format";
 
 const ASPECT: Record<ChallengeOut["aspect"], string> = {
   definition: "the claim's definition",
@@ -82,7 +82,7 @@ export function ReplicationList({ items }: { items: ReplicationOut[] }) {
                     {r.result.data_synthetic && " · on SYNTHETIC data"}
                   </p>
                   <p className="mt-1">
-                    {pct(r.result.mean)} <span className="text-muted">{intervalText(r.result.ci_lo, r.result.ci_hi)}</span>{" "}
+                    <span className={dirText(r.result.mean)}>{pct(r.result.mean)}</span> <span className="text-muted">{intervalText(r.result.ci_lo, r.result.ci_hi)}</span>{" "}
                     · n={r.result.n_effective} of {r.result.n_matched} matched · as of {r.result.as_of}
                   </p>
                   <p className="mt-1 text-muted">{r.result.verdict}</p>

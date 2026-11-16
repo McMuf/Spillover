@@ -1,10 +1,10 @@
 import type { Status } from "../lib/format";
 
-// Verdicts come from realized outcomes, so Supported and Not supported may use green and red.
+// Supported and Not supported are realized verdicts, so they take green and red; Proposed takes the blue highlight.
 // Every badge also carries a text label and a distinct mark, so color is never the only cue.
 const STYLE: Record<Status, { cls: string; mark: string }> = {
   Draft: { cls: "text-muted", mark: "◌" },
-  Proposed: { cls: "text-fg", mark: "○" },
+  Proposed: { cls: "text-accent", mark: "○" },
   Supported: { cls: "text-positive", mark: "✓" },
   "Not supported": { cls: "text-negative", mark: "✕" },
   Inconclusive: { cls: "text-muted", mark: "≈" },

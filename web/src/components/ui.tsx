@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
 import { Logo } from "./Logo";
+import type { Direction } from "../lib/format";
 
 /** A flat panel with a heading and an optional freshness stamp. No border: the fill separates it. */
 export function Card({
@@ -70,12 +71,12 @@ export function OutlineTag({ children }: { children: ReactNode }) {
 }
 
 /** A ticker pill: logo, symbol, an optional neutral number, and an arrow when it links somewhere. */
-export function TickerChip({ symbol, value, to }: { symbol: string; value?: string; to?: string }) {
+export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string; value?: string; to?: string; dir?: Direction }) {
   const body = (
     <>
       <Logo symbol={symbol} size={20} />
       <span className="font-semibold text-fg">{symbol}</span>
-      {value && <span className="text-muted">{value}</span>}
+      {value && <span className={`font-semibold ${{ up: "text-positive", down: "text-negative", flat: "text-muted" }[dir]}`}>{value}</span>}
       {to && (
         <>
           <span className="text-muted">
@@ -86,7 +87,9 @@ export function TickerChip({ symbol, value, to }: { symbol: string; value?: stri
       )}
     </>
   );
-  const cls = "inline-flex items-center gap-1.5 rounded-full border border-line bg-surface py-1 pl-1 pr-2.5 text-xs";
+  // Like a ticker on a market screen: the pill takes a faint wash of green or red when the number moves.
+  const tone = { up: "border-positive/30 bg-positive/10", down: "border-negative/30 bg-negative/10", flat: "border-line bg-surface" }[value ? dir : "flat"];
+  const cls = `inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-xs ${tone}`;
   return to ? (
     <Link to={to} className={`${cls} relative z-10 hover:border-muted`}>
       {body}
@@ -146,7 +149,7 @@ export function Segmented<T extends string>({
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${value === o.value ? "bg-accent/20 text-accent" : "text-muted hover:text-fg"}`}
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${value === o.value ? "bg-primary text-on-primary" : "text-muted hover:text-fg"}`}
         >
           {o.label}
         </button>

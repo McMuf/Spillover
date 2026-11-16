@@ -1,0 +1,9 @@
+{
+  "_note": "Company, index and fund marks shown next to the instruments they identify. Each file comes from Wikimedia Commons, was stripped of scripts, links and metadata, and was cropped to the symbol so it reads at small sizes. The files are public domain for copyright; the marks are trademarks of their owners, used only to identify them. Spillover is not affiliated with any of them.",
+  "SPX.svg": { "shows": "S&P 500 index (S&P Dow Jones Indices)", "source": "https://commons.wikimedia.org/wiki/File:Standard_and_Poor%27s_500_logo.svg", "license": "Public domain (trademarked)", "edit": "cropped to the S&P letters" },
+  "NASDAQ.svg": { "shows": "Nasdaq Composite index (Nasdaq, Inc.)", "source": "https://commons.wikimedia.org/wiki/File:NASDAQ_Logo.svg", "license": "Public domain (trademarked)", "edit": "cropped to the N symbol" },
+  "XLK.svg": { "shows": "Technology Select Sector SPDR Fund, issued by State Street", "source": "https://commons.wikimedia.org/wiki/File:State-street-logo-final.svg", "license": "Public domain (trademarked)", "edit": "cropped to the State Street symbol" },
+  "FED.svg": { "shows": "Federal Reserve System", "source": "https://commons.wikimedia.org/wiki/File:Seal_of_the_United_States_Federal_Reserve_System.svg", "license": "Public domain (US government insignia)", "edit": "none beyond sanitizing" },
+  "MSFT.svg": { "shows": "Microsoft", "source": "https://commons.wikimedia.org/wiki/File:Microsoft_logo_(2012).svg", "license": "Public domain (trademarked)", "edit": "cropped to the four squares" },
+  "AMZN.svg": { "shows": "Amazon", "source": "https://commons.wikimedia.org/wiki/File:Amazon_logo.svg", "license": "Public domain (trademarked)", "edit": "kept only the smile" }
+}

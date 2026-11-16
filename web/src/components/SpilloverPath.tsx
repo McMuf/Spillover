@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { NODE_BY_KEY, type NodeTypeKey } from "../design/nodes";
 import type { SiteClaim, SiteData } from "../generated/site";
+import { dirText } from "../lib/format";
 import { claimPath } from "../lib/paths";
 import { shortName } from "../lib/plain";
 import { Icon } from "./Icon";
@@ -80,7 +81,7 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
           </div>
           {p.effect ? (
             <div className="mt-3 border-t border-line pt-3">
-              <p className="text-2xl font-extrabold tabular-nums">{p.effect.estimate}</p>
+              <p className={`text-2xl font-extrabold tabular-nums ${dirText(item.backtest?.mean)}`}>{p.effect.estimate}</p>
               <p className="text-xs text-muted">
                 {p.effect.interval} · n={p.effect.n} counted · {p.effect.window} · <span className="whitespace-nowrap">as of {p.effect.asOf}</span> · backtest
               </p>

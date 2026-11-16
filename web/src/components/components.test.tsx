@@ -132,13 +132,16 @@ describe("TrendingCard", () => {
     expect(screen.getAllByText("ABC").length).toBeGreaterThan(0);
   });
 
-  it("uses no gradients or colored tints: one accent, flat surfaces", () => {
+  it("colors the number by direction and uses no gradients", () => {
     const { container } = render(
       <MemoryRouter>
         <TrendingCard item={makeClaim()} />
       </MemoryRouter>,
     );
-    expect(container.innerHTML).not.toMatch(/gradient|color-mix|positive|negative/);
+    expect(container.innerHTML).not.toMatch(/gradient/);
+    // The demo backtest is −1.23%: shown in red, with its minus sign, so color is never the only cue.
+    const value = screen.getByText("−1.23%");
+    expect(value.className).toContain("text-negative");
   });
 });
 

@@ -93,7 +93,7 @@ export function Shell() {
           </label>
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line px-3.5 py-1.5 text-sm font-semibold hover:bg-surface">
+            <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-on-primary hover:brightness-110">
               <Icon name="submit" size={16} />
               Submit a claim
             </Link>

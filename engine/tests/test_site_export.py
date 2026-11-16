@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -34,7 +35,10 @@ def test_site_data_covers_every_seed_claim(site: SiteData) -> None:
     assert ids == sorted(ids) and len(ids) >= 2
     assert site.meta.data_synthetic is True and site.meta.repo == "McMuf/Spillover"
     for c in site.claims:
-        assert c.status == "Proposed", "registered, with no forward events graded yet"
+        # Registered claims are Proposed (nothing graded yet); a claim that has not merged yet is a
+        # Draft. Which is which depends on the claim file, so check the status against the file.
+        registered = isinstance(c.claim.registered_at, datetime)
+        assert c.status == ("Proposed" if registered else "Draft")
         assert c.backtest is not None and c.chart is not None
         assert "registered_at" in c.yaml, "the claim page shows the real YAML"
 

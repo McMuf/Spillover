@@ -36,6 +36,14 @@ symbol = "MKT"
 provider = "alias"
 of = "SPX"
 
+# The Nasdaq Composite: the instrument of the placebo claim (clm_placebo_random_dates_v2), measured
+# against the S&P 500 above. FRED's NASDAQCOM series carries its own copyright notice (NASDAQ OMX),
+# like the S&P 500 series: check that you may use it this way before turning ingestion on.
+[[series]]
+symbol = "NASDAQ"
+provider = "fred"
+id = "NASDAQCOM"
+
 # Built in: FOMC decision dates from the Federal Reserve's public calendar (US government work).
 [[events]]
 type = "fomc"

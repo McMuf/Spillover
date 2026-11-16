@@ -22,6 +22,7 @@
 </p>
 
 <p align="center">
+  <a href="https://mcmuf.github.io/Spillover/"><b>See the live demo</b></a> (synthetic data) ·
   <a href="#quick-start"><b>Run it locally</b></a>
 </p>
 
@@ -319,7 +320,7 @@ The rules below are applied identically to every claim. Changes need a **7-day p
 4. **Naive baseline.** Every claim is scored against a factor-only baseline. Beating zero is not enough; the claim must beat what the market and sector already explain.
 5. **Independent events.** Overlapping windows are collapsed. Scheduled-event windows (such as central-bank decisions) that overlap an event are excluded or flagged. The **effective** sample size is what counts.
 6. **Multiple-comparison control.** Because many claims are tested, results are adjusted with a false-discovery-rate procedure across the set of claims. A single lucky claim does not get a free pass.
-7. **Permanent placebo.** A random-dates claim runs forever. If it shows significance more often than chance allows, the engine is treated as broken until fixed. Its dates are drawn **in advance** (`spillover placebo-events`, deterministic from a public seed, one file per future month, never rewritten), so a placebo date is committed before it happens exactly like a real forward event. The placebo claim's instrument needs a price source in the scoring job; until it has one, its predictions stay open and are reported as "no data" instead of failing the run.
+7. **Permanent placebo.** A random-dates claim runs forever. If it shows significance more often than chance allows, the engine is treated as broken until fixed. Its dates are drawn **in advance** (`spillover placebo-events`, deterministic from a public seed, one file per future month, never rewritten), so a placebo date is committed before it happens exactly like a real forward event. The placebo claim (`clm_placebo_random_dates_v2`) trades the Nasdaq Composite against the S&P 500, both from FRED, so the scoring job can price it. Version 1 traded a sector ETF the job had no price source for; it stays on record as registered and is superseded. A claim whose prices are missing is left open and reported as "no data" instead of failing the run, and a test fails if a live claim cannot be priced from the CI config.
 8. **Append-only history.** Verdicts, predictions and outcomes are never edited or deleted. Corrections are new records that link to the old ones.
 
 ### Status thresholds
@@ -742,7 +743,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | 3 | Mag-7 negative free-cash-flow headline hits MAGS beyond the company's weight | Thin | Few events; tests the weight decomposition |
 | 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
 | 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified |
-| 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v1` |
+| 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v2` (Nasdaq vs the S&P 500); `_v1` is superseded |
 
 Build order: claims **4** and **6** first, because they have plenty of events and validate the engine before anything interesting is tested on it. Event counts for claims 1, 2, 3 and 5 are rough estimates and must be counted from data before launch.
 

@@ -6,6 +6,7 @@ engine can be checked against ground truth:
 * ``SPX`` / ``MKT``: market returns with doubled volatility on FOMC decision days.
 * ``XLK``: beta 1.15 to the market, no event effects (target of the placebo claim).
 * ``SYN2``: beta 0.9 to the market with a -1.2% shock on ``SYN_SHOCK`` event days (tests only).
+* ``NASDAQ``: beta 1.2 to the market, no event effects (target of the v2 placebo claim).
 
 Only derived daily returns are stored, never vendor price files.
 """
@@ -99,10 +100,19 @@ def generate(out_dir: Path) -> None:
         int(i) for i in rng.choice(np.arange(MIN_HISTORY, N_DAYS - 10), size=60, replace=False)
     )
 
+    # Drawn last on purpose: adding it must not change any series generated before it.
+    nasdaq = 0.0001 + 1.2 * mkt + 0.008 * _unit_t(rng, N_DAYS)
+
     prices = pl.concat(
         [
             pl.DataFrame({"date": cal, "symbol": sym, "ret": series})
-            for sym, series in (("MKT", mkt), ("SPX", mkt), ("XLK", xlk), ("SYN2", syn2))
+            for sym, series in (
+                ("MKT", mkt),
+                ("SPX", mkt),
+                ("XLK", xlk),
+                ("SYN2", syn2),
+                ("NASDAQ", nasdaq),
+            )
         ]
     ).with_columns(pl.col("date").cast(pl.Date), pl.col("ret").cast(pl.Float64))
 

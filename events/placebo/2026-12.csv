@@ -1,0 +1,5 @@
+event_id,event_type,entity,date,scheduled,source
+rnd_2026-12-01,RANDOM_DATE,NONE,2026-12-01,false,https://github.com/McMuf/Spillover/tree/main/events/placebo
+rnd_2026-12-03,RANDOM_DATE,NONE,2026-12-03,false,https://github.com/McMuf/Spillover/tree/main/events/placebo
+rnd_2026-12-04,RANDOM_DATE,NONE,2026-12-04,false,https://github.com/McMuf/Spillover/tree/main/events/placebo
+rnd_2026-12-29,RANDOM_DATE,NONE,2026-12-29,false,https://github.com/McMuf/Spillover/tree/main/events/placebo

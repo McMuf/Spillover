@@ -1,0 +1,5 @@
+event_id,event_type,entity,date,scheduled,source
+rnd_2027-02-09,RANDOM_DATE,NONE,2027-02-09,false,https://github.com/McMuf/Spillover/tree/main/events/placebo
+rnd_2027-02-12,RANDOM_DATE,NONE,2027-02-12,false,https://github.com/McMuf/Spillover/tree/main/events/placebo
+rnd_2027-02-17,RANDOM_DATE,NONE,2027-02-17,false,https://github.com/McMuf/Spillover/tree/main/events/placebo
+rnd_2027-02-19,RANDOM_DATE,NONE,2027-02-19,false,https://github.com/McMuf/Spillover/tree/main/events/placebo

@@ -1,0 +1,26 @@
+{
+  "baseline": "factor_only",
+  "claim_id": "clm_placebo_random_dates_v1",
+  "claim_version": 1,
+  "confidence": null,
+  "created_at": "2026-11-16T16:43:12.773230Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2027-01-12",
+  "event_id": "rnd_2027-01-12",
+  "event_type": "RANDOM_DATE",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "XLK",
+    "venue": "us_equity"
+  },
+  "measure": "abnormal_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.1",
+  "schema_version": 1,
+  "sha256": "f53d6860740b72cc11ef2c354be14231c427e9972fdb221952bbb3778d725ac0",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

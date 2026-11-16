@@ -1,0 +1,28 @@
+# Starter claim: on Fed days, tech swings more than the broad market explains.
+id: clm_fomc_nasdaq_beyond_spx_v1
+
+statement: >
+  On FOMC decision days, the Nasdaq Composite makes a larger absolute move over the day and the
+  next trading day than the S&P 500's move explains.
+
+event_type: FOMC_DECISION
+trigger_entities: [FED]
+
+instrument: {venue: us_index, symbol: NASDAQ}
+
+window: {start: first_report, end: +1_trading_day}
+expected_sign: positive
+
+# Subtract what the S&P 500 (the market factor, MKT) explains; test the size of what is left.
+baseline: factor_only
+factor: MKT
+measure: abs_excess_return
+
+success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
+
+falsifier: >
+  The interval for the Nasdaq's excess absolute move beyond the S&P 500 includes zero or is
+  negative after at least 8 forward FOMC decisions.
+
+registered_by: McMuf
+registered_at: set_by_ci_on_merge

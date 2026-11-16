@@ -1,0 +1,27 @@
+# Starter claim: jobs-report days move the S&P 500 more than usual.
+id: clm_jobs_abs_move_spx_v1
+
+statement: >
+  On US jobs report days, the S&P 500 makes a larger absolute move over the day and the next
+  trading day than its trailing volatility predicts.
+
+event_type: JOBS_REPORT
+trigger_entities: [BLS]
+
+# The S&P 500 is itself the market, so there is no separate factor to control for.
+instrument: {venue: us_index, symbol: SPX}
+
+window: {start: first_report, end: +1_trading_day}
+expected_sign: positive
+
+baseline: constant_mean
+measure: abs_excess_return
+
+success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
+
+falsifier: >
+  The interval for the S&P 500's excess absolute move includes zero or is negative after at least
+  8 forward jobs reports.
+
+registered_by: McMuf
+registered_at: set_by_ci_on_merge

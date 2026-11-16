@@ -1,0 +1,26 @@
+{
+  "baseline": "factor_only",
+  "claim_id": "clm_cpi_nasdaq_beyond_spx_v1",
+  "claim_version": 1,
+  "confidence": null,
+  "created_at": "2026-11-16T19:31:58.315022Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2026-12-10",
+  "event_id": "cpi_release_2026-12-10",
+  "event_type": "CPI_RELEASE",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "NASDAQ",
+    "venue": "us_index"
+  },
+  "measure": "abs_excess_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.1",
+  "schema_version": 1,
+  "sha256": "5decd51e5ef23e39ae7bc7330e0b254ea38efdb5bf77ee2a2218580affb96b5e",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "baseline": "constant_mean",
+  "claim_id": "clm_fomc_abs_move_usd_v1",
+  "claim_version": 1,
+  "confidence": null,
+  "created_at": "2026-11-16T19:31:58.315022Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2027-07-28",
+  "event_id": "fomc_2027-07-28",
+  "event_type": "FOMC_DECISION",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "USD",
+    "venue": "fx"
+  },
+  "measure": "abs_excess_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.1",
+  "schema_version": 1,
+  "sha256": "936fa764c349fb994decf61361b983761a1da0fb45efa1dd567e46a44913511a",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

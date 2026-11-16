@@ -1,17 +1,16 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Highlight } from "../components/Highlight";
 import { Logo } from "../components/Logo";
+import { SpilloverMap } from "../components/SpilloverMap";
 import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
 import { PillButton, Segmented } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { pct, scoreboardRow } from "../lib/format";
-import { buildGraph } from "../lib/graph";
 import { categoryOf, highlightTerms, shortHeadline } from "../lib/plain";
 
-const GraphView = lazy(() => import("../components/GraphView"));
 
 const TH = "px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted";
 
@@ -19,7 +18,7 @@ function ExploreBody({ site }: { site: SiteData }) {
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
   const [topic, setTopic] = useState("All");
-  const [view, setView] = useState<"table" | "graph">("table");
+  const [view, setView] = useState<"table" | "map">("table");
   const topics = useMemo(() => ["All", ...new Set(site.claims.map((c) => categoryOf(c.claim.event_type)))], [site]);
 
   const shown = useMemo(() => {
@@ -30,7 +29,6 @@ function ExploreBody({ site }: { site: SiteData }) {
         (q === "" || `${c.claim.id} ${c.claim.statement} ${c.claim.instrument.symbol} ${shortHeadline(c)}`.toLowerCase().includes(q)),
     );
   }, [site, query, topic]);
-  const model = useMemo(() => buildGraph(shown, site), [shown, site]);
   const eventsTested = site.claims.reduce((n, c) => n + (c.backtest?.n_effective ?? 0), 0);
 
   return (
@@ -55,7 +53,7 @@ function ExploreBody({ site }: { site: SiteData }) {
           onChange={setView}
           options={[
             { value: "table", label: "Table" },
-            { value: "graph", label: "Graph" },
+            { value: "map", label: "Map" },
           ]}
         />
       </div>
@@ -126,9 +124,7 @@ function ExploreBody({ site }: { site: SiteData }) {
           </table>
         </div>
       ) : (
-        <Suspense fallback={<p className="text-muted">Loading graph…</p>}>
-          <GraphView model={model} label="Graph of the claims shown" />
-        </Suspense>
+        <SpilloverMap claims={shown} />
       )}
     </>
   );

@@ -1,5 +1,5 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AreaChart } from "../components/AreaChart";
 import { EvidenceMeter } from "../components/EvidenceMeter";
@@ -8,7 +8,7 @@ import { Highlight } from "../components/Highlight";
 import { Histogram } from "../components/Histogram";
 import { Icon } from "../components/Icon";
 import { Logo } from "../components/Logo";
-import { NodeLegend } from "../components/NodeLegend";
+import { SpilloverPath } from "../components/SpilloverPath";
 import { Ready, Row } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
 import { ChallengeList, ReplicationList } from "../components/Submissions";
@@ -18,11 +18,9 @@ import { instrumentName } from "../lib/brands";
 import { findClaim } from "../lib/data";
 import { embedSnippet } from "../lib/embed";
 import { citation, claimVersion, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
-import { buildGraph } from "../lib/graph";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
 
-const GraphView = lazy(() => import("../components/GraphView"));
 // The charting library is large, so it loads only when the Evidence tab is opened.
 const EventWindowChart = lazy(() =>
   import("../components/EventWindowChart").then((m) => ({ default: m.EventWindowChart })),
@@ -39,12 +37,16 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
   const b = item.backtest;
   const verdict = whatPastDataSays(item);
   const row = scoreboardRow(site.scoreboard.claims, c.id);
-  const model = useMemo(() => buildGraph([item], site), [item, site]);
   const recent = [...(b?.events ?? [])].sort((x, y) => y.event_date.localeCompare(x.event_date)).slice(0, 4);
   const findEvent = (id: string) => site.events.find((e) => e.event_id === id);
 
   return (
     <div className="space-y-6">
+      <section aria-labelledby="graph-h">
+        <h2 id="graph-h" className={H3}>How the claim is wired</h2>
+        <SpilloverPath item={item} site={site} />
+      </section>
+
       <section className={PANEL} aria-label="Situation overview">
         <h2 className={H3}>Overview</h2>
         <ul className="list-disc space-y-3 pl-5 text-[15px] leading-relaxed marker:text-muted">
@@ -124,14 +126,6 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
         </dl>
       </section>
 
-      <section aria-labelledby="graph-h">
-        <h2 id="graph-h" className={H3}>How the claim is wired</h2>
-        <Suspense fallback={<p className="text-muted">Loading graph…</p>}>
-          <GraphView model={model} label={`Graph of ${c.id}`} />
-        </Suspense>
-      </section>
-
-      <NodeLegend compact />
       <EmbedBox claimId={c.id} />
 
       <details className={PANEL}>

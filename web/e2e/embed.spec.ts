@@ -44,6 +44,10 @@ test("the method page explains the numbers", async ({ page }) => {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
   await expect(page.getByText("Nothing on this site is investment advice.")).toBeVisible();
+  const legend = page.getByTestId("node-legend");
+  for (const tag of ["EVT", "ENT", "INS", "FAC", "CON", "PRD"]) {
+    await expect(legend.getByText(tag, { exact: true })).toBeVisible();
+  }
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "How it works" }).click();
   await expect(page).toHaveURL(/#\/method$/);
 });

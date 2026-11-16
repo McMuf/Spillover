@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { NodeLegend } from "../components/NodeLegend";
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
@@ -136,6 +137,15 @@ export default function Method() {
           Nothing on this site is investment advice. Costs, slippage, risk and regime change are not modeled, and a claim that
           held in a sample says nothing about what to buy or sell.
         </p>
+      </Section>
+
+      <Section id="shapes" title="How a claim is drawn">
+        <p className={P}>
+          Every claim page shows the claim as a chain: who triggers the event, what happens, and which market it should
+          move, with what it is measured against, the rules applied and the frozen predictions underneath. Each step has
+          one of six fixed shapes, and the step&apos;s label always names it, so the shapes are a help, not a code to learn.
+        </p>
+        <NodeLegend compact />
       </Section>
 
       <Section id="glossary" title="Glossary">

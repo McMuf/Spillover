@@ -4,7 +4,6 @@ import { EventCard } from "../components/EventCard";
 import { FeedItem } from "../components/FeedItem";
 import { HowItWorks } from "../components/HowItWorks";
 import { Icon } from "../components/Icon";
-import { NodeLegend } from "../components/NodeLegend";
 import { Ready } from "../components/Ready";
 import { TrendingCard } from "../components/TrendingCard";
 import { IconButton, SectionHead, Segmented } from "../components/ui";
@@ -166,7 +165,6 @@ function HomeBody({ site }: { site: SiteData }) {
           <Trending site={site} />
           <Recent site={site} />
           <HowItWorks />
-          <NodeLegend />
         </div>
         <aside aria-label="Feed" className="min-w-0 border-line xl:sticky xl:top-20 xl:self-start xl:border-l xl:pl-6">
           <Rail site={site} />

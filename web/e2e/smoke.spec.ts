@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("loads the site, opens a claim and the six-shape legend renders", async ({ page }) => {
+test("loads the site, opens a claim and reads its chain", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   // The production build ships a Content-Security-Policy; any violation is a broken feature.
@@ -12,18 +12,21 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Spillover tests it in public");
   await expect(page.getByTestId("synthetic-banner")).toBeVisible();
 
-  const legend = page.getByTestId("node-legend");
-  await expect(legend).toBeVisible();
-  for (const tag of ["EVT", "ENT", "INS", "FAC", "CON", "PRD"]) {
-    await expect(legend.getByText(tag, { exact: true })).toBeVisible();
-  }
 
   await page.getByRole("link", { name: /Fed rate decisions make the S&P 500 swing/ }).first().click();
   await expect(page).toHaveURL(/#\/claims\/clm_fomc_abs_move_spx_v1$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("S&P 500");
   await expect(page.getByText(/On FOMC decision days, the S&P 500/).first()).toBeVisible();
-  await expect(page.getByTestId("node-legend")).toBeVisible();
-  await expect(page.getByTestId("graph-canvas")).toBeVisible();
+  // The claim reads as a labeled chain; every step names its node type, so no legend is needed.
+  const path = page.getByTestId("spillover-path");
+  await expect(path).toBeVisible();
+  for (const role of ["Who", "What happens", "Which market", "Measured against", "Rules applied", "Frozen predictions"]) {
+    await expect(path.getByText(role, { exact: false }).first()).toBeVisible();
+  }
+  for (const tag of ["ENT", "EVT", "INS", "FAC", "CON", "PRD"]) {
+    await expect(path.getByText(`· ${tag}`)).toBeVisible();
+  }
+  await expect(path.getByText("S&P 500").first()).toBeVisible();
 
   // Evidence tab: the chart, with its table alternative one click away.
   await page.getByRole("tab", { name: "Evidence" }).click();

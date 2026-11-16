@@ -88,14 +88,14 @@ Spillover is a **market research tool for hobbyists, students and curious people
 - **[Event-study engine](#5-event-study-engine):** Market model, abnormal returns, cumulative abnormal returns, bootstrap intervals and false-discovery-rate correction.
 - **[Prediction ledger](#6-prediction-ledger-and-timestamps):** Append-only, hashed, timestamped records of every forward call.
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
-- **[Graph view](#8-graph-view):** Cytoscape-based map with six fixed node shapes and evidence on every edge.
+- **[Claim chains and the news map](#8-claim-chains-and-the-news-map):** each claim drawn as a readable chain (who → what happens → which market), and a news-by-market map of every claim.
 - **[Web app](#9-web-app):** A calm, finance-app-style interface with dark and light themes, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
 - **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
 
 ## Works with
 
-`Python 3.12+` · `uv` · `Pydantic v2` · `Polars` · `DuckDB` · `Parquet` · `statsmodels` · `Typer` · `React` · `TypeScript` · `Vite` · `Tailwind` · `Cytoscape.js` · `TradingView Lightweight Charts` · `GitHub Actions` · `GitHub Pages` · `OpenTimestamps`
+`Python 3.12+` · `uv` · `Pydantic v2` · `Polars` · `DuckDB` · `Parquet` · `statsmodels` · `Typer` · `React` · `TypeScript` · `Vite` · `Tailwind` · `TradingView Lightweight Charts` · `GitHub Actions` · `GitHub Pages` · `OpenTimestamps`
 
 ## Why this exists
 
@@ -308,7 +308,7 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 | `EvidenceMeter` | Events collected versus required |
 | `InstrumentChip` | Symbol plus venue, never one without the other |
 
-Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for both themes. Contributors improve the system by changing tokens and components, not by adding one-off styles.
+Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one dark theme. Contributors improve the system by changing tokens and components, not by adding one-off styles.
 
 ## Scoring rules
 
@@ -492,32 +492,31 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 - *Rules version in each record:* grading is reproducible under the rules that applied when the claim was registered.
 - *Calibration plot, not just hit rate:* a 60% hit rate means little without knowing how confident the claim was. Calibration shows whether stated confidence matches reality.
 
-### 8. Graph view
+### 8. Claim chains and the news map
 
-**What it does.** Renders a claim and its evidence as a node-and-edge map using the six node types.
+**What it does.** Shows how a claim is wired and how claims relate, without asking anyone to learn a diagram language.
 
-**How.** Cytoscape.js with custom styles that map shapes one-to-one to node types (`rectangle`, `ellipse`, `diamond`, `hexagon`, `triangle`, `star`), tag labels from the schema, and a side sheet showing the full evidence for whatever is selected.
+**How.** Every claim page draws the claim as a chain read left to right: **who** triggers the event (entity), **what happens** (event), and **which market** should move (instrument), with the backtest estimate on the market. Underneath sit what it is **measured against** (factor), the **rules applied** (conditions) and the **frozen predictions**. Each step keeps one of the six fixed node shapes and is labeled with its role and type tag, so the shapes help but are never a code to decode. The link to the market is dashed while the sample is smaller than the claim requires, and the estimate always shows its interval, sample size, window and as-of date. Across claims, the Explore page's **Map** is a table with kinds of news as rows and markets as columns: each filled cell is a claim with its estimate, and an empty cell is a pair nobody has tested yet.
 
 **Why this design.**
-- *Cytoscape.js over hand-rolled SVG or a canvas library:* it ships the exact shape set needed, layout algorithms, selection, keyboard handling and a stable API, with far less code than building graph interaction from scratch.
-- *Graph is secondary to cards:* the graph helps people see structure; the card and table views carry the evidence and are the accessible path.
-- *40-node cap:* readability is a feature.
-- *Side sheet instead of tooltips:* tooltips hide on touch devices and cannot hold a table.
+- *A chain, not a force-directed graph:* a claim is a short, fixed sequence. Laying it out as one reads like a sentence and needs no panning, zooming or legend. An earlier Cytoscape graph was replaced for this reason, which also removed its 470 KB bundle.
+- *A matrix for relationships across claims:* "which news moves which market" is a two-way table. Rows and columns scale to hundreds of claims, stay readable on a phone, and are fully accessible as a real HTML table, which a node-link graph is not.
+- *Labels over legends:* every step says what it is in words; the six-shape legend remains on the Method page for reference.
 
 ### 9. Web app
 
 **What it does.** Presents claims, evidence, the forward log and the scoreboard.
 
-**How.** React with TypeScript on Vite, styled with Tailwind using design tokens, Radix primitives for accessible tabs and dialogs, TradingView Lightweight Charts for price charts, Cytoscape for the graph. Data is loaded from static JSON produced by the engine. Types come from the generated schema.
+**How.** React with TypeScript on Vite, styled with Tailwind using design tokens, Radix primitives for accessible tabs and dialogs, TradingView Lightweight Charts for the event-window chart; claim chains and the news map are plain HTML and SVG. Data is loaded from static JSON produced by the engine. Types come from the generated schema.
 
 **Why this design.**
 - *React plus TypeScript:* the most widely known combination among front-end contributors and the stack many fintech teams use, which lowers the barrier to contribute and makes the work legible to reviewers.
 - *Vite over a full framework:* the site is static, so server rendering, routing conventions and a Node server would be complexity without benefit.
-- *Tailwind with tokens:* fast to iterate and consistent; tokens keep both themes aligned.
+- *Tailwind with tokens:* fast to iterate and consistent; one dark theme, defined once in `design/tokens.ts`.
 - *Radix primitives:* accessibility (focus management, keyboard behavior, ARIA) is easy to get wrong and expensive to retrofit.
 - *Lightweight Charts:* small, fast, finance-native and Apache-2.0 licensed. Its license requires a **visible attribution link**, which the footer includes.
 - *No client-side secrets and no backend:* nothing to leak, nothing to scale.
-- *Testing:* Vitest for components and logic, plus Playwright browser tests: a smoke test that loads the built site, opens a claim and checks the legend renders, and an axe-core audit of every page in both themes for WCAG A/AA violations. Automated audits catch only part of what a person would, so manual review still matters. More tests are welcome.
+- *Testing:* Vitest for components and logic, plus Playwright browser tests: a smoke test that loads the built site, opens a claim and reads its chain, and an axe-core audit of every page for WCAG A/AA violations. Automated audits catch only part of what a person would, so manual review still matters. More tests are welcome.
 
 ### 10. Automation
 
@@ -550,7 +549,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 | Scheduling | **GitHub Actions** | Free, versioned with the code, no server |
 | Front end | **React, TypeScript, Vite, Tailwind, Radix** | See [Web app](#9-web-app) |
 | Charts | **TradingView Lightweight Charts** | Finance-native, small, Apache-2.0 (attribution required) |
-| Graph | **Cytoscape.js** | Built-in shapes and layouts that map to node types |
+| Claim chains and news map | **Plain HTML and SVG** | A claim is a short chain and claims form a two-way table; neither needs a graph library |
 | Testing | **Vitest, Playwright, axe-core** | Fast unit tests, a browser smoke test and an automated accessibility audit |
 | Hosting | **GitHub Pages** | Free static hosting alongside the code |
 | Timestamps | **OpenTimestamps (`ots` client)** | Free, open, Bitcoin-anchored |

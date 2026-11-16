@@ -11,23 +11,22 @@ export interface NodeType {
   tag: "EVT" | "ENT" | "INS" | "FAC" | "CON" | "PRD";
   name: string;
   glyph: string;
-  cytoscapeShape: "rectangle" | "ellipse" | "diamond" | "hexagon" | "triangle" | "star";
   means: string;
   mustHave: string;
 }
 
 export const NODE_TYPES: readonly NodeType[] = [
-  { key: "event", tag: "EVT", name: "Event", glyph: "■", cytoscapeShape: "rectangle",
+  { key: "event", tag: "EVT", name: "Event", glyph: "■",
     means: "One dated, sourced thing that happened", mustHave: "Timestamp, source" },
-  { key: "entity", tag: "ENT", name: "Entity", glyph: "●", cytoscapeShape: "ellipse",
+  { key: "entity", tag: "ENT", name: "Entity", glyph: "●",
     means: "A company, person, country or institution", mustHave: "Stable ID, name" },
-  { key: "instrument", tag: "INS", name: "Instrument", glyph: "◆", cytoscapeShape: "diamond",
+  { key: "instrument", tag: "INS", name: "Instrument", glyph: "◆",
     means: "A thing you can look up a price for, labeled with where it trades", mustHave: "Venue, symbol" },
-  { key: "factor", tag: "FAC", name: "Factor", glyph: "⬡", cytoscapeShape: "hexagon",
+  { key: "factor", tag: "FAC", name: "Factor", glyph: "⬡",
     means: "A broad driver the engine controls for", mustHave: "Series definition" },
-  { key: "condition", tag: "CON", name: "Condition", glyph: "▲", cytoscapeShape: "triangle",
+  { key: "condition", tag: "CON", name: "Condition", glyph: "▲",
     means: "A rule that must hold for the claim to apply", mustHave: "Machine-checkable rule" },
-  { key: "prediction", tag: "PRD", name: "Prediction", glyph: "★", cytoscapeShape: "star",
+  { key: "prediction", tag: "PRD", name: "Prediction", glyph: "★",
     means: "A frozen, hashed forward call", mustHave: "Hash, timestamp, claim version" },
 ];
 

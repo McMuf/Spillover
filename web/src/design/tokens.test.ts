@@ -34,7 +34,7 @@ describe("design tokens", () => {
 describe("node language", () => {
   it("has six types, each with a unique shape, tag and glyph", () => {
     expect(NODE_TYPES).toHaveLength(6);
-    for (const key of ["tag", "glyph", "cytoscapeShape", "key"] as const) {
+    for (const key of ["tag", "glyph", "key"] as const) {
       expect(new Set(NODE_TYPES.map((t) => t[key])).size, `unique ${key}`).toBe(6);
     }
     expect(NODE_TYPES.map((t) => t.tag)).toEqual(["EVT", "ENT", "INS", "FAC", "CON", "PRD"]);

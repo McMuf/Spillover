@@ -6,6 +6,7 @@ import { expect, test } from "@playwright/test";
 const PAGES = [
   ["claims", "/#/"],
   ["claim overview", "/#/claims/clm_fomc_abs_move_spx_v1"],
+  ["explore", "/#/explore"],
   ["feed", "/#/feed"],
   ["event", "/#/events/fomc_2025-12-17"],
   ["scoreboard", "/#/scoreboard"],
@@ -35,7 +36,7 @@ const PAGES = [
 
     test("claim challenge tab has no violations", async ({ page }) => {
       await page.goto("/#/claims/clm_fomc_abs_move_spx_v1");
-      await page.getByRole("tab", { name: /Challenge/ }).click();
+      await page.getByRole("tab", { name: /Both sides/ }).click();
       await expect(page.getByRole("heading", { name: /Challenges/ })).toBeVisible();
       const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
       const summary = results.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node(s))`);

@@ -1,45 +1,46 @@
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { EventItem } from "../components/EventItem";
 import { Ready } from "../components/Ready";
-import { Card, Tag } from "../components/ui";
-import { Logo } from "../components/Logo";
+import { Tag } from "../components/ui";
 import type { SiteData } from "../generated/site";
+import { categoryOf } from "../lib/plain";
 
 function Feed({ site }: { site: SiteData }) {
-  const events = [...site.events].sort((a, b) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id));
-  const shown = events.slice(0, 40);
+  const columns = useMemo(() => {
+    const sorted = [...site.events].sort((a, b) => b.date.localeCompare(a.date) || a.event_id.localeCompare(b.event_id));
+    const by = new Map<string, { cat: ReturnType<typeof categoryOf>; items: typeof sorted }>();
+    for (const e of sorted) {
+      const cat = categoryOf(e.event_type);
+      const col = by.get(cat.name) ?? { cat, items: [] };
+      col.items.push(e);
+      by.set(cat.name, col);
+    }
+    return [...by.values()].sort((a, b) => b.items.length - a.items.length);
+  }, [site]);
+
   return (
     <>
-      <Card title="Feed" stamp={`As of ${site.meta.data_as_of}`}>
-        <p className="mb-2 text-sm text-muted">
-          Dated, sourced events the claims are tested on, newest first. Each links to the claims that use it.
-        </p>
-        <ul>
-          {shown.map((e) => (
-            <li key={e.event_id} className="border-t border-line first:border-t-0">
-              <Link to={`/events/${e.event_id}`} className="flex items-center gap-3 py-4 hover:bg-surface-alt/40">
-                <Logo symbol={e.entities[0] ?? "EVT"} size={44} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{e.event_type.replace(/_/g, " ").toLowerCase()}</span>
-                  <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                    <span>{e.date}</span>
-                    {e.entities.slice(0, 2).map((en) => (
-                      <Tag key={en}>{en}</Tag>
-                    ))}
-                    {e.scheduled && <Tag>scheduled</Tag>}
-                    <span>
-                      {e.claims.length} claim{e.claims.length === 1 ? "" : "s"}
-                    </span>
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-          {shown.length === 0 && <li className="py-4 text-muted">No events yet.</li>}
-        </ul>
-        {events.length > shown.length && (
-          <p className="mt-2 text-xs text-muted">Showing the latest {shown.length} of {events.length} events.</p>
-        )}
-      </Card>
+      <h1 className="mb-1 text-3xl font-extrabold">Feed</h1>
+      <p className="mb-6 max-w-2xl text-sm text-muted">
+        Dated, sourced events the claims are tested on, grouped by topic and newest first. Each one lists the markets it touches.
+      </p>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {columns.map(({ cat, items }) => (
+          <section key={cat.name} aria-label={cat.name} className="rounded-xl border border-line bg-surface p-4">
+            <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
+              {cat.name}
+              <Tag hue={cat.hue}>{items.length}</Tag>
+            </h2>
+            <ul>
+              {items.slice(0, 12).map((e) => (
+                <EventItem key={e.event_id} event={e} site={site} />
+              ))}
+            </ul>
+            {items.length > 12 && <p className="mt-2 text-xs text-muted">Showing the latest 12 of {items.length}.</p>}
+          </section>
+        ))}
+        {columns.length === 0 && <p className="text-muted">No events yet.</p>}
+      </div>
     </>
   );
 }

@@ -1,26 +1,32 @@
 import { Link } from "react-router-dom";
 import type { SiteClaim, SiteData } from "../generated/site";
-import { pct, scoreboardRow, venueLabel } from "../lib/format";
+import { instrumentName } from "../lib/brands";
+import { pct, scoreboardRow } from "../lib/format";
+import { categoryOf } from "../lib/plain";
 import { Logo } from "./Logo";
 import { Sparkline } from "./Sparkline";
 import { StatusBadge } from "./StatusBadge";
 import { Tag } from "./ui";
 
-/** A market-style card: logo and one-sentence claim, two key numbers, status. The whole card is a link. */
+/** A compact card for the claims below the top stories. The whole card is a link. */
 export function ClaimCard({ item, site }: { item: SiteClaim; site: SiteData }) {
   const c = item.claim;
   const b = item.backtest;
+  const cat = categoryOf(c.event_type);
   const forward = scoreboardRow(site.scoreboard.claims, c.id)?.effective_events ?? 0;
   return (
-    <article className="relative flex flex-col rounded-xl border border-line bg-surface p-4 transition-colors hover:border-muted">
-      <div className="flex gap-3">
-        <Logo symbol={c.instrument.symbol} />
-        <h3 className="min-w-0 flex-1 text-base font-semibold leading-snug">
-          <Link to={`/claims/${c.id}`} className="line-clamp-3 after:absolute after:inset-0 after:content-['']">
-            {c.statement.replace(/\s+/g, " ").trim()}
-          </Link>
-        </h3>
+    <article className="relative flex flex-col rounded-xl border border-line bg-surface p-4 transition-colors hover:border-primary">
+      <div className="mb-3 flex items-center gap-2">
+        <Logo symbol={c.instrument.symbol} size={32} />
+        <span className="font-mono font-bold">{c.instrument.symbol}</span>
+        <span className="truncate text-sm text-muted">{instrumentName(c.instrument.symbol)}</span>
+        <span className="ml-auto"><Tag hue={cat.hue}>{cat.name}</Tag></span>
       </div>
+      <h3 className="text-base font-semibold leading-snug">
+        <Link to={`/claims/${c.id}`} className="line-clamp-3 after:absolute after:inset-0 after:content-['']">
+          {c.statement.replace(/\s+/g, " ").trim()}
+        </Link>
+      </h3>
 
       <dl className="mt-4 space-y-2 text-sm">
         <div className="flex items-center justify-between gap-3">
@@ -44,10 +50,8 @@ export function ClaimCard({ item, site }: { item: SiteClaim; site: SiteData }) {
         </div>
       </dl>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+      <div className="mt-4 border-t border-line pt-3">
         <StatusBadge status={item.status} />
-        <Tag>{c.instrument.symbol}</Tag>
-        <span className="text-xs text-muted">{venueLabel(c.instrument.venue)}</span>
       </div>
     </article>
   );

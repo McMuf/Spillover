@@ -3,7 +3,11 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Logo } from "../components/Logo";
-import { BackButton, PillButton, Tag } from "../components/ui";
+import { BackButton, PillButton, Tag, TickerChip } from "../components/ui";
+import { Sparkline } from "../components/Sparkline";
+import { NodeShape } from "../components/NodeShape";
+import { instrumentName } from "../lib/brands";
+import { categoryOf, whatPastDataSays, whatWeTest } from "../lib/plain";
 import { EvidenceMeter } from "../components/EvidenceMeter";
 import { ForwardLogTable } from "../components/ForwardLogTable";
 import { Histogram } from "../components/Histogram";
@@ -63,6 +67,80 @@ function EmbedBox({ claimId }: { claimId: string }) {
   );
 }
 
+function PlainBlocks({ item }: { item: SiteClaim }) {
+  const verdict = whatPastDataSays(item);
+  const c = item.claim;
+  return (
+    <div className="rounded-xl border border-line bg-surface p-5">
+      <h2 className="mb-3 text-lg font-bold">News overview</h2>
+      <ul className="list-disc space-y-2 pl-5 text-[15px]">
+        <li><strong>What we test.</strong> {whatWeTest(item)}</li>
+        <li><strong>What the past data says.</strong> {verdict.headline}. {verdict.detail}</li>
+        <li><strong>What would prove it wrong.</strong> {c.falsifier.replace(/\s+/g, " ").trim()}</li>
+      </ul>
+      <h2 className="mb-2 mt-5 text-lg font-bold">Market context</h2>
+      <p className="text-[15px] text-muted">
+        A past pattern is not a prediction. The real test starts when the claim is registered: only events{" "}
+        <em>after</em> that date count as forward evidence, and a claim needs at least {c.success.min_forward_events} of them
+        before it can be called Supported or Not supported. Until then it is listed as Proposed.
+      </p>
+    </div>
+  );
+}
+
+function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => void }) {
+  const c = item.claim;
+  const b = item.backtest;
+  const cat = categoryOf(c.event_type);
+  const series = item.chart?.mean ?? [];
+  const cards = [
+    { symbol: c.instrument.symbol, venue: venueLabel(c.instrument.venue), idea: `${instrumentName(c.instrument.symbol)} is the market this claim is about.`, main: true },
+    ...(c.baseline === "factor_only" && c.factor
+      ? [{ symbol: c.factor, venue: "market factor", idea: `${instrumentName(c.factor)} is what we subtract, so the result shows only what the overall market does not explain.`, main: false }]
+      : []),
+  ];
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted">Markets this claim touches. Numbers are backtests on past events, not forecasts.</p>
+      {cards.map((m) => (
+        <section key={m.symbol} aria-label={m.symbol} className="rounded-xl border border-line bg-surface p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Logo symbol={m.symbol} size={44} />
+              <div>
+                <p className="flex items-center gap-2"><span className="font-mono text-lg font-bold">{m.symbol}</span><Tag hue={cat.hue}>{m.venue}</Tag></p>
+                <p className="text-sm text-muted">{instrumentName(m.symbol)}</p>
+              </div>
+            </div>
+            {m.main && b && (
+              <div className="text-right">
+                <p className="text-xl font-extrabold">{pct(b.mean)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">backtest · n={b.n_effective}</p>
+              </div>
+            )}
+          </div>
+          <p className="my-4 flex items-start gap-2 border-t border-line pt-4 text-[15px]">
+            <span className="mt-0.5 text-cat-yellow"><Icon name="bulb" size={16} /></span>
+            {m.idea}
+          </p>
+          {m.main && series.length > 1 && (
+            <div className="rounded-lg bg-surface-alt p-3">
+              <Sparkline values={series} width={560} height={110} />
+              <p className="mt-1 text-xs text-muted">Average path around each past event (event at day 0).</p>
+            </div>
+          )}
+          {m.main && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setTab("evidence")} className="rounded-full bg-primary px-5 py-3 font-bold text-on-primary hover:brightness-110">View evidence</button>
+              <button type="button" onClick={() => setTab("challenge")} className="rounded-full border border-line px-5 py-3 font-bold hover:bg-surface-alt">Challenge</button>
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
   const c = item.claim;
   const b = item.backtest;
@@ -70,6 +148,8 @@ function Overview({ item, site }: { item: SiteClaim; site: SiteData }) {
   const model = useMemo(() => buildGraph([item], site), [item, site]);
   return (
     <div className="space-y-6">
+      <PlainBlocks item={item} />
+
       <section aria-labelledby="summary" className="rounded-xl border border-line bg-surface p-4">
         <h2 id="summary" className="mb-2 text-sm font-semibold">Summary</h2>
         <dl>
@@ -202,8 +282,21 @@ function Challenge({ item, site }: { item: SiteClaim; site: SiteData }) {
   const q = new URLSearchParams({ template: "challenge.yml", title: `Challenge: ${id}`, claim: id });
   const registered = item.status !== "Draft";
   const link = "inline-block rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-surface-alt";
+  const verdict = whatPastDataSays(item);
   return (
     <div className="space-y-6">
+      <div className="grid gap-3 md:grid-cols-2">
+        <section aria-label="The case for" className="rounded-xl border-l-4 bg-surface p-4" style={{ borderColor: "var(--c-cat-blue)" }}>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-cat-blue">Supporters say</h2>
+          <p className="text-[15px]">{item.claim.statement.replace(/\s+/g, " ").trim()}</p>
+          <p className="mt-2 text-sm text-muted">{verdict.headline}.</p>
+        </section>
+        <section aria-label="The case against" className="rounded-xl border-l-4 bg-surface p-4" style={{ borderColor: "var(--c-cat-orange)" }}>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-bold text-cat-orange">Skeptics say</h2>
+          <p className="text-[15px]">{item.claim.falsifier.replace(/\s+/g, " ").trim()}</p>
+          <p className="mt-2 text-sm text-muted">{item.challenges.length} challenge{item.challenges.length === 1 ? "" : "s"} and {item.replications.length} replication{item.replications.length === 1 ? "" : "s"} so far.</p>
+        </section>
+      </div>
       <p className="text-sm text-muted">
         Disagreement is a structured activity here. A <strong className="text-fg">challenge</strong> argues the claim is
         wrong, with evidence. A <strong className="text-fg">replication</strong> reruns it with named changes; the engine
@@ -306,6 +399,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
   const c = item.claim;
   const [tab, setTab] = useState("overview");
   const [copied, setCopied] = useState(false);
+  const cat = categoryOf(c.event_type);
   const text = citation(c.id, claimVersion(c.id), __COMMIT__, site.meta.repo);
 
   const copy = async () => {
@@ -327,30 +421,40 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
       </div>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
-          <header className="mb-5">
-            <div className="mb-3 flex items-center gap-3">
-              <Logo symbol={c.instrument.symbol} size={48} />
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-2xl font-extrabold">{c.instrument.symbol}</span>
-                <Tag>{venueLabel(c.instrument.venue)}</Tag>
+          <header className="relative mb-5 overflow-hidden rounded-xl border border-line bg-surface p-5 md:p-6">
+            <div aria-hidden="true" className="absolute inset-0" style={{ background: `radial-gradient(110% 120% at 100% 0%, color-mix(in srgb, var(--c-${cat.hue.replace(/[A-Z]/g, (m: string) => "-" + m.toLowerCase())}) 45%, transparent), transparent 65%)` }} />
+            <div aria-hidden="true" className="absolute -right-2 -top-2 opacity-25" style={{ color: `var(--c-${cat.hue.replace(/[A-Z]/g, (m: string) => "-" + m.toLowerCase())})` }}>
+              <NodeShape type="event" size={130} />
+            </div>
+            <div className="relative">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Tag hue={cat.hue}>{cat.name}</Tag>
                 <StatusBadge status={item.status} />
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {item.backtest ? `${item.backtest.n_effective} past events tested · as of ${item.backtest.as_of}` : "not tested yet"}
+                </span>
+              </div>
+              <h1 className="text-2xl font-extrabold leading-snug md:text-4xl">{c.statement.replace(/\s+/g, " ").trim()}</h1>
+              <p className="mt-3 max-w-2xl text-[15px] text-fg/80">{whatWeTest(item)}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <TickerChip symbol={c.instrument.symbol} value={item.backtest ? pct(item.backtest.mean) : undefined} hue={cat.hue} />
+                <span className="font-mono text-xs text-muted">{c.id}</span>
               </div>
             </div>
-            <h1 className="text-2xl font-bold leading-snug md:text-3xl">{c.statement.replace(/\s+/g, " ").trim()}</h1>
-            <p className="mt-2 font-mono text-xs text-muted">{c.id}</p>
-            <p className="mt-2 text-sm text-muted"><strong className="text-fg">What would prove it wrong:</strong> {c.falsifier.replace(/\s+/g, " ").trim()}</p>
           </header>
 
           <HeadChart item={item} />
 
           <Tabs.Root value={tab} onValueChange={setTab}>
             <Tabs.List aria-label="Claim sections" className="mb-5 flex gap-6 overflow-x-auto border-b border-line">
-              <Tabs.Trigger value="overview" className={TAB}>Overview</Tabs.Trigger>
+              <Tabs.Trigger value="overview" className={TAB}>Situation overview</Tabs.Trigger>
+              <Tabs.Trigger value="markets" className={TAB}>Affected markets</Tabs.Trigger>
               <Tabs.Trigger value="evidence" className={TAB}>Evidence</Tabs.Trigger>
               <Tabs.Trigger value="forward" className={TAB}>Forward log ({item.forward_log.length})</Tabs.Trigger>
-              <Tabs.Trigger value="challenge" className={TAB}>Challenge ({item.challenges.length + item.replications.length})</Tabs.Trigger>
+              <Tabs.Trigger value="challenge" className={TAB}>Both sides ({item.challenges.length + item.replications.length})</Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value="overview"><Overview item={item} site={site} /></Tabs.Content>
+            <Tabs.Content value="markets"><Markets item={item} setTab={setTab} /></Tabs.Content>
             <Tabs.Content value="evidence"><Evidence item={item} site={site} /></Tabs.Content>
             <Tabs.Content value="forward"><ForwardLogTable rows={item.forward_log} /></Tabs.Content>
             <Tabs.Content value="challenge"><Challenge item={item} site={site} /></Tabs.Content>

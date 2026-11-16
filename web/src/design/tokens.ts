@@ -9,6 +9,7 @@
 export type ThemeName = "dark";
 
 export interface ColorTokens {
+  /** Page background. */
   bg: string;
   surface: string;
   surfaceAlt: string;
@@ -18,7 +19,7 @@ export interface ColorTokens {
   /** Links, progress, chart lines. */
   accent: string;
   onAccent: string;
-  /** Filled pill buttons and the active tab. */
+  /** Filled pill buttons and the active filter. */
   primary: string;
   onPrimary: string;
   /** Realized, favorable outcome only. */
@@ -27,28 +28,47 @@ export interface ColorTokens {
   negative: string;
   noticeBg: string;
   noticeFg: string;
+  /** Decorative category hues for chips, tags and card art. They never mean good or bad. */
+  catBlue: string;
+  catPurple: string;
+  catOrange: string;
+  catCyan: string;
+  catPink: string;
+  catYellow: string;
 }
 
+/**
+ * Palette after TradingView's dark theme (blue #2962FF, slate surfaces, soft grays) on a black page.
+ */
 export const color: Record<ThemeName, ColorTokens> = {
   dark: {
     bg: "#000000",
-    surface: "#0b0b0c",
-    surfaceAlt: "#18181a",
-    line: "#2a2a2d",
-    fg: "#f3f6fb",
-    muted: "#98a2b5",
-    accent: "#8fb2ff",
-    onAccent: "#0a0f1a",
-    primary: "#1f3d73",
+    surface: "#131722",
+    surfaceAlt: "#1e222d",
+    line: "#2a2e39",
+    fg: "#e0e3eb",
+    muted: "#9598a1",
+    accent: "#7aa2ff",
+    onAccent: "#0b0e14",
+    primary: "#2962ff",
     onPrimary: "#ffffff",
-    positive: "#3fd37f",
-    negative: "#ff7b59",
+    positive: "#2ebd85",
+    negative: "#f7525f",
     noticeBg: "#2a2410",
     noticeFg: "#f0d58a",
+    catBlue: "#5c8dff",
+    catPurple: "#b388ff",
+    catOrange: "#ffa94d",
+    catCyan: "#4dd0e1",
+    catPink: "#ff7aa8",
+    catYellow: "#ffd54f",
   },
 };
 
-export const radius = { card: "22px", pill: "999px" };
+export const CATEGORY_HUES = ["catBlue", "catPurple", "catOrange", "catCyan", "catPink", "catYellow"] as const;
+export type CategoryHue = (typeof CATEGORY_HUES)[number];
+
+export const radius = { card: "12px", pill: "999px" };
 export const font = {
   sans: '"Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
@@ -67,12 +87,12 @@ export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTo
   ["accent", "surfaceAlt"],
   ["onAccent", "accent"],
   ["onPrimary", "primary"],
-  ["fg", "primary"],
   ["positive", "surface"],
   ["negative", "surface"],
   ["positive", "surfaceAlt"],
   ["negative", "surfaceAlt"],
   ["noticeFg", "noticeBg"],
+  ...CATEGORY_HUES.flatMap((h) => [[h, "surface"] as const, [h, "surfaceAlt"] as const]),
 ];
 
 /** WCAG relative luminance and contrast ratio for #rrggbb colors. */

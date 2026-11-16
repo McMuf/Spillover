@@ -31,7 +31,7 @@ test("loads the site, opens a claim and the six-shape legend renders", async ({ 
   await expect(page.getByRole("table", { name: /Mean abnormal path/ })).toBeVisible();
 
   // Challenge tab: structured lanes, with pull-request links pre-filled from the templates.
-  await page.getByRole("tab", { name: /Challenge/ }).click();
+  await page.getByRole("tab", { name: /Both sides/ }).click();
   await expect(page.getByRole("heading", { name: /Challenges \(0\)/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: /Replications \(0\)/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Propose a replication (pull request)" })).toHaveAttribute(

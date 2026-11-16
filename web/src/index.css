@@ -16,6 +16,12 @@
   --color-negative: var(--c-negative);
   --color-notice-bg: var(--c-notice-bg);
   --color-notice-fg: var(--c-notice-fg);
+  --color-cat-blue: var(--c-cat-blue);
+  --color-cat-purple: var(--c-cat-purple);
+  --color-cat-orange: var(--c-cat-orange);
+  --color-cat-cyan: var(--c-cat-cyan);
+  --color-cat-pink: var(--c-cat-pink);
+  --color-cat-yellow: var(--c-cat-yellow);
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --radius-card: 12px;
@@ -29,7 +35,7 @@ html {
 body {
   margin: 0;
   background: var(--c-bg, #000000);
-  color: var(--c-fg, #f3f6fb);
+  color: var(--c-fg, #e0e3eb);
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   line-height: 1.45;

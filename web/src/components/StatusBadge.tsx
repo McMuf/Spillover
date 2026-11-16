@@ -4,10 +4,10 @@ import type { Status } from "../lib/format";
 // Every badge also carries a text label and a distinct mark, so color is never the only cue.
 const STYLE: Record<Status, { cls: string; mark: string }> = {
   Draft: { cls: "border-dashed border-line text-muted", mark: "◌" },
-  Proposed: { cls: "border-line text-fg", mark: "○" },
-  Supported: { cls: "border-positive text-positive", mark: "✓" },
-  "Not supported": { cls: "border-negative text-negative", mark: "✕" },
-  Inconclusive: { cls: "border-line text-muted", mark: "≈" },
+  Proposed: { cls: "border-cat-blue/40 bg-cat-blue/15 text-cat-blue", mark: "○" },
+  Supported: { cls: "border-positive bg-positive/15 text-positive", mark: "✓" },
+  "Not supported": { cls: "border-negative bg-negative/15 text-negative", mark: "✕" },
+  Inconclusive: { cls: "border-cat-orange/40 bg-cat-orange/15 text-cat-orange", mark: "≈" },
 };
 
 export function StatusBadge({ status }: { status: Status }) {

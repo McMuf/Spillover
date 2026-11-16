@@ -1,8 +1,21 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Icon } from "./Icon";
+import type { CategoryHue } from "../design/tokens";
+import { Icon, type IconName } from "./Icon";
+import { Logo } from "./Logo";
 
-/** A rounded surface with a large heading and an optional freshness stamp, as on the overview cards. */
+const cssVar = (hue: CategoryHue) => `var(--c-${hue.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())})`;
+
+/** A tinted style from a category hue: colored text on a faint wash of the same color. */
+export function tint(hue: CategoryHue, strength = 16): CSSProperties {
+  return {
+    color: cssVar(hue),
+    background: `color-mix(in srgb, ${cssVar(hue)} ${strength}%, transparent)`,
+    borderColor: `color-mix(in srgb, ${cssVar(hue)} 35%, transparent)`,
+  };
+}
+
+/** A rounded surface with a large heading and an optional freshness stamp. */
 export function Card({
   title,
   stamp,
@@ -28,19 +41,55 @@ export function Card({
   );
 }
 
+/** A section heading with an optional note, like "Top News Today". */
+export function SectionHead({ id, title, note, right }: { id: string; title: string; note?: string; right?: ReactNode }) {
+  return (
+    <div className="mb-3 flex items-end justify-between gap-3">
+      <div>
+        <h2 id={id} className="text-2xl font-bold leading-tight">
+          {title}
+        </h2>
+        {note && <p className="mt-0.5 text-sm text-muted">{note}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
 /** "⚡ AS OF …": data without a visible age cannot be trusted. */
 export function Stamp({ children }: { children: ReactNode }) {
   return (
-    <span className="mt-2 inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted">
+    <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted">
       <Icon name="bolt" size={13} />
       {children}
     </span>
   );
 }
 
-/** A small rounded tag next to a name, such as the venue or a status. */
-export function Tag({ children }: { children: ReactNode }) {
-  return <span className="shrink-0 rounded-lg bg-surface-alt px-2 py-0.5 text-xs font-semibold text-muted">{children}</span>;
+/** A small rounded tag. Colored by category when given a hue, with an optional icon. */
+export function Tag({ children, hue, icon }: { children: ReactNode; hue?: CategoryHue; icon?: IconName }) {
+  return (
+    <span
+      style={hue ? tint(hue) : undefined}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold ${
+        hue ? "" : "border-transparent bg-surface-alt text-muted"
+      }`}
+    >
+      {icon && <Icon name={icon} size={12} />}
+      {children}
+    </span>
+  );
+}
+
+/** A company pill: logo, symbol and an optional neutral value, like the tickers under a news story. */
+export function TickerChip({ symbol, value, hue = "catBlue" }: { symbol: string; value?: string; hue?: CategoryHue }) {
+  return (
+    <span style={tint(hue, 12)} className="inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-xs font-bold">
+      <Logo symbol={symbol} size={20} />
+      <span className="font-mono text-fg">{symbol}</span>
+      {value && <span className="font-semibold">{value}</span>}
+    </span>
+  );
 }
 
 /** The rounded value badge. Neutral unless it states an outcome that already happened. */
@@ -50,20 +99,24 @@ export function ValuePill({ children, tone = "neutral" }: { children: ReactNode;
     positive: "bg-positive text-on-accent",
     negative: "bg-negative text-on-accent",
   }[tone];
-  return <span className={`inline-flex min-w-[88px] justify-center rounded-xl px-3 py-2 text-[15px] font-bold ${cls}`}>{children}</span>;
+  return <span className={`inline-flex min-w-[88px] justify-center rounded-lg px-3 py-2 text-[15px] font-bold ${cls}`}>{children}</span>;
 }
 
-/** A selectable pill, used for filters and range selectors. */
+/** A selectable pill, used for filters and range selectors. Active pills glow in the primary blue. */
 export function PillButton({
   active,
   onClick,
   children,
   label,
+  hue,
+  icon,
 }: {
   active: boolean;
   onClick: () => void;
   children: ReactNode;
   label?: string;
+  hue?: CategoryHue;
+  icon?: IconName;
 }) {
   return (
     <button
@@ -71,10 +124,14 @@ export function PillButton({
       aria-pressed={active}
       aria-label={label}
       onClick={onClick}
-      className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[15px] font-semibold ${
-        active ? "border-primary bg-primary text-on-primary" : "border-line bg-surface text-muted hover:text-fg"
+      style={!active && hue ? { borderColor: `color-mix(in srgb, ${cssVar(hue)} 45%, transparent)` } : undefined}
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+        active
+          ? "border-primary bg-primary text-on-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--c-primary)_30%,transparent)]"
+          : "border-line bg-surface text-muted hover:border-accent hover:text-fg"
       }`}
     >
+      {icon && <Icon name={icon} size={15} />}
       {children}
     </button>
   );
@@ -83,7 +140,7 @@ export function PillButton({
 /** A circular icon button for back arrows and similar. */
 export function BackButton({ to, label = "Back" }: { to: string; label?: string }) {
   return (
-    <Link to={to} aria-label={label} className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-surface text-fg hover:bg-surface-alt">
+    <Link to={to} aria-label={label} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-surface text-fg hover:bg-surface-alt">
       <Icon name="back" />
     </Link>
   );
@@ -110,7 +167,7 @@ export function FilterTabs<T extends string>({
           aria-pressed={value === o}
           onClick={() => onChange(o)}
           className={`-mb-px shrink-0 whitespace-nowrap border-b-2 py-3 text-[15px] font-semibold ${
-            value === o ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg"
+            value === o ? "border-primary text-fg" : "border-transparent text-muted hover:text-fg"
           }`}
         >
           {o}

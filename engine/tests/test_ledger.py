@@ -404,3 +404,24 @@ def test_register_only_stamps_the_files_it_is_given(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0 and "1 claim(s)" in result.output
     assert load_claim(b).registered_at_utc is not None
+
+
+def test_predict_stops_for_a_claim_once_a_newer_version_is_registered(
+    tmp_path: Path, data_with_future_events: MarketData
+) -> None:
+    v1 = shock_claim(tmp_path)
+    v2 = v1.model_copy(update={"id": "clm_syn_shock_v2"})
+    root = tmp_path / "predictions"
+    summary = predict([v1, v2], data_with_future_events, root, NOW)
+    assert summary.skipped_superseded_claims == ["clm_syn_shock_v1"]
+    assert {p.parent.name for p in summary.written} == {"clm_syn_shock_v2"}
+
+
+def test_a_draft_newer_version_does_not_supersede_the_registered_one(
+    tmp_path: Path, data_with_future_events: MarketData
+) -> None:
+    v1 = shock_claim(tmp_path)
+    draft = v1.model_copy(update={"id": "clm_syn_shock_v2", "registered_at": "set_by_ci_on_merge"})
+    summary = predict([v1, draft], data_with_future_events, tmp_path / "predictions", NOW)
+    assert summary.skipped_superseded_claims == []
+    assert {p.parent.name for p in summary.written} == {"clm_syn_shock_v1"}

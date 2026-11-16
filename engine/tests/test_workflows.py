@@ -114,3 +114,26 @@ def test_register_never_stamps_every_draft() -> None:
     assert "--only" in scripts and "--diff-filter=A" in scripts
     checkout = next(st for _, st in steps(wf) if "actions/checkout" in st.get("uses", ""))
     assert checkout["with"]["fetch-depth"] == 0, "the diff against the push's parent needs history"
+
+
+def test_a_broken_extraction_setup_turns_the_ingest_run_red() -> None:
+    wf = load(ROOT / ".github" / "workflows" / "ingest.yml")
+    runs = [st.get("run", "") for _, st in steps(wf)]
+    assert any("ingest-headlines" in r and "--strict" in r for r in runs)
+
+
+def test_no_ingest_step_runs_on_a_ledger_that_failed_verification() -> None:
+    """Later steps may run after a headline failure, but never after the ledger check failed."""
+    wf = load(ROOT / ".github" / "workflows" / "ingest.yml")
+    named = [st for _, st in steps(wf) if "name" in st]
+    order = [st["name"] for st in named]
+    verify_at = order.index("Verify the ledger")
+    assert named[verify_at].get("id") == "verify"
+    for st in named[verify_at + 1 :]:
+        cond = str(st.get("if", ""))
+        if "!cancelled()" in cond or "always()" in cond:
+            assert "steps.verify.outcome == 'success'" in cond or "steps.prices.outcome" in cond, (
+                st["name"]
+            )
+    prices = next(st for st in named if st.get("id") == "prices")
+    assert "steps.verify.outcome == 'success'" in prices["if"]

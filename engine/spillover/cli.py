@@ -30,7 +30,7 @@ from spillover.gold import (
 )
 from spillover.ingest.config import ConfigError, load_config
 from spillover.ingest.fomc import FomcParseError
-from spillover.ingest.headline_run import run_headlines
+from spillover.ingest.headline_run import HeadlineSummary, run_headlines
 from spillover.ingest.headlines import FeedError
 from spillover.ingest.http import FetchError, http_get, redact
 from spillover.ingest.prices import PriceError
@@ -387,6 +387,11 @@ def predict_cmd(
         f"{summary.skipped_window_closed} event(s) with a closed window, "
         f"{summary.skipped_existing} already frozen"
     )
+    if summary.skipped_superseded_claims:
+        typer.echo(
+            "  superseded by a newer registered version (no new predictions): "
+            + ", ".join(summary.skipped_superseded_claims)
+        )
 
 
 @app.command("verify-ledger")
@@ -537,6 +542,14 @@ def ingest_headlines(
     config: Annotated[
         Path, typer.Option("--config", help="Sources file (see data/sources.example.toml).")
     ] = Path("data/sources.toml"),
+    strict: Annotated[
+        bool,
+        typer.Option(
+            "--strict",
+            help="Fail when headlines are waiting for an API key or every model call failed "
+            "(for scheduled runs, so a broken setup turns the run red instead of passing).",
+        ),
+    ] = False,
 ) -> None:
     """Fetch headline feeds, extract events (cache first) and append them to events/."""
     try:
@@ -567,6 +580,36 @@ def ingest_headlines(
         typer.echo(f"  extraction problem: {redact(line)}", err=True)
     if summary.feeds_ok == 0:
         raise _fail("no feed could be read")
+    problem = headline_run_problem(summary)
+    if strict and problem:
+        raise _fail(problem)
+
+
+def headline_run_problem(summary: HeadlineSummary) -> str | None:
+    """Why a headline run did nothing useful, or None. Partial failures (one refusal) are fine."""
+    if summary.pending_no_client:
+        return (
+            f"{summary.pending_no_client} new headline(s) could not be extracted because "
+            "ANTHROPIC_API_KEY is not set for this step. Check the repository secret's exact name."
+        )
+    if summary.extraction_errors and summary.live_calls == 0:
+        kinds = sorted(
+            {e.rsplit("(", 1)[-1].rstrip(")") for e in summary.extraction_errors if "(" in e}
+        )
+        hint = ""
+        if "AuthenticationError" in kinds or "PermissionDeniedError" in kinds:
+            hint = " The API key was rejected: create a new key and update the secret."
+        elif "BadRequestError" in kinds:
+            hint = (
+                " Often this means the Anthropic account has no credit: add billing in the Console."
+            )
+        elif "RateLimitError" in kinds:
+            hint = " Rate limited: lower max_new_per_run or wait for the next run."
+        return (
+            f"every model call failed ({len(summary.extraction_errors)} headline(s); "
+            f"{', '.join(kinds) or 'see above'}).{hint}"
+        )
+    return None
 
 
 @app.command("eval-extractor")

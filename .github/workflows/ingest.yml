@@ -41,6 +41,7 @@ jobs:
 
       # Never build on a ledger that has been tampered with.
       - name: Verify the ledger
+        id: verify
         run: |
           uv run spillover verify-ledger
           uv run spillover verify-outcomes
@@ -48,22 +49,31 @@ jobs:
       # Pre-register random placebo dates for future months. Idempotent: an existing month is
       # never rewritten, so a date is always committed before it happens.
       - name: Draw placebo dates ahead of time
+        id: placebo
         run: uv run spillover placebo-events
 
       - name: Fetch headlines and extract events
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: uv run spillover ingest-headlines --config data/sources.ci.toml
+        # --strict: a missing key or a rejected account fails the run (red) instead of passing quietly.
+        run: uv run spillover ingest-headlines --config data/sources.ci.toml --strict
 
+      # The steps below still run if headline extraction failed (that failure already turns the
+      # run red), so a headline problem never stops calendar and placebo predictions. They never
+      # run on a ledger that failed verification.
       - name: Build the price and event cache (derived returns only, not committed)
+        id: prices
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.placebo.outcome == 'success' }}
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: uv run spillover ingest --config data/sources.ci.toml
 
       - name: Freeze predictions for forward events
+        if: ${{ !cancelled() && steps.prices.outcome == 'success' }}
         run: uv run spillover predict --data data/cache
 
       - name: Commit new events and predictions
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.placebo.outcome == 'success' }}
         run: |
           git add events predictions
           if git diff --cached --quiet; then

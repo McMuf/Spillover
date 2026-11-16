@@ -7,6 +7,7 @@ The JSON Schema in ``schemas/claim.schema.json`` is generated from these models
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
@@ -182,6 +183,25 @@ class Claim(_Strict):
         if self.registered_at.tzinfo is None:
             return self.registered_at.replace(tzinfo=UTC)
         return self.registered_at.astimezone(UTC)
+
+
+def superseded_ids(claims: Iterable[Claim]) -> set[str]:
+    """Registered claims replaced by a newer registered version of the same claim.
+
+    ``clm_x_v1`` is superseded once ``clm_x_v2`` (or later) is registered. A superseded claim stays
+    on record with everything it already collected, but it collects no new predictions.
+    """
+    items = list(claims)
+    latest: dict[str, int] = {}
+    for c in items:
+        if c.registered_at_utc is not None:
+            stem = c.id.rsplit("_v", 1)[0]
+            latest[stem] = max(latest.get(stem, 0), c.version)
+    return {
+        c.id
+        for c in items
+        if c.registered_at_utc is not None and c.version < latest[c.id.rsplit("_v", 1)[0]]
+    }
 
 
 def claim_json_schema() -> dict[str, Any]:

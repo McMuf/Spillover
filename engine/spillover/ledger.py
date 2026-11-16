@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from importlib import metadata
 from pathlib import Path
@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from spillover.data import MarketData
 from spillover.eventstudy import matching_events
-from spillover.models import Claim, Instrument, Window
+from spillover.models import Claim, Instrument, Window, superseded_ids
 
 RULES_VERSION = "0.1"
 # No headline extractor exists yet; events are supplied directly with their type already set.
@@ -185,6 +185,7 @@ class PredictSummary:
     skipped_before_registration: int
     skipped_window_closed: int
     skipped_existing: int
+    skipped_superseded_claims: list[str] = field(default_factory=lambda: list[str]())
 
 
 def window_is_open(data: MarketData, event_date: date, end_offset: int) -> bool:
@@ -204,11 +205,14 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
     written: list[Path] = []
     drafts: list[str] = []
     before = closed = existing = 0
+    replaced = superseded_ids(claims)
 
     for claim in claims:
         registered = claim.registered_at_utc
         if registered is None:
             drafts.append(claim.id)
+            continue
+        if claim.id in replaced:
             continue
         events = matching_events(claim, data)
         # Events from the extractor carry its version; calendar and CSV events carry "none".
@@ -237,4 +241,4 @@ def predict(claims: list[Claim], data: MarketData, root: Path, now: datetime) ->
                 except LedgerError:
                     existing += 1
 
-    return PredictSummary(written, drafts, before, closed, existing)
+    return PredictSummary(written, drafts, before, closed, existing, sorted(replaced))

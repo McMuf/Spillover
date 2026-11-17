@@ -1,0 +1,10 @@
+{
+  "answer": {
+    "confidence": "medium",
+    "entities": [],
+    "event_type": "NONE"
+  },
+  "extractor_version": "spillover-rules/1-849816d1/p1-7d05fe",
+  "source": "fed-press",
+  "title": "Federal Reserve Board finalizes changes to enhance the transparency and public accountability of its stress test and reduce volatility in its stress test-related capital requirements"
+}

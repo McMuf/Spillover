@@ -1,0 +1,10 @@
+{
+  "answer": {
+    "confidence": "low",
+    "entities": [],
+    "event_type": "REGULATORY_ACTION"
+  },
+  "extractor_version": "spillover-rules/1-849816d1/p1-7d05fe",
+  "source": "sec-press",
+  "title": "SEC Charges Multiple Entities in Fraud Schemes Totaling at Least $15 Million That Used WhatsApp and Other Platforms to Lure Investors"
+}

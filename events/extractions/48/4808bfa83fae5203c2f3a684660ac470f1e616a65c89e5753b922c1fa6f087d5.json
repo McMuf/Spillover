@@ -1,0 +1,12 @@
+{
+  "answer": {
+    "confidence": "high",
+    "entities": [
+      "AXP"
+    ],
+    "event_type": "REGULATORY_ACTION"
+  },
+  "extractor_version": "spillover-rules/1-849816d1/p1-7d05fe",
+  "source": "fed-press",
+  "title": "Federal Reserve Board announces enforcement action against American Express Company to address, among other things, the firm\u2019s failure to sufficiently detect and report certain suspicious activity related to money laundering"
+}

@@ -90,5 +90,6 @@ export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
     ],
     news: [],
     upcoming: [],
+    headlines: [],
   };
 }

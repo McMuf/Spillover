@@ -34,6 +34,11 @@ from spillover.ingest.config import ConfigError, load_config
 from spillover.ingest.filings import ITEMS as FILING_ITEMS
 from spillover.ingest.filings import FilingsError, run_filings
 from spillover.ingest.fomc import FomcParseError
+from spillover.ingest.gdelt import CACHE_FILE as GDELT_CACHE
+from spillover.ingest.gdelt import GdeltError
+from spillover.ingest.gdelt import fetch_headlines as fetch_gdelt
+from spillover.ingest.gdelt import load_cache as load_gdelt_cache
+from spillover.ingest.gdelt import save_cache as save_gdelt_cache
 from spillover.ingest.headline_run import HeadlineSummary, run_headlines
 from spillover.ingest.headlines import FeedError
 from spillover.ingest.http import FetchError, http_get, redact, sec_fetcher
@@ -58,7 +63,14 @@ from spillover.report import format_report
 from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import ScoreError, grade_all, verify_outcomes
-from spillover.site_export import build_labeling, build_site_data, site_json_schema
+from spillover.site_export import (
+    LiveHeadline,
+    build_labeling,
+    build_site_data,
+    headline_candidates,
+    label_headlines,
+    site_json_schema,
+)
 from spillover.stamp import StampError, ots_binary, stamp_new, upgrade_pending
 
 app = typer.Typer(
@@ -216,8 +228,35 @@ def export_site(
     outcomes: OutcomesOpt = DEFAULT_OUTCOMES,
     out: Annotated[Path, typer.Option(help="Output directory for site.json.")] = DEFAULT_SITE_OUT,
     n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
+    live_headlines: Annotated[
+        bool,
+        typer.Option(
+            "--live-headlines",
+            help="Fetch the latest market headlines from GDELT for the News tab (display only).",
+        ),
+    ] = False,
 ) -> None:
     """Write the single typed JSON file the static website reads (generated, never committed)."""
+    headlines: list[LiveHeadline] = []
+    if live_headlines:
+        now = datetime.now(UTC)
+        try:
+            fetched = fetch_gdelt(http_get)
+            save_gdelt_cache(fetched, GDELT_CACHE, now)
+            headlines = label_headlines(fetched)
+        except (FetchError, GdeltError) as exc:
+            # News is a nicety: a GDELT outage must never stop the site from building. Reuse the
+            # previous build's headlines (kept by the workflow's cache) if they are recent.
+            cached = load_gdelt_cache(GDELT_CACHE, now)
+            if cached:
+                headlines = label_headlines(cached)
+                typer.echo(
+                    f"warning: GDELT refused this build ({redact(str(exc))[:80]}); "
+                    f"showing {len(cached)} headline(s) from the previous build",
+                    err=True,
+                )
+            else:
+                typer.echo(f"warning: no live headlines this build: {redact(str(exc))}", err=True)
     try:
         claims = [(load_claim(p), p.read_text(encoding="utf-8")) for p in claim_files(claims_dir)]
         market = load_market_data(data)
@@ -230,10 +269,11 @@ def export_site(
             challenges_dir=Path("challenges"),
             replications_dir=Path("replications"),
             results_dir=RESULTS_DIR,
-            labeling=build_labeling(),
+            labeling=build_labeling(extra=headline_candidates(headlines)),
             store=EVENTS_DIR,
             # Real data: news runs to today. Synthetic fixtures end in the past, so use their end.
             today=None if market.synthetic else datetime.now(UTC).date(),
+            headlines=headlines,
         )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc

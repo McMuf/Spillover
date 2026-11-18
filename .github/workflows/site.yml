@@ -61,10 +61,19 @@ jobs:
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
         run: uv run spillover ingest --config data/sources.ci.toml
 
+      # The last good GDELT headlines, reused when GDELT rate-limits this runner's address. A cache,
+      # not a commit: nothing about headlines is ever written to the repository.
+      - name: Restore the previous build's headlines
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: data/headlines.json
+          key: gdelt-headlines-${{ github.run_id }}
+          restore-keys: gdelt-headlines-
+
       - name: Export the site data from the engine
         env:
           SPILLOVER_DATA: ${{ steps.cache.outcome == 'success' && 'data/cache' || 'fixtures/synthetic' }}
-        run: uv run spillover export-site
+        run: uv run spillover export-site --live-headlines
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:

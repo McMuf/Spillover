@@ -30,9 +30,10 @@ from spillover.eventstudy import (
     mean_window_path,
     run_backtest,
 )
-from spillover.extractor import ExtractionError
+from spillover.extractor import Extraction, ExtractionError
 from spillover.gold import GOLD_FILE, GoldError, GoldRow, evaluate_gold, load_gold
 from spillover.ingest.filings import SOURCE as FILINGS_SOURCE
+from spillover.ingest.gdelt import MARKET_WORDS, GdeltHeadline
 from spillover.lanes import describe_changes, lane_files, load_challenge, load_replication
 from spillover.ledger import (
     RULES_VERSION,
@@ -340,6 +341,22 @@ class NewsStory(_M):
     claim_ids: list[str]  # registered claims this event triggers
 
 
+class LiveHeadline(_M):
+    """A current headline from the GDELT Project, labeled by the free rules labeler.
+
+    Shown on the News tab only; never written to the event ledger (see spillover.ingest.gdelt).
+    """
+
+    headline_id: str
+    title: str
+    url: str
+    domain: str
+    seen_at: datetime
+    event_type: str  # NONE when it fits no event type
+    entities: list[str]
+    confidence: Literal["high", "medium", "low"]
+
+
 NEWS_DAYS = 120  # stories from this many days before the data's last day
 NEWS_MAX = 150
 NEWS_SOURCES_MAX = 5
@@ -355,6 +372,7 @@ class SiteData(_M):
     taxonomy: list[TaxonomyEntry]
     news: list[NewsStory]
     upcoming: list[NewsStory]  # the next scheduled events (claims already wait for them)
+    headlines: list[LiveHeadline]  # latest general news (GDELT), display only
 
 
 def site_json_schema() -> dict[str, Any]:
@@ -385,6 +403,50 @@ def build_taxonomy(data: MarketData) -> list[TaxonomyEntry]:
 
 
 UPCOMING_MAX = 8
+
+
+def label_headlines(
+    items: list[GdeltHeadline], companies: Path = COMPANIES_FILE
+) -> list[LiveHeadline]:
+    """Tag each headline with the free labeler's answer, validated like a ledger extraction."""
+    rules = RulesExtractor.load(companies) if companies.exists() else None
+    out: list[LiveHeadline] = []
+    for h in items:
+        ex = (
+            Extraction.model_validate(rules.label(h.title))
+            if rules
+            else Extraction(event_type=NONE, entities=[], confidence="low")
+        )
+        # Off-topic stories (a house listing, a fashion piece) match the query through words deep
+        # in the article. Keep a headline only if it is itself about companies or markets.
+        if ex.event_type == NONE and not ex.entities and not MARKET_WORDS.search(h.title):
+            continue
+        out.append(
+            LiveHeadline(
+                headline_id=h.headline_id,
+                title=h.title,
+                url=h.url,
+                domain=h.domain,
+                seen_at=h.seen_at,
+                event_type=ex.event_type,
+                entities=ex.entities,
+                confidence=ex.confidence,
+            )
+        )
+    return out
+
+
+def headline_candidates(items: list[LiveHeadline]) -> list[LabelCandidate]:
+    return [
+        LabelCandidate(
+            headline_id=h.headline_id,
+            title=h.title,
+            source=f"gdelt-{h.domain}",
+            url=h.url,
+            published_at=h.seen_at,
+        )
+        for h in items
+    ]
 
 
 def build_news(
@@ -464,6 +526,7 @@ def build_labeling(
     gold_path: Path = GOLD_FILE,
     companies: Path = COMPANIES_FILE,
     n: int = 60,
+    extra: list[LabelCandidate] | None = None,
 ) -> Labeling:
     """Recent unlabeled headlines to label, and the labeler's accuracy once people have labeled."""
     gold_rows: list[GoldRow] = []
@@ -509,6 +572,13 @@ def build_labeling(
         )
         if len(candidates) == n:
             break
+    # Then current general news, so the labeler's accuracy is measured on it before it is trusted.
+    for c in extra or []:
+        key = (c.source, c.title)
+        if len(candidates) >= n or key in done or key in seen:
+            continue
+        seen.add(key)
+        candidates.append(c)
     return Labeling(
         candidates=candidates,
         event_types=_event_types(),
@@ -684,6 +754,7 @@ def build_site_data(
     labeling: Labeling | None = None,
     store: Path | None = None,
     today: date | None = None,
+    headlines: list[LiveHeadline] | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
     board = Scoreboard.model_validate(
@@ -788,4 +859,5 @@ def build_site_data(
         taxonomy=build_taxonomy(data),
         news=news,
         upcoming=upcoming,
+        headlines=headlines or [],
     )

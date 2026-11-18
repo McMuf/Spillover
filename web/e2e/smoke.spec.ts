@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test("loads the site, opens a claim and reads its chain", async ({ page }) => {
@@ -106,6 +107,7 @@ test("news opens a story with its four tabs, and an untested kind of event leads
   await page.goto("/#/feed"); // the old address still works
   await expect(page).toHaveURL(/#\/news$/);
   await expect(page.getByRole("heading", { level: 1, name: "News" })).toBeVisible();
+  await page.getByRole("button", { name: /On the record/ }).click();
   await page.getByRole("listitem").getByRole("link").first().click();
   for (const tab of ["About", "Market implications", "Stakeholders", "Data"]) {
     await page.getByRole("tab", { name: tab }).click();
@@ -138,4 +140,26 @@ test("a story with no claim offers to start one with its event type chosen", asy
   await page.getByRole("tab", { name: "Market implications" }).click();
   await page.getByRole("link", { name: "Write a claim about events like this" }).click();
   await expect(page.getByLabel(/Event type/)).toHaveValue("CYBER_INCIDENT");
+});
+
+test("latest headlines link out safely, tag testable ones, and switch to the record", async ({ page }) => {
+  await page.route("**/data/site.json", async (route) => {
+    const res = await route.fetch();
+    const site = (await res.json()) as { headlines: unknown[] };
+    site.headlines = [
+      { headline_id: "gdelt-1", title: "SEC charges Coinbase with operating an unregistered exchange", url: "https://x.example/1", domain: "x.example", seen_at: "2026-11-18T01:15:00Z", event_type: "REGULATORY_ACTION", entities: ["COIN"], confidence: "high" },
+      { headline_id: "gdelt-2", title: "Analyst reacts to widespread tech issues", url: "https://y.example/2", domain: "y.example", seen_at: "2026-11-18T01:00:00Z", event_type: "NONE", entities: [], confidence: "medium" },
+    ];
+    await route.fulfill({ response: res, json: site });
+  });
+  await page.goto("/#/news");
+  const first = page.getByRole("link", { name: /SEC charges Coinbase/ });
+  await expect(first).toHaveAttribute("href", "https://x.example/1");
+  await expect(first).toHaveAttribute("rel", /noopener/);
+  await expect(page.getByText("Testable", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("GDELT Project").first()).toBeVisible();
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+  await page.getByRole("button", { name: /On the record/ }).click();
+  await expect(page.getByText(/Events in the record/)).toBeVisible();
 });

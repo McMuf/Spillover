@@ -6,6 +6,7 @@ import { Ready } from "../components/Ready";
 import { Segmented, Tag, TickerChip } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { claimsFor, ORIGIN_TAG, storySentence, storyTitle, type Origin, type Story } from "../lib/news";
+import { eventLabel } from "../lib/plain";
 
 type Filter = "all" | Origin;
 const ORDER: Origin[] = ["calendar", "filings", "headlines", "prices"];
@@ -61,22 +62,18 @@ function StoryItem({ story, site }: { story: Story; site: SiteData }) {
   );
 }
 
-function News({ site }: { site: SiteData }) {
+function OnRecord({ site }: { site: SiteData }) {
   const [filter, setFilter] = useState<Filter>("all");
   const present = useMemo(() => ORDER.filter((o) => site.news.some((s) => s.origin === o)), [site]);
   const shown = useMemo(() => site.news.filter((s) => filter === "all" || s.origin === filter), [site, filter]);
   const options = [{ value: "all" as Filter, label: "All" }, ...present.map((o) => ({ value: o as Filter, label: FILTER_LABEL[o] }))];
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-1 text-3xl font-extrabold tracking-tight">News</h1>
-      <p className="mb-6 text-[15px] leading-relaxed text-muted">
-        Real events from official calendars, company SEC filings and news headlines. Each one opens to what happened, what
-        past events like it did to markets, who is involved, and the measured data. Spillover links to sources and never
-        copies articles.{" "}
-        <Link to="/label" className="text-accent underline underline-offset-2">
-          Help check the headline labels
-        </Link>
+    <div>
+      <p className="mb-6 text-sm leading-relaxed text-muted">
+        Events in the record: from official calendars, company SEC filings and labeled headlines. These are what claims
+        are tested on. Each opens to what happened, what past events like it did to markets, who is involved, and the
+        measured data.
       </p>
       {options.length > 2 && (
         <div className="mb-6 overflow-x-auto">
@@ -112,6 +109,100 @@ function News({ site }: { site: SiteData }) {
         </ul>
       ) : (
         <p className="text-muted">No events in the last few months yet.</p>
+      )}
+    </div>
+  );
+}
+
+
+function ago(iso: string, now: number): string {
+  const mins = Math.max(0, Math.round((now - Date.parse(iso)) / 60000));
+  if (mins < 60) return `${mins} min ago`;
+  const h = Math.round(mins / 60);
+  return h < 48 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
+}
+
+function Headlines({ site }: { site: SiteData }) {
+  const now = useMemo(() => Date.now(), []);
+  const testable = site.headlines.filter((h) => h.event_type !== "NONE").length;
+  return (
+    <div>
+      <p className="mb-6 text-sm leading-relaxed text-muted">
+        The latest market news from outlets worldwide, refreshed every time the site rebuilds. A headline marked{" "}
+        <span className="font-semibold text-fg">testable</span> matches a kind of event that claims can be tested on
+        ({testable} of {site.headlines.length} right now). Tags come from a free automatic labeler and can be wrong;{" "}
+        <Link to="/label" className="text-accent underline underline-offset-2">
+          help check them
+        </Link>
+        .
+      </p>
+      <ul>
+        {site.headlines.map((h) => (
+          <li key={h.headline_id} className="border-t border-line py-4 first:border-t-0 first:pt-0">
+            <p className="mb-1 text-xs text-muted">
+              {h.domain} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
+            </p>
+            <h2 className="text-[16px] font-semibold leading-snug">
+              <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" className="hover:underline">
+                {h.title}
+              </a>
+            </h2>
+            {h.event_type !== "NONE" && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Tag>Testable</Tag>
+                <span className="text-xs text-muted">{eventLabel(h.event_type)}</span>
+                {h.entities.map((e) => (
+                  <TickerChip key={e} symbol={e} />
+                ))}
+                <Link
+                  to={`/submit?eventType=${encodeURIComponent(h.event_type)}`}
+                  className="text-xs font-semibold text-accent hover:underline"
+                >
+                  Write a claim about events like this
+                </Link>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-6 text-xs text-muted">
+        Headlines via the{" "}
+        <a href="https://www.gdeltproject.org/" className="underline" rel="noopener noreferrer">
+          GDELT Project
+        </a>
+        . Spillover links to articles and never copies them. These headlines are shown only; they do not enter the record
+        until the labeler's measured accuracy on general news holds up.
+      </p>
+    </div>
+  );
+}
+
+type View = "headlines" | "record";
+
+function News({ site }: { site: SiteData }) {
+  const [view, setView] = useState<View>(site.headlines.length > 0 ? "headlines" : "record");
+  return (
+    <div className="mx-auto max-w-3xl">
+      <h1 className="mb-4 text-3xl font-extrabold tracking-tight">News</h1>
+      <div className="mb-6">
+        <Segmented
+          label="Which news"
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "headlines", label: `Latest headlines (${site.headlines.length})` },
+            { value: "record", label: `On the record (${site.news.length})` },
+          ]}
+        />
+      </div>
+      {view === "headlines" ? (
+        site.headlines.length > 0 ? (
+          <Headlines site={site} />
+        ) : (
+          <p className="text-muted">No live headlines in this build. They are fetched each time the site rebuilds.</p>
+        )
+      ) : (
+        <OnRecord site={site} />
       )}
     </div>
   );

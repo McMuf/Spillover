@@ -1022,6 +1022,65 @@
       "title": "Labeling",
       "type": "object"
     },
+    "LiveHeadline": {
+      "additionalProperties": false,
+      "description": "A current headline from the GDELT Project, labeled by the free rules labeler.\n\nShown on the News tab only; never written to the event ledger (see spillover.ingest.gdelt).",
+      "properties": {
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "entities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entities",
+          "type": "array"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "headline_id": {
+          "title": "Headline Id",
+          "type": "string"
+        },
+        "seen_at": {
+          "format": "date-time",
+          "title": "Seen At",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "headline_id",
+        "title",
+        "url",
+        "domain",
+        "seen_at",
+        "event_type",
+        "entities",
+        "confidence"
+      ],
+      "title": "LiveHeadline",
+      "type": "object"
+    },
     "NewsSource": {
       "additionalProperties": false,
       "description": "Where a story was reported. Spillover links to sources; it never copies articles.",
@@ -1890,6 +1949,13 @@
       "title": "Events",
       "type": "array"
     },
+    "headlines": {
+      "items": {
+        "$ref": "#/$defs/LiveHeadline"
+      },
+      "title": "Headlines",
+      "type": "array"
+    },
     "labeling": {
       "$ref": "#/$defs/Labeling"
     },
@@ -1935,7 +2001,8 @@
     "labeling",
     "taxonomy",
     "news",
-    "upcoming"
+    "upcoming",
+    "headlines"
   ],
   "title": "Spillover site data",
   "type": "object"

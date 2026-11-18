@@ -130,6 +130,10 @@ export function Shell() {
             Board of Governors of the Federal Reserve System and oil prices from the US Energy Information
             Administration (public domain). S&amp;P 500 © S&amp;P Dow Jones Indices LLC; Nasdaq Composite © Nasdaq,
             Inc.; used for non-commercial educational research. Only statistics derived from them are shown.
+            {" · "}Headlines via the{" "}
+            <a className="underline hover:text-fg" href="https://www.gdeltproject.org/" rel="noopener noreferrer">
+              GDELT Project
+            </a>
             {" · "}build {__COMMIT__}
             {" · "}Charts powered by{" "}
             <a className="underline hover:text-fg" href="https://www.tradingview.com/" rel="noopener noreferrer">

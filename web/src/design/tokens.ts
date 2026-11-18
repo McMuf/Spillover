@@ -1,28 +1,31 @@
 /**
- * Design tokens. Spillover is dark-only: there is one theme and no switcher.
+ * Design tokens. Spillover has one light theme, tinted lavender, and no switcher.
  *
- * Components use semantic names (bg, fg, primary...) through CSS variables, never raw colors.
- * Red and green are reserved for outcomes that already happened (`positive`, `negative`);
- * estimates, backtests and every other number stay neutral.
+ * Components use semantic names (bg, fg, accent...) through CSS variables, never raw colors.
+ * Green and red mean direction (up and down) and nothing else; the brand color (violet, with a
+ * lavender-to-peach wash) carries identity: links, focus, active states, neutral charts, hero bands.
  */
 
-export type ThemeName = "dark";
+export type ThemeName = "light";
 
 export interface ColorTokens {
-  /** Page background. */
+  /** Page background: near-white with a lavender tint. */
   bg: string;
-  /** Cards and panels. */
+  /** Panels and raised areas (lavender). */
   surface: string;
-  /** Inputs, chips and raised areas inside a card. */
+  /** Inputs, chips and raised areas inside a panel. */
   surfaceAlt: string;
   /** Hairline dividers. */
   line: string;
+  /** Text: a plum-black ink. */
   fg: string;
   muted: string;
-  /** The highlight color (blue): active tab, highlighted names, links, chart lines, the active filter. */
+  /** The brand color (violet): links, focus, active states, neutral chart lines, Proposed status. */
   accent: string;
   onAccent: string;
-  /** Main call-to-action buttons (a deeper blue, with white text). */
+  /** A soft lavender fill for active items, with `accent` or `fg` text on it. */
+  accentSoft: string;
+  /** Main call-to-action buttons: ink pills, as on most finance sites. */
   primary: string;
   onPrimary: string;
   /** Up: a market number above zero, or a graded hit. */
@@ -31,29 +34,36 @@ export interface ColorTokens {
   negative: string;
   noticeBg: string;
   noticeFg: string;
+  /** The brand wash, top to bottom: lavender, lilac, peach (a sky at dawn over the mountains). */
+  washFrom: string;
+  washVia: string;
+  washTo: string;
 }
 
 /**
- * Black page and flat near-black surfaces. Green and red mean direction (up and down), as on any
- * market screen; blue is the one highlight color, chosen because it stays distinct from both for
- * readers with red-green color blindness. Every colored number also carries its sign (+ or −).
+ * Lavender page, plum ink, violet brand. Green and red are darkened so numbers stay readable on the
+ * light tints; every colored number also carries its sign (+ or −) or a word.
  */
 export const color: Record<ThemeName, ColorTokens> = {
-  dark: {
-    bg: "#000000",
-    surface: "#111111",
-    surfaceAlt: "#1b1b1b",
-    line: "#262626",
-    fg: "#f5f5f5",
-    muted: "#8e8e8e",
-    accent: "#4c9aff",
-    onAccent: "#00122b",
-    primary: "#2563eb",
+  light: {
+    bg: "#fbf9fd",
+    surface: "#f3eef9",
+    surfaceAlt: "#e9e2f3",
+    line: "#e3dbee",
+    fg: "#1e1729",
+    muted: "#5e5470",
+    accent: "#5f3fc0",
+    onAccent: "#ffffff",
+    accentSoft: "#ebe3fb",
+    primary: "#1e1729",
     onPrimary: "#ffffff",
-    positive: "#22c55e",
-    negative: "#ff4d5e",
-    noticeBg: "#111111",
-    noticeFg: "#c9c9c9",
+    positive: "#07703a",
+    negative: "#bd1d38",
+    noticeBg: "#fbe8dc",
+    noticeFg: "#5b3826",
+    washFrom: "#e4dcf4",
+    washVia: "#f1e3f1",
+    washTo: "#fbe6d8",
   },
 };
 
@@ -68,20 +78,30 @@ export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTo
   ["fg", "bg"],
   ["fg", "surface"],
   ["fg", "surfaceAlt"],
+  ["fg", "accentSoft"],
   ["muted", "bg"],
   ["muted", "surface"],
   ["muted", "surfaceAlt"],
   ["accent", "bg"],
   ["accent", "surface"],
   ["accent", "surfaceAlt"],
+  ["accent", "accentSoft"],
   ["onAccent", "accent"],
   ["onPrimary", "primary"],
+  ["bg", "fg"],
+  ["positive", "bg"],
+  ["negative", "bg"],
   ["positive", "surface"],
   ["negative", "surface"],
   ["positive", "surfaceAlt"],
   ["negative", "surfaceAlt"],
   ["noticeFg", "noticeBg"],
-];
+  ["fg", "washFrom"],
+  ["fg", "washTo"],
+  ["muted", "washFrom"],
+  ["muted", "washVia"],
+  ["muted", "washTo"],
+]
 
 /** WCAG relative luminance and contrast ratio for #rrggbb colors. */
 export function luminance(hex: string): number {

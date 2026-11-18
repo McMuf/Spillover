@@ -94,7 +94,7 @@ Spillover is a **market research tool for hobbyists, students and curious people
 - **[Prediction ledger](#6-prediction-ledger-and-timestamps):** Append-only, hashed, timestamped records of every forward call.
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
 - **[Claim chains and the news map](#8-claim-chains-and-the-news-map):** each claim drawn as a readable chain (who → what happens → which market), and a news-by-market map of every claim.
-- **[Web app](#9-web-app):** A calm, finance-app-style interface with one dark theme, built in TypeScript.
+- **[Web app](#9-web-app):** A calm, finance-app-style interface with one light, lavender-tinted theme, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
 - **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
 
@@ -220,7 +220,9 @@ The graph is the product's face, so it follows one rule: **if a shape could mean
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
 - **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
-- **Almost everything is black and white.** Green and red say direction; blue is kept for inline text links, the keyboard focus ring and the "Proposed" status, and nothing else. Lines whose direction does not apply (a swing size) are drawn in white. Panels sit flat on the black page, separated by hairlines; only things you can tap (chips, tiles, buttons) are rounded.
+- **One brand color, one wash.** The page is near-white with a lavender tint; text is a plum-black ink. The brand violet marks links, the focus ring, active items, the "Proposed" status and chart lines whose direction does not apply (a swing size). A lavender-to-peach wash (a dawn sky) sits behind the top of every page and in hero bands. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
+- **Pictures before paragraphs.** Explanations lead with a diagram (the event window to scale, a status as the interval that produces it) and keep text to a sentence or two.
+- **The mark.** Two peaks with a river spilling out of the valley between them, under the dawn wash (`web/src/components/BrandMark.tsx`); the browser-tab icon `web/public/favicon.svg` is generated from the same drawing, and a test keeps them identical.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
 - **Index membership is its own edge type** (`weight`), drawn differently from `spillover`, so mechanical effects and real effects never share a line.
 - **The graph is capped at about 40 nodes** per view. Past that, the view collapses into a table. A graph nobody can read is decoration.
@@ -233,7 +235,7 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 ## Screens and user experience
 
 > [!NOTE]
-> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a black page, flat panels, tabular numerals, one dark theme and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
+> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a lavender-tinted light page, a violet brand color, flat lists, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
 
 ### Design principles
 
@@ -268,7 +270,7 @@ A claim detail page on mobile keeps a **sticky footer** with the two most useful
 
 ### Screen 3: News and story pages
 
-**News** (`#/news`) has two views. **Latest headlines** shows current market news from outlets worldwide, via the [GDELT Project](https://www.gdeltproject.org/), fetched live by the browser while the page is open (every few minutes, falling back to the copy from the last site build if GDELT is unreachable), each with the article's own preview image loaded from the publisher's site; a headline that matches a kind of event claims can be tested on is tagged *Testable*. These headlines are shown only and never enter the record. **On the record** lists the events claims are tested on (scheduled releases, SEC filings, labeled headlines), with the next scheduled events under *Coming up*.
+**News** (`#/news`) has two views. **Latest headlines** shows the last hour of market news from outlets worldwide, via the [GDELT Project](https://www.gdeltproject.org/). Every hourly site build reads GDELT's raw 15-minute files (about 1,500 English articles each, with no rate limit) and keeps the 60 most clearly market-related stories by GDELT's topic codes and the words in the title, at most three per outlet. While the page is open, the browser also asks GDELT's search API for anything newer every few minutes and adds it on top (one request per tab, shared by every page). Each story comes with the article's own preview image loaded from the publisher's site; a headline that matches a kind of event claims can be tested on is tagged *Testable*. These headlines are shown only and never enter the record. **On the record** lists the events claims are tested on (scheduled releases, SEC filings, labeled headlines), with the next scheduled events under *Coming up*.
 
 Each event opens as a **story** with four tabs:
 
@@ -326,7 +328,7 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 | `EvidenceMeter` | Events collected versus required |
 | `InstrumentChip` | Symbol plus venue, never one without the other |
 
-Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one dark theme. Contributors improve the system by changing tokens and components, not by adding one-off styles.
+Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one light theme. Contributors improve the system by changing tokens and components, not by adding one-off styles.
 
 ## Scoring rules
 
@@ -537,7 +539,7 @@ The first hand-labeled gold set (45 regulator press releases, labeled November 1
 **Why this design.**
 - *React plus TypeScript:* the most widely known combination among front-end contributors and the stack many fintech teams use, which lowers the barrier to contribute and makes the work legible to reviewers.
 - *Vite over a full framework:* the site is static, so server rendering, routing conventions and a Node server would be complexity without benefit.
-- *Tailwind with tokens:* fast to iterate and consistent; one dark theme, defined once in `design/tokens.ts`.
+- *Tailwind with tokens:* fast to iterate and consistent; one light theme, defined once in `design/tokens.ts`.
 - *Radix primitives:* accessibility (focus management, keyboard behavior, ARIA) is easy to get wrong and expensive to retrofit.
 - *Lightweight Charts:* small, fast, finance-native and Apache-2.0 licensed. Its license requires a **visible attribution link**, which the footer includes.
 - *No client-side secrets and no backend:* nothing to leak, nothing to scale. The planned [community layer](#community-planned) changes this only for social features, never for the record.
@@ -554,7 +556,7 @@ The first hand-labeled gold set (45 regulator press releases, labeled November 1
 | `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Reads the PR's changed files through the GitHub API as plain text, validates them with trusted code from `main`, and posts or updates one comment. Everything taken from the PR is shown inertly (code spans, length-limited) and the bot only edits its own comment |
 | `ingest.yml` | schedule on `main` | secrets for data keys; write to `main` | Build the price cache, draw placebo dates, add company events from SEC 8-K filings (with the `SEC_CONTACT` secret), freeze predictions, and (only if `EXTRACT_HEADLINES` is set) fetch headlines and extract events. **Off by default** (repository variable `INGEST_ENABLED`) |
 | `score.yml` | schedule on `main` | `FRED_API_KEY` secret; write to `main` | Grade closed windows against real prices, rebuild scoreboard data. Same off-by-default switch |
-| `site.yml` | push to `main`, after every ingest run, weekdays after scoring | Pages deploy; the data keys in one step that runs before any npm package | Fetch the latest GDELT headlines for the News tab (display only; the previous build's are reused if GDELT refuses), then build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
+| `site.yml` | push to `main`, after every ingest run, hourly, weekdays after scoring | Pages deploy; the data keys in one step that runs before any npm package | Fetch the last hour of GDELT headlines for the News tab (display only; raw 15-minute files first, then the search API, then the previous build's), read questions and comment counts from Discussions (read-only token), then build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
 `check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` stay off until the `FRED_API_KEY` secret exists and the repository variable `INGEST_ENABLED` is `true`; that part costs nothing. On this repository both are set: ingestion has been running live since November 16, 2026. Headline labeling has its own switch, the variable `EXTRACT_HEADLINES` (`true` to run it). With the default rule-based labeler it is free; switching the labeler to Claude (`engine = "claude"`) costs roughly a cent per hundred headlines with Haiku and needs `ANTHROPIC_API_KEY` plus account credit. Calendar and placebo claims never need it. Company events from SEC 8-K filings need only the secret `SEC_CONTACT` (a contact email, which SEC requires of automated tools); without it that step does nothing. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
@@ -666,7 +668,7 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 | Release calendars 10 and 50 | CPI and jobs report dates | Bureau of Labor Statistics schedules | Dates only |
 | FOMC calendar | Fed decision dates | federalreserve.gov | Public domain (US government work) |
 | `labels/companies.json` | Company names and tickers for the free headline labeler | Wikidata | CC0 (public domain) |
-| Latest headlines via the [GDELT Project](https://www.gdeltproject.org/) (DOC 2.0 API) | Market news headlines (title, link, outlet, time) for the News tab | Outlets worldwide, indexed by GDELT | Free "for any academic, commercial, or governmental use", with a citation and link to GDELT (in the site footer and on the News tab). Fetched when the site builds and shown only: these headlines are **not** written to the event ledger until the labeler's measured accuracy on general news holds up |
+| Latest headlines via the [GDELT Project](https://www.gdeltproject.org/) (Global Knowledge Graph 15-minute files, and the DOC 2.0 API) | Market news headlines (title, link, outlet, time, preview-image link) for the News tab | Outlets worldwide, indexed by GDELT | Free "for any academic, commercial, or governmental use", with a citation and link to GDELT (in the site footer and on the News tab). Fetched when the site builds and shown only: these headlines are **not** written to the event ledger until the labeler's measured accuracy on general news holds up |
 | Single stocks via [Alpha Vantage](https://www.alphavantage.co/) (`TIME_SERIES_DAILY_ADJUSTED`) | Split- and dividend-adjusted daily closes for individual companies | Alpha Vantage Inc. | **Not switched on yet.** Personal, non-commercial use (research qualifies); the free tier is too small, so this waits for a key from Alpha Vantage's program for open-source and educational projects. Only derived statistics are published, never prices. A stock that fails to load is skipped; it never stops other claims |
 | SEC 8-K filings ("latest filings" feed) and `company_tickers.json` | Company events typed by item number: 1.05 cyber incident, 1.03 bankruptcy, 4.02 restatement | US Securities and Exchange Commission (EDGAR) | Public domain (US government work). SEC requires automated tools to send a contact email and stay under 10 requests per second; a run makes about six requests |
 

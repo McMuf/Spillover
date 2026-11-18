@@ -197,7 +197,7 @@ export function BackButton({ to, label = "Back" }: { to: string; label?: string 
 export const TAB_CLASS =
   "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-[17px] font-semibold text-muted hover:text-fg data-[state=active]:border-fg data-[state=active]:text-fg";
 
-/** A call to action. Primary is a solid white button with an arrow; secondary is an outlined pill. */
+/** A call to action. Primary is a solid ink pill with an arrow; secondary is an outlined pill. */
 export function ActionLink({
   to,
   children,

@@ -19,7 +19,7 @@ export function NodeLegend({ compact = false }: { compact?: boolean }) {
         ))}
       </dl>
       <p className="mt-3 text-xs text-muted">
-        Shape and tag name the type; color never does. Green and red show direction (up or down), blue marks highlights, and dashed lines are untested or low-sample.
+        Shape and tag name the type; color never does. Green and red show direction (up or down), violet marks highlights, and dashed lines are untested or low-sample.
       </p>
     </section>
   );

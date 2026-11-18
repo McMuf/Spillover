@@ -1,51 +1,48 @@
 import { Link } from "react-router-dom";
+import { Icon, type IconName } from "./Icon";
 
-const STEPS = [
-  {
-    title: "Someone writes a claim",
-    body: "One testable sentence, such as “Fed rate decisions make the S&P 500 move more than usual,” plus the result that would prove it wrong.",
-  },
-  {
-    title: "We freeze it",
-    body: "Before the outcome, the claim is time-stamped and locked. Nobody can edit it afterwards, so nobody can pretend they called it.",
-  },
-  {
-    title: "The market grades it",
-    body: "After enough real events, we check what the stock or index did, compared with what the overall market already explains. The maths is public.",
-  },
+const STEPS: { icon: IconName; title: string; body: string }[] = [
+  { icon: "pen", title: "Someone writes a claim", body: "“Fed decisions make the S&P 500 swing more than usual”, plus what would prove it wrong." },
+  { icon: "lock", title: "It is frozen", body: "Time-stamped and locked before the outcome. Nobody can pretend they called it." },
+  { icon: "scale", title: "The market grades it", body: "After enough real events, against what the overall market already explains." },
 ];
 
 /** The plain-English answer to "what is this?", at the bottom of the home page. */
 export function HowItWorks() {
   return (
-    <section aria-labelledby="how-h" className="rounded-2xl bg-surface p-6 md:p-8">
-      <h2 id="how-h" className="text-[22px] font-bold">
+    <section aria-labelledby="how-h" className="wash-x overflow-hidden rounded-3xl p-6 md:p-8">
+      <h2 id="how-h" className="text-[24px] font-extrabold tracking-tight">
         What is Spillover?
       </h2>
-      <p className="mt-2 max-w-3xl text-[17px] leading-relaxed text-muted">
-        Anyone can post a prediction about how a headline or event will affect a stock or index. We lock it in before
-        the outcome, then grade it against real market data. The scoreboard shows who was right, how often it happened,
-        and how sure we are.
+      <p className="mt-1 max-w-2xl text-[16px] leading-relaxed text-muted">
+        Predictions about how news moves markets, locked in first and graded by real market data after.
       </p>
 
-      <ol className="mt-8 grid gap-8 md:grid-cols-3">
-        {STEPS.map((s, i) => (
-          <li key={s.title}>
-            <p className="font-mono text-sm text-muted">0{i + 1}</p>
-            <h3 className="mt-1 text-lg font-bold">{s.title}</h3>
-            <p className="mt-1 text-[15px] leading-relaxed text-muted">{s.body}</p>
+      <ol className="relative mt-6 grid gap-5 md:grid-cols-3 md:gap-4">
+        <span aria-hidden="true" className="absolute left-5 right-5 top-5 hidden border-t-2 border-dashed border-accent/35 md:block" />
+        {STEPS.map((s) => (
+          <li key={s.title} className="relative flex gap-3 md:block">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-on-accent">
+              <Icon name={s.icon} size={18} />
+            </span>
+            <div className="md:mt-3">
+              <h3 className="font-bold">{s.title}</h3>
+              <p className="mt-0.5 text-[15px] leading-relaxed text-muted">{s.body}</p>
+            </div>
           </li>
         ))}
       </ol>
 
-      <p className="mt-8 border-t border-line pt-5 text-sm leading-relaxed text-muted">
-        <strong className="text-fg">What this is not.</strong> There is no trading and no money here, and nothing is advice.
-        Numbers on the cards are <strong className="text-fg">backtests</strong> on past events: practice runs, not proof.
-        “Inconclusive” means “not enough data yet”, not “wrong”.{" "}
-        <Link to="/method" className="text-accent underline underline-offset-2">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-bg/70 px-4 py-3 text-sm">
+        <p className="text-muted">
+          <strong className="text-fg">No trading, no money, no advice.</strong> Card numbers are backtests: practice runs, not
+          proof.
+        </p>
+        <Link to="/method" className="inline-flex items-center gap-1.5 font-semibold text-accent hover:underline">
           How the numbers are made
+          <Icon name="arrowRight" size={15} />
         </Link>
-      </p>
+      </div>
     </section>
   );
 }

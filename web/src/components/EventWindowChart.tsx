@@ -37,7 +37,7 @@ export function EventWindowChart({ chart, tone = "neutral" }: { chart: Chart; to
     const el = ref.current;
     if (!el) return;
     const first = chart.days[0] ?? 0;
-    const c = color.dark;
+    const c = color.light;
     const api = createChart(el, {
       autoSize: true,
       height: 280,
@@ -53,8 +53,8 @@ export function EventWindowChart({ chart, tone = "neutral" }: { chart: Chart; to
       handleScale: false,
     });
 
-    // Green when the effect is up, red when down, white when direction does not apply.
-    const stroke = { up: c.positive, down: c.negative, neutral: c.fg }[tone];
+    // Green when the effect is up, red when down, the brand violet when direction does not apply.
+    const stroke = { up: c.positive, down: c.negative, neutral: c.accent }[tone];
     const line = (values: number[], opts: { width: 1 | 2; dashed?: boolean; alpha?: string; live?: boolean }) => {
       const s = api.addSeries(LineSeries, {
         color: (opts.dashed ? c.muted : stroke) + (opts.alpha ?? ""),

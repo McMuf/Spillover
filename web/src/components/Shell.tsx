@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import type { SiteData } from "../generated/site";
 import { useSiteState } from "../lib/data";
 import { categoryOf } from "../lib/plain";
+import { BrandMark } from "./BrandMark";
 import { Icon, type IconName } from "./Icon";
 
 const NAV: { to: string; label: string; end: boolean; icon: IconName }[] = [
@@ -58,7 +59,7 @@ export function Shell() {
   const site = state.phase === "ready" ? state.site : null;
   const repo = site?.meta.repo ?? "McMuf/Spillover";
   // Listing and claim pages use the full width; reading pages stay at a readable measure.
-  const wide = ["/", "/explore", "/news", "/questions", "/scoreboard"].includes(pathname) || pathname.startsWith("/claims/");
+  const wide = ["/", "/explore", "/news", "/questions", "/scoreboard", "/method"].includes(pathname) || pathname.startsWith("/claims/");
 
   const topics = site ? topicCounts(site) : [];
   const search = (
@@ -76,7 +77,7 @@ export function Shell() {
           void navigate(q ? `/explore?q=${encodeURIComponent(q)}` : "/explore", { replace: pathname === "/explore" });
         }}
         placeholder="Search claims, markets or kinds of news"
-        className="w-full rounded-full bg-surface-alt py-2.5 pl-11 pr-10 text-sm text-fg placeholder:text-muted focus:bg-surface"
+        className="w-full rounded-full bg-surface py-2.5 pl-11 pr-10 text-sm text-fg placeholder:text-muted focus:bg-bg"
       />
       <kbd aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-line px-1.5 text-xs text-muted xl:block">
         /
@@ -85,15 +86,18 @@ export function Shell() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative isolate flex min-h-screen flex-col">
+      {/* The brand wash behind the top of every page, fading into the page color. */}
+      <div aria-hidden="true" className="wash pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] [mask-image:linear-gradient(to_bottom,black_55%,transparent)]" />
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-1 focus:text-on-accent">
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-line bg-bg">
-        <div className="mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3 md:px-6 xl:gap-8">
-          <Link to="/" className="flex shrink-0 items-center gap-2 text-[19px] font-extrabold tracking-tight xl:w-[208px]">
-            <Icon name="layers" size={22} />
+      <header className="sticky top-0 z-40 px-2 pt-2 md:px-4 md:pt-3">
+        <div className="float mx-auto max-w-[1440px] rounded-2xl bg-bg/90 backdrop-blur-md">
+        <div className="flex items-center gap-4 px-3 py-2.5 md:px-4 xl:gap-8">
+          <Link to="/" className="flex shrink-0 items-center gap-2.5 text-[19px] font-extrabold tracking-tight xl:w-[208px]">
+            <BrandMark size={30} />
             Spillover
           </Link>
           <div className="hidden max-w-xl flex-1 md:block">{search}</div>
@@ -108,8 +112,8 @@ export function Shell() {
           </div>
         </div>
         {/* Below the wide layout: the sections as a tab row (swipe on a phone), then search. */}
-        <div className="mx-auto max-w-[1440px] px-4 md:px-6 xl:hidden">
-          <nav aria-label="Main" className="no-scrollbar -mx-4 flex gap-6 overflow-x-auto px-4 md:-mx-6 md:px-6">
+        <div className="px-3 md:px-4 xl:hidden">
+          <nav aria-label="Main" className="no-scrollbar -mx-3 flex gap-6 overflow-x-auto px-3 md:-mx-4 md:px-4">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
@@ -117,7 +121,7 @@ export function Shell() {
                 end={n.end}
                 className={({ isActive }) =>
                   `flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 pb-2.5 pt-1 text-[15px] font-medium ${
-                    isActive ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg"
+                    isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"
                   }`
                 }
               >
@@ -127,10 +131,11 @@ export function Shell() {
           </nav>
           <div className="pb-3 pt-1 md:hidden">{search}</div>
         </div>
+        </div>
       </header>
 
       {site?.meta.data_synthetic && (
-        <div role="note" className="border-b border-line bg-notice-bg px-4 py-2 text-center text-xs text-notice-fg" data-testid="synthetic-banner">
+        <div role="note" className="mx-2 mt-2 rounded-xl bg-notice-bg px-4 py-2 text-center text-xs text-notice-fg md:mx-4" data-testid="synthetic-banner">
           <strong className="text-fg">Synthetic demo data.</strong> Every number on this site comes from simulated returns, not
           real markets. Live data is not connected yet.
         </div>
@@ -138,8 +143,8 @@ export function Shell() {
 
       <div className="mx-auto flex w-full max-w-[1440px] flex-1">
         {/* Wide screens: a sidebar with the sections, ways to contribute and topics. */}
-        <aside aria-label="Sections" className="hidden w-[240px] shrink-0 border-r border-line xl:block">
-          <div className="no-scrollbar sticky top-[65px] max-h-[calc(100vh-65px)] overflow-y-auto px-4 py-6">
+        <aside aria-label="Sections" className="hidden w-[240px] shrink-0 xl:block">
+          <div className="no-scrollbar sticky top-[84px] max-h-[calc(100vh-84px)] overflow-y-auto px-4 py-6">
             <nav aria-label="Main">
               <ul className="space-y-1">
                 {NAV.map((n) => (
@@ -149,13 +154,13 @@ export function Shell() {
                       end={n.end}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium ${
-                          isActive ? "bg-surface-alt text-fg" : "text-muted hover:bg-surface hover:text-fg"
+                          isActive ? "bg-accent-soft font-semibold text-fg" : "text-muted hover:bg-surface hover:text-fg"
                         }`
                       }
                     >
                       {({ isActive }) => (
                         <>
-                          <span className={isActive ? "text-fg" : ""}>
+                          <span className={isActive ? "text-accent" : ""}>
                             <Icon name={n.icon} size={19} />
                           </span>
                           {n.label}
@@ -188,7 +193,7 @@ export function Shell() {
                         className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm text-muted hover:bg-surface hover:text-fg"
                       >
                         <span className="flex items-center gap-3">
-                          <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-surface-alt text-[10px] font-bold text-fg">
+                          <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-accent-soft text-[10px] font-bold text-accent">
                             {topic.charAt(0)}
                           </span>
                           {topic}
@@ -210,7 +215,7 @@ export function Shell() {
         </main>
       </div>
 
-      <footer className="border-t border-line py-8 text-xs text-muted">
+      <footer className="mt-8 border-t border-line bg-surface py-8 text-xs text-muted">
         <div className="mx-auto max-w-[1440px] space-y-2 px-4 md:px-6">
           <p>
             <strong className="text-fg">Research, not investment advice.</strong> Spillover never places trades and holds no

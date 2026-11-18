@@ -6,6 +6,7 @@ import type { FeedItem } from "../lib/feed";
 import { claimStat } from "../lib/format";
 import { ORIGIN_TAG, storySentence, storyTitle } from "../lib/news";
 import { entityName, eventLabel, highlightTerms, shortHeadline, whatWeTest } from "../lib/plain";
+import { BrandMark } from "./BrandMark";
 import { Highlight } from "./Highlight";
 import { Icon } from "./Icon";
 import { Identicon } from "./Identicon";
@@ -92,8 +93,8 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
       return (
         <Row
           avatar={
-            <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full bg-fg text-bg">
-              <Icon name="layers" size={20} />
+            <span aria-hidden="true" className="block overflow-hidden rounded-full">
+              <BrandMark size={40} />
             </span>
           }
           name="Spillover"

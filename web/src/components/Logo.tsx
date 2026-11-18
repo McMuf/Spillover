@@ -20,7 +20,7 @@ export function logoFor(symbol: string): string | undefined {
   return BY_SYMBOL.get(symbol.toUpperCase());
 }
 
-/** Marks that sit better on a dark tile than on white (the rest get a white tile, like an app icon). */
+/** Marks that sit better on a dark tile than on white (the rest get a white tile with a hairline, like an app icon). */
 const TILE: Record<string, string> = { AMZN: "#232f3e" };
 
 /** Symbols that are a concept rather than a company: drawn with an icon, never as initials. */
@@ -39,7 +39,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const url = logoFor(key);
   if (url) {
     return (
-      <span aria-hidden="true" style={{ ...box, background: TILE[key] ?? "#ffffff" }} className="grid shrink-0 place-items-center overflow-hidden rounded-full">
+      <span aria-hidden="true" style={{ ...box, background: TILE[key] ?? "#ffffff" }} className="grid shrink-0 place-items-center overflow-hidden rounded-full ring-1 ring-line">
         <img src={url} alt="" style={{ width: "62%", height: "62%" }} className="object-contain" />
       </span>
     );
@@ -58,7 +58,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
     // White glyph on dark brand colors, near-black glyph on light ones.
     const glyph = luminance(bg) > 0.4 ? "#111111" : "#ffffff";
     return (
-      <span aria-hidden="true" style={{ ...box, background: bg }} className="grid shrink-0 place-items-center rounded-full">
+      <span aria-hidden="true" style={{ ...box, background: bg }} className="grid shrink-0 place-items-center rounded-full ring-1 ring-line">
         <svg viewBox="0 0 24 24" width={size * 0.56} height={size * 0.56} focusable="false">
           <path d={brand.path} fill={glyph} />
         </svg>

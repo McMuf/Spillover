@@ -4,6 +4,7 @@ import { AreaChart } from "../components/AreaChart";
 import { FeedRow } from "../components/FeedRow";
 import { HowItWorks } from "../components/HowItWorks";
 import { Icon } from "../components/Icon";
+import { Landscape } from "../components/Landscape";
 import { Logo } from "../components/Logo";
 import { Ready } from "../components/Ready";
 import { Ticker } from "../components/Ticker";
@@ -204,21 +205,34 @@ function HomeBody({ site }: { site: SiteData }) {
   const contributors = people(site).length;
   return (
     <>
-      <header className="mb-6">
-        <h1 className="max-w-3xl text-3xl font-extrabold leading-[1.1] tracking-tight md:text-[44px]">
-          Does news really move markets? Spillover tests it in public.
-        </h1>
-        <div className="mt-4">
-          <StatRow
-            label="Spillover so far"
-            items={[
-              { value: String(site.claims.length), label: site.claims.length === 1 ? "claim" : "claims" },
-              { value: String(frozen), label: "predictions frozen" },
-              { value: String(onRecord), label: "events on record" },
-              { value: String(contributors), label: contributors === 1 ? "contributor" : "contributors" },
-            ]}
-          />
+      <header className="relative mb-8 grid items-end gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+        <div className="py-2 md:py-8">
+          <p className="text-sm font-semibold text-accent">An open ledger for news and markets</p>
+          <h1 className="mt-2 max-w-3xl text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[50px]">
+            Does news really move markets? Spillover tests it in public.
+          </h1>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link to="/submit" className="inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-[15px] font-semibold text-bg hover:opacity-90">
+              Write a claim
+              <Icon name="arrowRight" size={16} />
+            </Link>
+            <Link to="/method" className="inline-flex items-center gap-2 rounded-full border border-fg/20 bg-bg/60 px-5 py-2.5 text-[15px] font-semibold hover:bg-bg">
+              How it works
+            </Link>
+          </div>
+          <div className="mt-6">
+            <StatRow
+              label="Spillover so far"
+              items={[
+                { value: String(site.claims.length), label: site.claims.length === 1 ? "claim" : "claims" },
+                { value: String(frozen), label: "predictions frozen" },
+                { value: String(onRecord), label: "events on record" },
+                { value: String(contributors), label: contributors === 1 ? "contributor" : "contributors" },
+              ]}
+            />
+          </div>
         </div>
+        <Landscape className="hidden h-[300px] w-full rounded-3xl md:block" />
       </header>
 
       <UpcomingStrip site={site} />

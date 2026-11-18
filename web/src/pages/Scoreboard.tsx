@@ -10,7 +10,7 @@ import type { SiteData } from "../generated/site";
 import { claimStat, dirText, intervalText, pct, plainPct } from "../lib/format";
 import { shortHeadline } from "../lib/plain";
 
-/** Market logo, symbol in blue and the claim in words, with its id underneath. */
+/** Market logo, symbol in violet and the claim in words, with its id underneath. */
 function ClaimCell({ site, id, placebo }: { site: SiteData; id: string; placebo: boolean }) {
   const item = site.claims.find((c) => c.claim.id === id);
   if (!item) {

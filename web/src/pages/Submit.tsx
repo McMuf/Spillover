@@ -100,7 +100,10 @@ function Form({ site }: { site: SiteData }) {
   // "Write a claim about events like this" on a news story pre-selects its event type.
   const [f, setF] = useState<ClaimForm>(() => {
     const t = params.get("eventType") ?? "";
-    return site.taxonomy.some((e) => e.name === t) ? { ...EMPTY_FORM, eventType: t } : EMPTY_FORM;
+    // The home page's "Saw something in the news?" box hands over its sentence.
+    const statement = (params.get("statement") ?? "").slice(0, 600);
+    const base = statement ? { ...EMPTY_FORM, statement } : EMPTY_FORM;
+    return site.taxonomy.some((e) => e.name === t) ? { ...base, eventType: t } : base;
   });
   const set = <K extends keyof ClaimForm>(k: K, v: ClaimForm[K]) => setF((p) => ({ ...p, [k]: v }));
   const text = useMemo(() => toYaml(f), [f]);

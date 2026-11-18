@@ -2,7 +2,8 @@ import { Link, useParams } from "react-router-dom";
 import { Identicon } from "../components/Identicon";
 import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
-import { BackButton, Card, Tag, TickerChip } from "../components/ui";
+import { Icon } from "../components/Icon";
+import { BackButton, Card, StatRow, Tag, TickerChip } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { plainPct } from "../lib/format";
 import { isHandle, people, profileOf, type Profile } from "../lib/people";
@@ -45,26 +46,40 @@ function Person({ p }: { p: Profile }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <BackButton to="/people" label="Back to people" />
-      <header className="flex items-center gap-4">
-        <Identicon handle={p.handle} size={56} />
-        <div className="min-w-0">
-          <h1 className="truncate text-[28px] font-extrabold leading-tight">{p.handle}</h1>
-          <p className="text-sm text-muted">
-            {p.claims.length} claim{p.claims.length === 1 ? "" : "s"} · {p.challenges.length} challenge
-            {p.challenges.length === 1 ? "" : "s"} · {p.replications.length} replication{p.replications.length === 1 ? "" : "s"}
+      <header className="overflow-hidden rounded-[20px] bg-surface">
+        <div className="h-16 bg-surface-alt" aria-hidden="true" />
+        <div className="px-5 pb-5">
+          <div className="-mt-8 flex flex-wrap items-end justify-between gap-3">
+            <span className="rounded-full bg-surface p-1">
+              <Identicon handle={p.handle} size={64} />
+            </span>
             {isHandle(p.handle) && (
-              <>
-                {" · "}
-                <a href={`https://github.com/${p.handle}`} className="text-accent underline underline-offset-2" rel="noopener noreferrer">
-                  GitHub profile
-                </a>
-              </>
+              <a
+                href={`https://github.com/${p.handle}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-1.5 text-sm font-semibold hover:bg-surface-alt"
+                rel="noopener noreferrer"
+              >
+                GitHub profile
+                <Icon name="external" size={14} />
+              </a>
             )}
-          </p>
+          </div>
+          <h1 className="mt-3 truncate text-[26px] font-extrabold leading-tight">{p.handle}</h1>
+          <p className="text-sm text-muted">@{p.handle} · contributor</p>
+          <div className="mt-4">
+            <StatRow
+              label={`${p.handle} on the record`}
+              items={[
+                { value: String(p.claims.length), label: p.claims.length === 1 ? "claim" : "claims" },
+                { value: String(p.challenges.length), label: p.challenges.length === 1 ? "challenge" : "challenges" },
+                { value: String(p.replications.length), label: p.replications.length === 1 ? "replication" : "replications" },
+              ]}
+            />
+          </div>
         </div>
       </header>
 
-      <Card title="Track record" id="record">
+      <Card title="Track record" id="record" kicker={{ icon: "scale", label: "Graded by the market" }}>
         <TrackRecord p={p} />
       </Card>
 

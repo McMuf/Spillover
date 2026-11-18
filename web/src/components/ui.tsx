@@ -10,15 +10,19 @@ export function Card({
   stamp,
   children,
   id,
+  kicker,
 }: {
   title: string;
   stamp?: string;
   children: ReactNode;
   id?: string;
+  /** A small icon and label above the heading, naming what kind of panel this is. */
+  kicker?: { icon: IconName; label: string };
 }) {
   const headingId = id ?? `card-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <section aria-labelledby={headingId} className="rounded-2xl bg-surface p-5 md:p-6">
+    <section aria-labelledby={headingId} className="rounded-[20px] bg-surface p-5 md:p-6">
+      {kicker && <Kicker icon={kicker.icon}>{kicker.label}</Kicker>}
       <div className="mb-4 flex items-start justify-between gap-3">
         <h2 id={headingId} className="text-xl font-bold leading-tight">
           {title}
@@ -27,6 +31,16 @@ export function Card({
       </div>
       {children}
     </section>
+  );
+}
+
+/** "◇ Market implications": a small icon and label that names a section, above its heading. */
+export function Kicker({ icon, children }: { icon: IconName; children: ReactNode }) {
+  return (
+    <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted">
+      <Icon name={icon} size={14} />
+      {children}
+    </p>
   );
 }
 
@@ -74,9 +88,9 @@ export function OutlineTag({ children }: { children: ReactNode }) {
 export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string; value?: string; to?: string; dir?: Direction }) {
   const body = (
     <>
-      <Logo symbol={symbol} size={20} />
-      <span className="font-semibold text-fg">{symbol}</span>
-      {value && <span className={`font-semibold ${{ up: "text-positive", down: "text-negative", flat: "text-muted" }[dir]}`}>{value}</span>}
+      <Logo symbol={symbol} size={18} />
+      <span className="font-semibold text-accent">{symbol}</span>
+      {value && <span className={`font-medium ${{ up: "text-positive", down: "text-negative", flat: "text-fg" }[dir]}`}>{value}</span>}
       {to && (
         <>
           <span className="text-muted">
@@ -87,9 +101,9 @@ export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string
       )}
     </>
   );
-  // Like a ticker on a market screen: the pill takes a faint wash of green or red when the number moves.
-  const tone = { up: "border-positive/30 bg-positive/10", down: "border-negative/30 bg-negative/10", flat: "border-line bg-surface" }[value ? dir : "flat"];
-  const cls = `inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-xs ${tone}`;
+  // Like the ticker pills under a news story: a hairline outline, the symbol in blue and the number
+  // in green or red only when it is a move. No fill, so a row of them stays quiet.
+  const cls = "inline-flex items-center gap-1.5 rounded-full border border-line py-0.5 pl-0.5 pr-2.5 text-xs";
   return to ? (
     <Link to={to} className={`${cls} relative z-10 hover:border-muted`}>
       {body}
@@ -120,7 +134,7 @@ export function PillButton({
       aria-label={label}
       onClick={onClick}
       className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ${
-        active ? "bg-accent text-on-accent" : "border border-line text-muted hover:text-fg"
+        active ? "bg-surface-alt text-fg" : "text-muted hover:bg-surface hover:text-fg"
       }`}
     >
       {icon && <Icon name={icon} size={14} />}
@@ -142,14 +156,14 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex rounded-full bg-surface-alt p-0.5">
+    <div role="group" aria-label={label} className="inline-flex gap-0.5 rounded-xl bg-surface p-1">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${value === o.value ? "bg-primary text-on-primary" : "text-muted hover:text-fg"}`}
+          className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold ${value === o.value ? "bg-surface-alt text-fg" : "text-muted hover:text-fg"}`}
         >
           {o.label}
         </button>
@@ -182,4 +196,55 @@ export function BackButton({ to, label = "Back" }: { to: string; label?: string 
 }
 
 export const TAB_CLASS =
-  "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-[17px] font-semibold text-muted hover:text-fg data-[state=active]:border-fg data-[state=active]:text-fg";
+  "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-[17px] font-semibold text-muted hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg";
+
+/** A call to action. Primary is a solid white button with an arrow; secondary is an outlined pill. */
+export function ActionLink({
+  to,
+  children,
+  variant = "primary",
+  icon = "arrowRight",
+}: {
+  to: string;
+  children: ReactNode;
+  variant?: "primary" | "secondary";
+  icon?: IconName | null;
+}) {
+  const cls =
+    variant === "primary"
+      ? "bg-fg text-bg hover:opacity-90"
+      : "border border-line text-fg hover:bg-surface";
+  return (
+    <Link to={to} className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${cls}`}>
+      {children}
+      {icon && <Icon name={icon} size={16} />}
+    </Link>
+  );
+}
+
+/** "7 claims | 53 predictions frozen": a row of headline numbers split by hairlines. */
+export function StatRow({ items, label }: { items: { value: string; label: string }[]; label: string }) {
+  return (
+    <dl aria-label={label} className="grid grid-cols-2 gap-y-2 text-sm sm:flex sm:flex-wrap sm:items-center">
+      {items.map((it, i) => (
+        // dt before dd for screen readers; shown number-first. Hairline dividers once it is one row.
+        <div key={it.label} className={`flex flex-row-reverse items-baseline justify-end gap-1.5 ${i > 0 ? "sm:ml-4 sm:border-l sm:border-line sm:pl-4" : ""}`}>
+          <dt className="text-muted">{it.label}</dt>
+          <dd className="font-bold text-fg">{it.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** A headline number with its unit set smaller ("0.83" large, "%" small). */
+export function BigNumber({ text, className = "" }: { text: string; className?: string }) {
+  const m = /^([+−-]?[\d,.]+)(.*)$/.exec(text);
+  if (!m) return <span className={className}>{text}</span>;
+  return (
+    <span className={className}>
+      {m[1]}
+      <span className="ml-0.5 text-[0.55em] font-bold">{m[2]}</span>
+    </span>
+  );
+}

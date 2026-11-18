@@ -5,7 +5,7 @@ import type { CalibrationBin, ForwardRow } from "../generated/site";
 import { STATUSES } from "../lib/format";
 import { makeClaim, makeSite } from "../test-utils";
 import { CalibrationPlot } from "./CalibrationPlot";
-import { TrendingCard } from "./TrendingCard";
+import { ClaimPost } from "./ClaimPost";
 import { dayToTime, timeToDay } from "./EventWindowChart";
 import { EvidenceMeter } from "./EvidenceMeter";
 import { ForwardLogTable } from "./ForwardLogTable";
@@ -118,30 +118,40 @@ describe("CalibrationPlot", () => {
   });
 });
 
-describe("TrendingCard", () => {
-  it("leads with a plain headline, the plain-English test, the ticker and status", () => {
+describe("ClaimPost", () => {
+  it("leads with who registered it, a plain headline, the plain-English test, the market and status", () => {
     const item = makeClaim();
     render(
       <MemoryRouter>
-        <TrendingCard item={item} />
+        <ClaimPost item={item} />
       </MemoryRouter>,
     );
     expect(screen.getByText("Draft")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /ABC lags the market/ })).toHaveAttribute("href", "/claims/clm_demo_v1");
+    expect(screen.getAllByRole("link", { name: /ABC lags the market/ })[0]).toHaveAttribute("href", "/claims/clm_demo_v1");
+    expect(screen.getByRole("link", { name: "someone" })).toHaveAttribute("href", "/people/someone");
     expect(screen.getByText(/we check whether ABC falls/)).toBeInTheDocument();
     expect(screen.getAllByText("ABC").length).toBeGreaterThan(0);
   });
 
-  it("colors the number by direction and uses no gradients", () => {
+  it("colors a move by direction, words a swing size neutrally, and uses no gradients", () => {
     const { container } = render(
       <MemoryRouter>
-        <TrendingCard item={makeClaim()} />
+        <ClaimPost item={makeClaim()} />
       </MemoryRouter>,
     );
     expect(container.innerHTML).not.toMatch(/gradient/);
     // The demo backtest is −1.23%: shown in red, with its minus sign, so color is never the only cue.
-    const value = screen.getByText("−1.23%");
-    expect(value.className).toContain("text-negative");
+    expect(screen.getByText("−1.23").closest("p")?.className).toContain("text-negative");
+
+    const swing = makeClaim("clm_swing_v1");
+    swing.claim.measure = "abs_excess_return";
+    render(
+      <MemoryRouter>
+        <ClaimPost item={swing} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("smaller swing than usual")).toBeInTheDocument();
+    expect(screen.getByText("1.23").closest("p")?.className).not.toMatch(/text-(positive|negative)/);
   });
 });
 

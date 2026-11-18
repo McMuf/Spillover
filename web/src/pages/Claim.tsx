@@ -1,4 +1,5 @@
 import { Discussion } from "../components/Discussion";
+import { Identicon } from "../components/Identicon";
 import { PersonLink } from "../components/PersonLink";
 import { discussionTerm } from "../lib/community";
 import * as Tabs from "@radix-ui/react-tabs";
@@ -473,6 +474,16 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
       </div>
 
       <header className="mb-8 max-w-4xl">
+        {/* Who registered it and when, the way a post names its author. */}
+        <div className="mb-4 flex items-center gap-3">
+          <Identicon handle={c.registered_by} size={36} />
+          <p className="text-sm">
+            <PersonLink handle={c.registered_by} className="font-semibold hover:underline" />
+            <span className="block text-xs text-muted">
+              {c.registered_at !== "set_by_ci_on_merge" ? `Registered and frozen ${c.registered_at.slice(0, 10)}` : "Draft · not registered yet"}
+            </span>
+          </p>
+        </div>
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <Tag>{categoryOf(c.event_type)}</Tag>
           <Stamp>

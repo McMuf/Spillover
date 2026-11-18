@@ -29,11 +29,11 @@ const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 function About({ story }: { story: Story }) {
   return (
     <div className="space-y-6">
-      <Card title="What happened" id="about-what">
+      <Card title="What happened" id="about-what" kicker={{ icon: "news", label: "About" }}>
         <p className="text-[15px] leading-relaxed">{storySentence(story)}</p>
         <p className="mt-3 text-sm leading-relaxed text-muted">{originNote(story.origin)}</p>
       </Card>
-      <Card title="Sources" id="about-sources">
+      <Card title="Sources" id="about-sources" kicker={{ icon: "external", label: "Linked, never copied" }}>
         <ul className="space-y-3">
           {story.sources.map((s, i) => (
             <li key={`${s.url ?? s.source}-${i}`} className="text-sm">
@@ -111,7 +111,7 @@ function Stakeholders({ story, site }: { story: Story; site: SiteData }) {
   const priced = new Set(site.meta.priced_symbols);
   return (
     <div className="space-y-6">
-      <Card title="Who it is about" id="who">
+      <Card title="Who it is about" id="who" kicker={{ icon: "people", label: "Stakeholders" }}>
         {story.entities.length === 0 ? (
           <p className="text-sm text-muted">No single company or institution is named.</p>
         ) : (
@@ -131,7 +131,7 @@ function Stakeholders({ story, site }: { story: Story; site: SiteData }) {
           </ul>
         )}
       </Card>
-      <Card title="Markets being watched" id="markets-watched">
+      <Card title="Markets being watched" id="markets-watched" kicker={{ icon: "trend", label: "From registered claims" }}>
         {markets.length === 0 ? (
           <p className="text-sm text-muted">No registered claim watches a market for this kind of event yet.</p>
         ) : (

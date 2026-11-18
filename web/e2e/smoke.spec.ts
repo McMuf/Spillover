@@ -108,7 +108,7 @@ test("news opens a story with its four tabs, and an untested kind of event leads
   await expect(page).toHaveURL(/#\/news$/);
   await expect(page.getByRole("heading", { level: 1, name: "News" })).toBeVisible();
   await page.getByRole("button", { name: /On the record/ }).click();
-  await page.getByRole("listitem").getByRole("link").first().click();
+  await page.getByRole("main").getByRole("listitem").getByRole("link").first().click();
   for (const tab of ["About", "Market implications", "Stakeholders", "Data"]) {
     await page.getByRole("tab", { name: tab }).click();
     await expect(page.getByRole("tabpanel")).toBeVisible();

@@ -5,7 +5,8 @@ import { Logo } from "../components/Logo";
 import { SpilloverMap } from "../components/SpilloverMap";
 import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
-import { PillButton, Segmented } from "../components/ui";
+import { AreaChart } from "../components/AreaChart";
+import { PillButton, Segmented, StatRow } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { claimStat, scoreboardRow } from "../lib/format";
@@ -13,11 +14,19 @@ import { categoryOf, highlightTerms, shortHeadline } from "../lib/plain";
 
 
 const TH = "px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted";
+const TONE = { up: "up", down: "down", flat: "accent" } as const;
 
 function ExploreBody({ site }: { site: SiteData }) {
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
-  const [topic, setTopic] = useState("All");
+  // The topic lives in the address, so the sidebar's topic links open Explore already filtered.
+  const topic = params.get("topic") ?? "All";
+  const setTopic = (t: string) => {
+    const next = new URLSearchParams(params);
+    if (t === "All") next.delete("topic");
+    else next.set("topic", t);
+    setParams(next);
+  };
   const [view, setView] = useState<"table" | "map">("table");
   const topics = useMemo(() => ["All", ...new Set(site.claims.map((c) => categoryOf(c.claim.event_type)))], [site]);
 
@@ -36,16 +45,13 @@ function ExploreBody({ site }: { site: SiteData }) {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
           <h1 className="text-3xl font-extrabold tracking-tight">Explore</h1>
-          <dl className="flex gap-8">
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted">Claims</dt>
-              <dd className="text-[15px] font-bold">{site.claims.length}</dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted">Past events tested</dt>
-              <dd className="text-[15px] font-bold">{eventsTested}</dd>
-            </div>
-          </dl>
+          <StatRow
+            label="Explore totals"
+            items={[
+              { value: String(site.claims.length), label: site.claims.length === 1 ? "claim" : "claims" },
+              { value: String(eventsTested), label: "past events tested" },
+            ]}
+          />
         </div>
         <Segmented
           label="View"
@@ -76,8 +82,8 @@ function ExploreBody({ site }: { site: SiteData }) {
       </p>
 
       {view === "table" ? (
-        <div tabIndex={0} role="region" aria-label="Claims (scrollable)" className="overflow-x-auto">
-          <table className="w-full min-w-[48rem] text-left text-[15px]">
+        <div tabIndex={0} role="region" aria-label="Claims (scrollable)" className="relative overflow-x-auto rounded-[20px] bg-surface px-2">
+          <table className="w-full min-w-[54rem] text-left text-[15px]">
             <caption className="sr-only">All claims</caption>
             <thead>
               <tr className="border-b border-line">
@@ -85,6 +91,9 @@ function ExploreBody({ site }: { site: SiteData }) {
                 <th scope="col" className={TH}>Claim</th>
                 <th scope="col" className={`${TH} text-right`}>Events tested</th>
                 <th scope="col" className={`${TH} text-right`}>Backtest</th>
+                <th scope="col" className={TH}>
+                  <span className="sr-only">Average path around past events</span>
+                </th>
                 <th scope="col" className={`${TH} text-right`}>Forward</th>
                 <th scope="col" className={TH}>Status</th>
               </tr>
@@ -94,12 +103,12 @@ function ExploreBody({ site }: { site: SiteData }) {
                 const c = it.claim;
                 const fwd = scoreboardRow(site.scoreboard.claims, c.id)?.effective_events ?? 0;
                 return (
-                  <tr key={c.id} className="relative border-b border-line hover:bg-surface">
+                  <tr key={c.id} className="relative border-b border-line last:border-b-0 hover:bg-surface-alt">
                     <td className="px-3 py-4">
                       <div className="flex items-center gap-3">
                         <Logo symbol={c.instrument.symbol} size={36} />
                         <div>
-                          <p className="font-bold">{c.instrument.symbol}</p>
+                          <p className="font-semibold text-accent">{c.instrument.symbol}</p>
                           <p className="text-sm text-muted">{instrumentName(c.instrument.symbol)}</p>
                         </div>
                       </div>
@@ -112,13 +121,16 @@ function ExploreBody({ site }: { site: SiteData }) {
                     </td>
                     <td className="px-3 py-4 text-right tabular-nums">{it.backtest?.n_effective ?? 0}</td>
                     <td className={`px-3 py-4 text-right font-semibold tabular-nums ${claimStat(it.claim.measure, it.backtest?.mean).cls}`}>{claimStat(it.claim.measure, it.backtest?.mean).text}</td>
+                    <td className="w-28 px-3 py-4" aria-hidden="true">
+                      <AreaChart values={it.chart?.mean ?? []} height={30} tone={TONE[claimStat(c.measure, it.backtest?.mean).dir]} />
+                    </td>
                     <td className="px-3 py-4 text-right tabular-nums">{fwd} of {c.success.min_forward_events}</td>
                     <td className="px-3 py-4"><StatusBadge status={it.status} /></td>
                   </tr>
                 );
               })}
               {shown.length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-8 text-muted">No claims match. Clear the search or topic filter.</td></tr>
+                <tr><td colSpan={7} className="px-3 py-8 text-muted">No claims match. Clear the search or topic filter.</td></tr>
               )}
             </tbody>
           </table>

@@ -20,12 +20,15 @@ import type { SiteClaim, SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { findClaim } from "../lib/data";
 import { embedSnippet } from "../lib/embed";
-import { citation, claimVersion, direction, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel } from "../lib/format";
+import { citation, claimStat, claimVersion, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel, type Direction } from "../lib/format";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
 import { factorNames } from "../lib/paths";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
 
 // The charting library is large, so it loads only when the Evidence tab is opened.
+const TONE: Record<Direction, "up" | "down" | "accent"> = { up: "up", down: "down", flat: "accent" };
+
+
 const EventWindowChart = lazy(() =>
   import("../components/EventWindowChart").then((m) => ({ default: m.EventWindowChart })),
 );
@@ -113,7 +116,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
           {b ? (
             <>
               <Row label="Backtest estimate">
-                <span className={dirText(b.mean)}>{pct(b.mean)}</span> <span className="text-muted">{intervalText(b.ci_lo, b.ci_hi)}</span>
+                <span className={claimStat(c.measure, b.mean).cls}>{claimStat(c.measure, b.mean).text}</span> <span className="text-muted">{intervalText(b.ci_lo, b.ci_hi)}</span>
               </Row>
               <Row label="Backtest sample">
                 n={b.n_effective} effective of {b.n_matched} matched
@@ -217,7 +220,8 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
             </div>
             {m.main && b && (
               <div className="text-right">
-                <p className={`text-[17px] font-bold tabular-nums ${dirText(b.mean)}`}>{pct(b.mean)}</p>
+                <p className={`text-[17px] font-bold tabular-nums ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).value}</p>
+                {claimStat(c.measure, b.mean).note && <p className="text-xs text-muted">{claimStat(c.measure, b.mean).note}</p>}
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest · n={b.n_effective}</p>
               </div>
             )}
@@ -228,7 +232,7 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
             </span>
             {m.idea}
           </p>
-          {m.main && chart && <AreaChart values={chart.mean} markIndex={chart.days.indexOf(0)} height={170} tone={direction(b?.mean) === "down" ? "down" : direction(b?.mean) === "up" ? "up" : "accent"} />}
+          {m.main && chart && <AreaChart values={chart.mean} markIndex={chart.days.indexOf(0)} height={170} tone={TONE[claimStat(c.measure, b?.mean).dir]} />}
           {m.main && (
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setTab("evidence")} className="rounded-full bg-primary py-2.5 font-bold text-on-primary hover:opacity-90">
@@ -296,7 +300,7 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
 
       <section aria-labelledby="rep-h">
         <h2 id="rep-h" className={H3}>Replications ({item.replications.length})</h2>
-        {item.replications.length > 0 ? <ReplicationList items={item.replications} /> : <p className="rounded-2xl bg-surface p-4 text-sm text-muted">None yet.</p>}
+        {item.replications.length > 0 ? <ReplicationList items={item.replications} measure={item.claim.measure} /> : <p className="rounded-2xl bg-surface p-4 text-sm text-muted">None yet.</p>}
       </section>
 
       <section aria-labelledby="start-h" className="space-y-3">
@@ -431,7 +435,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
                   <td className="px-4 py-2">{e.event_date}</td>
                   <td className="px-4 py-2"><Link className="font-mono text-xs text-accent hover:underline" to={`/events/${e.event_id}`}>{e.event_id}</Link></td>
                   <td className={`px-4 py-2 ${dirText(e.car)}`}>{pct(e.car)}</td>
-                  <td className={`px-4 py-2 ${dirText(e.value)}`}>{pct(e.value)}</td>
+                  <td className={`px-4 py-2 ${claimStat(item.claim.measure, e.value).cls}`}>{claimStat(item.claim.measure, e.value).text}</td>
                 </tr>
               ))}
             </tbody>
@@ -516,7 +520,8 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             {b ? (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest estimate</p>
-                <p className={`mt-1 text-4xl font-extrabold tabular-nums ${dirText(b.mean)}`}>{pct(b.mean)}</p>
+                <p className={`mt-1 text-4xl font-extrabold tabular-nums ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).value}</p>
+                {claimStat(c.measure, b.mean).note && <p className="mt-1 text-sm font-semibold">{claimStat(c.measure, b.mean).note}</p>}
                 <p className="mt-1 text-xs text-muted">
                   n={b.n_effective} · {intervalText(b.ci_lo, b.ci_hi)}
                   {b.data_synthetic && " · synthetic data"}

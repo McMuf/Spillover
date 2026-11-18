@@ -49,20 +49,20 @@ export function Shell() {
       </a>
 
       <header className="sticky top-0 z-40 border-b border-line bg-bg">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-8 px-4 md:h-16 md:flex-nowrap md:px-6">
-          <Link to="/" className="flex h-14 items-center gap-2 text-[19px] font-extrabold tracking-tight md:h-auto">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-8 px-4 md:px-6 xl:h-16 xl:flex-nowrap">
+          <Link to="/" className="flex h-14 items-center gap-2 text-[19px] font-extrabold tracking-tight xl:h-auto">
             <Icon name="layers" size={22} />
             Spillover
           </Link>
 
-          <nav aria-label="Main" className="no-scrollbar order-last -mx-4 flex w-[calc(100%+2rem)] gap-7 overflow-x-auto px-4 md:order-none md:mx-0 md:h-full md:w-auto md:px-0">
+          <nav aria-label="Main" className="no-scrollbar order-last -mx-4 flex w-[calc(100%+2rem)] gap-6 overflow-x-auto px-4 md:-mx-6 md:w-[calc(100%+3rem)] md:px-6 xl:order-none xl:mx-0 xl:h-full xl:w-auto xl:px-0">
             {NAV.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={n.end}
                 className={({ isActive }) =>
-                  `flex shrink-0 items-center whitespace-nowrap border-b-2 py-3 text-[15px] font-medium md:py-0 ${
+                  `flex shrink-0 items-center whitespace-nowrap border-b-2 py-3 text-[15px] font-medium xl:py-0 ${
                     isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"
                   }`
                 }
@@ -72,7 +72,7 @@ export function Shell() {
             ))}
           </nav>
 
-          <label className="relative order-last mb-3 w-full md:order-none md:mb-0 md:ml-auto md:w-72 lg:w-96">
+          <label className="relative order-last mb-3 w-full xl:order-none xl:mb-0 xl:ml-auto xl:w-72">
             <span className="sr-only">Search claims</span>
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
               <Icon name="search" size={16} />
@@ -88,12 +88,12 @@ export function Shell() {
               placeholder="Search claims"
               className="w-full rounded-full border border-line bg-surface py-2 pl-10 pr-10 text-sm text-fg placeholder:text-muted focus:border-muted"
             />
-            <kbd aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-line px-1.5 text-xs text-muted md:block">
+            <kbd aria-hidden="true" className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-line px-1.5 text-xs text-muted xl:block">
               /
             </kbd>
           </label>
 
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <div className="ml-auto flex items-center gap-2 xl:ml-0">
             <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-on-primary hover:brightness-110">
               <Icon name="submit" size={16} />
               Submit a claim

@@ -4,7 +4,7 @@ import { InstrumentChip } from "../components/InstrumentChip";
 import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
 import { findClaim } from "../lib/data";
-import { dirText, intervalText, pct, scoreboardRow } from "../lib/format";
+import { claimStat, intervalText, scoreboardRow } from "../lib/format";
 
 /**
  * A compact claim card with no site chrome, meant to be framed on other pages. It is read-only,
@@ -33,7 +33,7 @@ export default function EmbedClaim() {
               {b && (
                 <p className="mt-3 text-xs text-muted">
                   <span className="font-semibold uppercase tracking-wide">Backtest</span> · n={b.n_effective} ·{" "}
-                  <span className={`font-semibold ${dirText(b.mean)}`}>{pct(b.mean)}</span> {intervalText(b.ci_lo, b.ci_hi)} · as of {b.as_of}
+                  <span className={`font-semibold ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).text}</span> {intervalText(b.ci_lo, b.ci_hi)} · as of {b.as_of}
                   {b.data_synthetic && " · SYNTHETIC data"}
                 </p>
               )}

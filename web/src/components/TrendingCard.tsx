@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { SiteClaim } from "../generated/site";
-import { direction, pct } from "../lib/format";
+import { claimStat } from "../lib/format";
 import { categoryOf, highlightTerms, shortHeadline, whatWeTest } from "../lib/plain";
 import { AreaChart } from "./AreaChart";
 import { Highlight } from "./Highlight";
@@ -15,7 +15,7 @@ export function TrendingCard({ item }: { item: SiteClaim }) {
   const c = item.claim;
   const b = item.backtest;
   const chart = item.chart;
-  const d = direction(b?.mean);
+  const d = claimStat(c.measure, b?.mean).dir;
   const tone = d === "up" ? "up" : d === "down" ? "down" : "accent";
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface transition-colors hover:bg-surface-alt">
@@ -37,7 +37,7 @@ export function TrendingCard({ item }: { item: SiteClaim }) {
         </h3>
         <p className="mt-2 line-clamp-3 text-[15px] leading-relaxed text-muted">{whatWeTest(item)}</p>
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
-          <TickerChip symbol={c.instrument.symbol} value={b ? pct(b.mean) : undefined} dir={direction(b?.mean)} />
+          <TickerChip symbol={c.instrument.symbol} value={b ? claimStat(c.measure, b.mean).text : undefined} dir={d} />
           <StatusBadge status={item.status} />
         </div>
       </div>

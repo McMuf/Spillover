@@ -1,6 +1,6 @@
 import type { SiteClaim, SiteData } from "../generated/site";
 import { instrumentName, NAME_BY_SYMBOL } from "./brands";
-import { intervalText, pct, venueLabel, windowLabel } from "./format";
+import { claimStat, intervalText, pct, venueLabel, windowLabel } from "./format";
 import { categoryOf, eventTitle } from "./plain";
 
 /**
@@ -67,7 +67,7 @@ export function claimPath(item: SiteClaim, site: SiteData): ClaimPath {
     },
     effect: b
       ? {
-          estimate: pct(b.mean),
+          estimate: claimStat(c.measure, b.mean).text,
           interval: intervalText(b.ci_lo, b.ci_hi),
           n: b.n_effective,
           window: windowLabel(b.window_days),

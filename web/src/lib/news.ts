@@ -1,5 +1,5 @@
 import type { SiteClaim, SiteData, SiteEvent } from "../generated/site";
-import { dirText, pct } from "./format";
+import { claimStat } from "./format";
 import { eventHeadline, eventSentence } from "./plain";
 
 export type Story = SiteData["news"][number];
@@ -105,10 +105,6 @@ export function pastEvents(site: SiteData, claim: SiteClaim, before: string, n =
  * worded and shown in a neutral colour instead.
  */
 export function measuredValue(claim: SiteClaim, v: number | null): { text: string; cls: string } {
-  if (v === null || Number.isNaN(v)) return { text: "n/a", cls: "text-muted" };
-  if (claim.claim.measure === "abs_excess_return") {
-    const size = pct(Math.abs(v)).replace(/^[+−]/, "");
-    return { text: `${size} ${v >= 0 ? "bigger" : "smaller"} swing than usual`, cls: "text-fg" };
-  }
-  return { text: pct(v), cls: dirText(v) };
+  const s = claimStat(claim.claim.measure, v);
+  return { text: s.text, cls: s.cls };
 }

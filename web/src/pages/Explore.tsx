@@ -8,7 +8,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { PillButton, Segmented } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
-import { dirText, pct, scoreboardRow } from "../lib/format";
+import { claimStat, scoreboardRow } from "../lib/format";
 import { categoryOf, highlightTerms, shortHeadline } from "../lib/plain";
 
 
@@ -111,7 +111,7 @@ function ExploreBody({ site }: { site: SiteData }) {
                       <p className="text-xs text-muted">{categoryOf(c.event_type)}</p>
                     </td>
                     <td className="px-3 py-4 text-right tabular-nums">{it.backtest?.n_effective ?? 0}</td>
-                    <td className={`px-3 py-4 text-right font-semibold tabular-nums ${dirText(it.backtest?.mean)}`}>{it.backtest ? pct(it.backtest.mean) : "n/a"}</td>
+                    <td className={`px-3 py-4 text-right font-semibold tabular-nums ${claimStat(it.claim.measure, it.backtest?.mean).cls}`}>{claimStat(it.claim.measure, it.backtest?.mean).text}</td>
                     <td className="px-3 py-4 text-right tabular-nums">{fwd} of {c.success.min_forward_events}</td>
                     <td className="px-3 py-4"><StatusBadge status={it.status} /></td>
                   </tr>

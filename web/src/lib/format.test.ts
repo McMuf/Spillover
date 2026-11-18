@@ -46,3 +46,23 @@ describe("direction", () => {
     expect(dirText(-0.01)).toBe("text-negative");
   });
 });
+
+describe("claimStat", () => {
+  it("words a swing size and never colours it as up or down", async () => {
+    const { claimStat } = await import("./format");
+    expect(claimStat("abs_excess_return", -0.0066)).toEqual({
+      value: "0.66%",
+      note: "smaller swing than usual",
+      text: "0.66% smaller swing than usual",
+      cls: "text-fg",
+      dir: "flat",
+    });
+    expect(claimStat("abs_excess_return", 0.0083).note).toBe("bigger swing than usual");
+  });
+
+  it("keeps red and green for moves", async () => {
+    const { claimStat } = await import("./format");
+    expect(claimStat("abnormal_return", -0.02)).toMatchObject({ value: "−2.00%", note: null, cls: "text-negative", dir: "down" });
+    expect(claimStat("abnormal_return", null).text).toBe("n/a");
+  });
+});

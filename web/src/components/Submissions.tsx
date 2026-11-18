@@ -1,6 +1,6 @@
 import { PersonLink } from "./PersonLink";
 import type { ChallengeOut, ReplicationOut } from "../generated/site";
-import { intervalText, pct, dirText } from "../lib/format";
+import { claimStat, intervalText } from "../lib/format";
 
 const ASPECT: Record<ChallengeOut["aspect"], string> = {
   definition: "the claim's definition",
@@ -53,7 +53,7 @@ export function ChallengeList({ items }: { items: ChallengeOut[] }) {
   );
 }
 
-export function ReplicationList({ items }: { items: ReplicationOut[] }) {
+export function ReplicationList({ items, measure = "abnormal_return" }: { items: ReplicationOut[]; measure?: string }) {
   return (
     <ul className="space-y-3">
       {items.map((r) => (
@@ -83,7 +83,7 @@ export function ReplicationList({ items }: { items: ReplicationOut[] }) {
                     {r.result.data_synthetic && " · on SYNTHETIC data"}
                   </p>
                   <p className="mt-1">
-                    <span className={dirText(r.result.mean)}>{pct(r.result.mean)}</span> <span className="text-muted">{intervalText(r.result.ci_lo, r.result.ci_hi)}</span>{" "}
+                    <span className={claimStat(measure, r.result.mean).cls}>{claimStat(measure, r.result.mean).text}</span> <span className="text-muted">{intervalText(r.result.ci_lo, r.result.ci_hi)}</span>{" "}
                     · n={r.result.n_effective} of {r.result.n_matched} matched · as of {r.result.as_of}
                   </p>
                   <p className="mt-1 text-muted">{r.result.verdict}</p>

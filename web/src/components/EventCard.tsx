@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { SiteData, SiteEvent } from "../generated/site";
-import { direction, pct } from "../lib/format";
+import { claimStat } from "../lib/format";
 import { categoryOf, eventHeadline, eventSentence } from "../lib/plain";
 import { Stamp, TickerChip } from "./ui";
 
@@ -25,8 +25,8 @@ export function EventCard({ event, site }: { event: SiteEvent; site: SiteData })
             <TickerChip
               key={ec.claim_id}
               symbol={claim.instrument.symbol}
-              value={ec.effective ? pct(ec.value) : "not counted"}
-              dir={ec.effective ? direction(ec.value) : "flat"}
+              value={ec.effective ? claimStat(claim.measure, ec.value).text : "not counted"}
+              dir={ec.effective ? claimStat(claim.measure, ec.value).dir : "flat"}
               to={`/claims/${ec.claim_id}`}
             />
           );

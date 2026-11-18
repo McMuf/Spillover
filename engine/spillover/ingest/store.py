@@ -6,7 +6,7 @@ import csv
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
@@ -21,10 +21,11 @@ from spillover.eventstore import (
 )
 from spillover.ingest.config import Config, EventsSpec, SeriesSpec
 from spillover.ingest.fomc import FOMC_URL, fetch_fomc
-from spillover.ingest.http import Fetcher
+from spillover.ingest.http import Fetcher, FetchError, redact
 from spillover.ingest.prices import (
     Levels,
     PriceError,
+    alphavantage_levels,
     fred_levels,
     fred_release_dates,
     read_csv_levels,
@@ -39,6 +40,10 @@ from spillover.price_events import price_move_events
 
 MIN_DAYS = 200  # an estimation window is 130 days; fewer than this cannot test anything
 FRED_KEY_ENV = "FRED_API_KEY"
+ALPHAVANTAGE_KEY_ENV = "ALPHAVANTAGE_API_KEY"
+# Stock prices are optional: one missing ticker must never stop index, calendar and placebo
+# predictions. A skipped stock's claims say "no price data" until it loads.
+OPTIONAL_PROVIDERS = frozenset({"alphavantage"})
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _TYPE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
@@ -68,6 +73,8 @@ class IngestSummary:
     missing_days: dict[str, int]
     n_events: int
     skipped_events: list[str]
+    # Optional series (single stocks) that did not load this run, and why. Never fatal.
+    skipped_series: dict[str, str] = field(default_factory=lambda: dict[str, str]())
 
 
 def _levels_for(spec: SeriesSpec, config: Config, env: Mapping[str, str], fetch: Fetcher) -> Levels:
@@ -81,6 +88,12 @@ def _levels_for(spec: SeriesSpec, config: Config, env: Mapping[str, str], fetch:
             )
         assert spec.id is not None
         return fred_levels(spec.id, key, config.data.start, fetch)
+    if spec.provider == "alphavantage":
+        key = env.get(ALPHAVANTAGE_KEY_ENV, "").strip()
+        if not key:
+            raise IngestError(f"{spec.symbol}: {ALPHAVANTAGE_KEY_ENV} is not set")
+        assert spec.id is not None
+        return alphavantage_levels(spec.id, key, config.data.start, fetch)
     assert spec.path is not None
     return read_csv_levels(spec.path)
 
@@ -206,6 +219,7 @@ def build_events(
     returns: Mapping[str, SeriesReturns] | None = None,
     history: tuple[date, date] | None = None,
     fred_key: str | None = None,
+    unavailable: frozenset[str] = frozenset(),
 ) -> tuple[pl.DataFrame, list[str], list[str]]:
     """All configured events. ``history`` = (data start, today) adds past placebo months."""
     frames: list[pl.DataFrame] = []
@@ -277,6 +291,9 @@ def build_events(
             )
         elif spec.type == "price_moves":
             assert spec.symbol is not None
+            if spec.symbol in unavailable:
+                skipped.append(f"price moves of {spec.symbol}: its prices did not load this run")
+                continue
             if returns is None or spec.symbol not in returns:
                 raise IngestError(
                     f"price_moves watches {spec.symbol!r}, which is not a configured series"
@@ -315,11 +332,23 @@ def build_cache(
     config: Config, fetch: Fetcher, env: Mapping[str, str], today: date
 ) -> IngestSummary:
     real = [s for s in config.series if s.provider != "alias"]
-    levels = {s.symbol: _levels_for(s, config, env, fetch) for s in real}
+    levels: dict[str, Levels] = {}
+    skipped_series: dict[str, str] = {}
+    for s in real:
+        if s.provider not in OPTIONAL_PROVIDERS:
+            levels[s.symbol] = _levels_for(s, config, env, fetch)
+            continue
+        try:
+            levels[s.symbol] = _levels_for(s, config, env, fetch)
+        except (IngestError, PriceError, FetchError) as exc:
+            skipped_series[s.symbol] = redact(str(exc))
     per_series = own_calendar_returns(levels, config.data.start, config.data.max_abs_return)
     for s in config.series:
         if s.provider == "alias":
             assert s.of is not None
+            if s.of in skipped_series:
+                skipped_series[s.symbol] = f"alias of {s.of}, which did not load"
+                continue
             per_series[s.symbol] = per_series[s.of]
     days = sorted({d for ds, _ in per_series.values() for d in ds})
     missing = {sym: len(days) - len(ds) for sym, (ds, _) in per_series.items()}
@@ -329,6 +358,7 @@ def build_cache(
         per_series,
         history=(config.data.start, today),
         fred_key=env.get(FRED_KEY_ENV, "").strip() or None,
+        unavailable=frozenset(skipped_series),
     )
 
     # Long format, each series on its own days; the loader fills the gaps with "did not trade".
@@ -355,10 +385,20 @@ def build_cache(
                 "id": s.id or (str(s.path) if s.path else s.of),
             }
             for s in config.series
+            if s.symbol not in skipped_series
         ],
+        "skipped_series": sorted(skipped_series),
         "event_sources": event_sources,
     }
     (out / "MANIFEST.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return IngestSummary(
-        out, days[0], days[-1], len(days), sorted(per_series), missing, events.height, skipped
+        out,
+        days[0],
+        days[-1],
+        len(days),
+        sorted(per_series),
+        missing,
+        events.height,
+        skipped,
+        skipped_series,
     )

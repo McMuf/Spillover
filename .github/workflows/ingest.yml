@@ -82,6 +82,7 @@ jobs:
         if: ${{ !cancelled() && steps.verify.outcome == 'success' && steps.placebo.outcome == 'success' }}
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
         run: uv run spillover ingest --config data/sources.ci.toml
 
       - name: Freeze predictions for forward events

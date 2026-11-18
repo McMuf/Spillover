@@ -513,6 +513,9 @@ def ingest(
             )
     for line in summary.skipped_events:
         typer.echo(f"  note: {line}")
+    for symbol, why in sorted(summary.skipped_series.items()):
+        # Not fatal: index, calendar and placebo claims carry on; this stock's claims wait.
+        typer.echo(f"  warning: {symbol} skipped this run: {why}", err=True)
     typer.echo(f"Use it with: --data {summary.out}   (or export SPILLOVER_DATA={summary.out})")
 
 

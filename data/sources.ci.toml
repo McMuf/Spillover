@@ -1,5 +1,5 @@
 # The configuration the scheduled GitHub workflows (ingest.yml, score.yml) use. No secrets here:
-# FRED_API_KEY and ANTHROPIC_API_KEY come from repository secrets.
+# FRED_API_KEY, ALPHAVANTAGE_API_KEY, ANTHROPIC_API_KEY and SEC_CONTACT come from repository secrets.
 #
 # REVIEW BEFORE TURNING THE WORKFLOWS ON (repository variable INGEST_ENABLED=true):
 #  - FRED's S&P 500 series carries its own copyright notice from S&P. Check that you may use it
@@ -44,6 +44,24 @@ id = "DEXJPUS"  # Japanese yen per US dollar, Board of Governors of the Federal 
 symbol = "WTI"
 provider = "fred"
 id = "DCOILWTICO"  # West Texas Intermediate crude oil spot price, US Energy Information Administration
+
+# --- Single stocks (Alpha Vantage, adjusted daily closes) -----------------------------------------
+# Off until the repository secret ALPHAVANTAGE_API_KEY exists. Its free tier (25 requests a day,
+# 100 days of history) is too small: the engine needs about 130 trading days before each event, and
+# the scheduled runs fetch every series several times a day. The key to use is one from Alpha
+# Vantage's program for open-source and educational projects. Their terms allow personal,
+# non-commercial research use; only derived statistics are published, never prices.
+# Uncomment a block once that key is set. A stock that fails to load is skipped, never fatal.
+#
+# [[series]]
+# symbol = "DAL"   # Delta Air Lines
+# provider = "alphavantage"
+# id = "DAL"
+#
+# [[series]]
+# symbol = "CRWD"  # CrowdStrike
+# provider = "alphavantage"
+# id = "CRWD"
 
 [[events]]
 type = "fomc"

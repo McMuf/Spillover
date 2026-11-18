@@ -27,16 +27,20 @@ class DataSettings(_Strict):
 
 class SeriesSpec(_Strict):
     symbol: Annotated[str, Field(pattern=r"^[A-Za-z0-9._-]+$")]
-    provider: Literal["fred", "csv", "alias"]
-    id: str | None = None  # FRED series id
+    provider: Literal["fred", "csv", "alias", "alphavantage"]
+    id: str | None = None  # FRED series id, or the ticker for alphavantage
     path: Path | None = None  # CSV file you exported yourself
     of: str | None = None  # alias: copy another symbol's returns (for example MKT = SPX)
 
     @model_validator(mode="after")
     def _fields(self) -> Self:
-        need = {"fred": self.id, "csv": self.path, "alias": self.of}[self.provider]
+        need = {"fred": self.id, "alphavantage": self.id, "csv": self.path, "alias": self.of}[
+            self.provider
+        ]
         if need is None:
-            field = {"fred": "id", "csv": "path", "alias": "of"}[self.provider]
+            field = {"fred": "id", "alphavantage": "id", "csv": "path", "alias": "of"}[
+                self.provider
+            ]
             raise ValueError(f"provider '{self.provider}' needs '{field}'")
         return self
 

@@ -50,6 +50,56 @@ def fred_levels(series_id: str, api_key: str, start: date, fetch: Fetcher) -> Le
     return parse_fred(fetch(f"{FRED_URL}?{query}"), series_id)
 
 
+ALPHAVANTAGE_URL = "https://www.alphavantage.co/query"
+
+
+def parse_alphavantage(payload: str, symbol: str, start: date) -> Levels:
+    """Split- and dividend-adjusted daily closes from TIME_SERIES_DAILY_ADJUSTED.
+
+    Adjusted closes matter here: an unadjusted 2-for-1 split looks like a 50% one-day crash.
+    """
+    try:
+        body = json.loads(payload)
+    except ValueError:
+        raise PriceError(f"Alpha Vantage {symbol}: response is not JSON") from None
+    if not isinstance(body, dict):
+        raise PriceError(f"Alpha Vantage {symbol}: unexpected response")
+    for key in ("Error Message", "Note", "Information"):
+        if key in body:
+            # The provider's own words (an unknown symbol, a rate limit, a premium-only function).
+            said = str(body[key])[:300]
+            raise PriceError(f"Alpha Vantage {symbol}: {said}")
+    rows = body.get("Time Series (Daily)")
+    if not isinstance(rows, dict) or not rows:
+        raise PriceError(f"Alpha Vantage {symbol}: no daily series in the response")
+    out: Levels = {}
+    try:
+        for day, row in rows.items():
+            d = date.fromisoformat(day)
+            if d >= start:
+                out[d] = float(row["5. adjusted close"])
+    except (ValueError, KeyError, TypeError):
+        raise PriceError(
+            f"Alpha Vantage {symbol}: malformed row (expected adjusted closes)"
+        ) from None
+    if not out:
+        raise PriceError(f"Alpha Vantage {symbol}: no prices on or after {start}")
+    return dict(sorted(out.items()))
+
+
+def alphavantage_levels(symbol: str, api_key: str, start: date, fetch: Fetcher) -> Levels:
+    query = urllib.parse.urlencode(
+        {
+            "function": "TIME_SERIES_DAILY_ADJUSTED",
+            "symbol": symbol,
+            "outputsize": "full",
+            "datatype": "json",
+            "apikey": api_key,
+        }
+    )
+    return parse_alphavantage(fetch(f"{ALPHAVANTAGE_URL}?{query}"), symbol, start)
+
+
 FRED_RELEASE_DATES_URL = "https://api.stlouisfed.org/fred/release/dates"
 
 

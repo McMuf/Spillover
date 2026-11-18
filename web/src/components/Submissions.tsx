@@ -1,3 +1,4 @@
+import { PersonLink } from "./PersonLink";
 import type { ChallengeOut, ReplicationOut } from "../generated/site";
 import { intervalText, pct, dirText } from "../lib/format";
 
@@ -24,7 +25,7 @@ export function ChallengeList({ items }: { items: ChallengeOut[] }) {
               <span className="font-mono text-xs text-muted">{c.id}</span>
               <span className="text-xs font-semibold uppercase tracking-wide">Challenges {ASPECT[c.aspect]}</span>
               <span className="text-xs text-muted">
-                by {c.submitted_by} · {when(c.submitted_at)}
+                by <PersonLink handle={c.submitted_by} /> · {when(c.submitted_at)}
               </span>
             </header>
             <p className="whitespace-pre-wrap text-sm">{c.argument}</p>
@@ -61,7 +62,7 @@ export function ReplicationList({ items }: { items: ReplicationOut[] }) {
             <header className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span className="font-mono text-xs text-muted">{r.id}</span>
               <span className="text-xs text-muted">
-                by {r.submitted_by} · {when(r.submitted_at)}
+                by <PersonLink handle={r.submitted_by} /> · {when(r.submitted_at)}
               </span>
             </header>
             <p className="text-sm">{r.rationale}</p>

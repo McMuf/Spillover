@@ -10,6 +10,7 @@ import LabelPage from "./pages/Label";
 import Home from "./pages/Home";
 import Method from "./pages/Method";
 import NewsPage from "./pages/News";
+import PeoplePage from "./pages/People";
 import NotFound from "./pages/NotFound";
 import ScoreboardPage from "./pages/Scoreboard";
 
@@ -29,6 +30,8 @@ export default function App() {
               <Route path="claims/:id" element={<ClaimPage />} />
               <Route path="explore" element={<ExplorePage />} />
               <Route path="news" element={<NewsPage />} />
+              <Route path="people" element={<PeoplePage />} />
+              <Route path="people/:handle" element={<PeoplePage />} />
               <Route path="feed" element={<Navigate to="/news" replace />} />
               <Route path="label" element={<LabelPage />} />
               <Route path="events/:id" element={<EventPage />} />

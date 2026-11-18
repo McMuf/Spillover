@@ -1,3 +1,4 @@
+import { PersonLink } from "../components/PersonLink";
 import { Link } from "react-router-dom";
 import { CalibrationPlot } from "../components/CalibrationPlot";
 import { Identicon } from "../components/Identicon";
@@ -65,7 +66,9 @@ function Board({ site }: { site: SiteData }) {
               <li key={c.registered_by} className="border-t border-line py-4 first:border-t-0">
                 <div className="flex items-center gap-3">
                   <Identicon handle={c.registered_by} />
-                  <h3 className="text-lg font-bold">{c.registered_by}</h3>
+                  <h3 className="text-lg font-bold">
+                    <PersonLink handle={c.registered_by} className="hover:underline" />
+                  </h3>
                 </div>
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
                   {[

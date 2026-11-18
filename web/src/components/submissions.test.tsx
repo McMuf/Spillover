@@ -1,7 +1,12 @@
-import { render, screen, within } from "@testing-library/react";
+import { render as rtlRender, screen, within } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { ChallengeOut, ReplicationOut } from "../generated/site";
 import { ChallengeList, ReplicationList } from "./Submissions";
+
+// Names link to profile pages, so the lists render inside a router.
+const render = (ui: ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 const challenge: ChallengeOut = {
   id: "chl_demo_v1",
@@ -28,7 +33,8 @@ describe("ChallengeList", () => {
   it("shows the argument, who and when, and the evidence", () => {
     render(<ChallengeList items={[challenge]} />);
     expect(screen.getByText(/Challenges the baseline/)).toBeInTheDocument();
-    expect(screen.getByText(/by someone · 2026-01-05/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "someone" })).toHaveAttribute("href", "/people/someone");
+    expect(screen.getByText(/· 2026-01-05/)).toBeInTheDocument();
     expect(screen.getByText(/That inflates n/)).toBeInTheDocument();
     const link = screen.getByRole("link", { name: "https://example.org/analysis" });
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
@@ -38,7 +44,8 @@ describe("ChallengeList", () => {
   it("only turns https evidence into links", () => {
     const hostile: ChallengeOut = { ...challenge, evidence: [{ kind: "replication", ref: "javascript:alert(1)", note: "" }] };
     render(<ChallengeList items={[hostile]} />);
-    expect(screen.queryByRole("link")).toBeNull(); // a replication ref is shown as text, never as a link
+    // A replication ref is shown as text, never as a link (the only link is the author's profile).
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/people/someone"]);
   });
 
   it("says a challenge awaits registration until CI stamps it", () => {

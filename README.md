@@ -32,6 +32,7 @@
   <a href="#the-node-language">Node language</a> ·
   <a href="#screens-and-user-experience">Screens</a> ·
   <a href="#architecture">Architecture</a> ·
+  <a href="#community-planned">Community</a> ·
   <a href="#contributing">Contributing</a> ·
   <a href="#roadmap">Roadmap</a> ·
   <a href="#faq">FAQ</a>
@@ -40,7 +41,7 @@
 Spillover is a **market research tool for hobbyists, students and curious people**. It is not a trading bot, a signal service or a price predictor. It is a public notebook with a referee: you write down what you think a headline will do to a market, the system locks that statement in with a timestamp, and later the market decides whether you were right. Every claim ends up on a public scoreboard with its sample size, its uncertainty and its failures shown.
 
 > [!NOTE]
-> **Status: alpha, pre-launch.** The data model, scoring rules and screens in this document are the design the first milestone builds against. Anything marked *planned* is not shipped yet. Spillover is **research, not investment advice**, and nothing here is a recommendation to buy or sell anything.
+> **Status: alpha, live since November 16, 2026.** The engine, ledger, news feed and site run on real data; the first forward predictions are graded after their events in December 2026. Anything marked *planned* is not shipped yet. Spillover is **research, not investment advice**, and nothing here is a recommendation to buy or sell anything.
 
 <details>
 <summary><b>Table of contents</b></summary>
@@ -54,6 +55,7 @@ Spillover is a **market research tool for hobbyists, students and curious people
 - [Screens and user experience](#screens-and-user-experience)
 - [Scoring rules](#scoring-rules)
 - [Architecture](#architecture)
+- [Community (planned)](#community-planned)
 - [Tech stack and rationale](#tech-stack-and-rationale)
 - [Data, licensing and sources](#data-licensing-and-sources)
 - [Quick start](#quick-start)
@@ -72,24 +74,27 @@ Spillover is a **market research tool for hobbyists, students and curious people
 
 ## What it can do
 
-- **Register a claim in a YAML file.** A claim names a trigger (a type of headline), an instrument (a stock, ETF, index or perpetual future), a time window, an expected direction and a success rule. Opening a pull request is how you submit it.
+- **Register a claim with a guided form.** A claim names a trigger (a kind of event), an instrument (a stock, ETF, index or perpetual future), a time window, an expected direction and a success rule. The form walks you from a news story to a testable claim, warns when an idea is a one-off rather than a kind of event, and writes the YAML file; opening a pull request is how you submit it. *Live prices today cover US indexes, the dollar, the yen and oil; single stocks are built and wait for a data key, and perpetual futures are planned.*
 - **Backtest it before you commit.** The engine runs an *event study* over 3 to 5 years of history: it finds past events of that type, measures what the instrument did beyond what the broader market explains, and reports the result with an honest interval.
-- **Freeze live predictions.** When a new qualifying headline appears, the engine writes a prediction, hashes it, and commits it to an append-only ledger *before* the window closes. Bitcoin-anchored timestamps (OpenTimestamps) make the commit time hard to fake.
+- **Freeze live predictions.** When a new qualifying event appears (a scheduled release, an SEC filing or a labeled headline), the engine writes a prediction, hashes it, and commits it to an append-only ledger *before* the window closes. Bitcoin-anchored timestamps (OpenTimestamps) make the commit time hard to fake.
 - **Grade against reality.** After the window closes, the engine scores the call against the realized abnormal return and a naive baseline. Wins and misses are both published.
-- **Show the reasoning as a graph.** A fixed visual language of six node types, each with its own shape and tag, turns a claim into a readable map with no ambiguity about what any shape means.
+- **Show the reasoning as a chain.** Each claim reads left to right as who triggers it, what happens and which market should move, using a fixed visual language of six node types; a news-by-market map shows every claim at once and which pairs nobody has tested.
+- **Follow the news.** A News tab with the latest market headlines from outlets worldwide (display only) and the events on record. Each story opens to what happened, what past events like it did to markets, who is involved and the measured data, and offers to start a claim when nobody has tested that kind of event.
+- **Measure its own labeler.** People label a sample of headlines by hand on the site; the labeler's accuracy against them is published, tied to the exact labeler version and labels.
+- **Correct mistakes in the open.** The event record is append-only. A wrong event is withdrawn by a reviewed line in `labels/retracted.txt` with its reason; the original stays visible.
 - **Challenge and replicate.** Anyone can open a challenge against a claim or replicate it with different data. Challenges and replications are first-class, reviewed contributions.
 - **Publish a calibration scoreboard.** Per claim and per contributor: hit rate, effect size, sample size, intervals, and a calibration plot. The scoreboard is generated, never hand-edited.
-- **Run entirely on free infrastructure.** A static site on GitHub Pages, a scheduled GitHub Action for the engine, and Git as the database.
+- **Run entirely on free infrastructure.** A static site on GitHub Pages, a scheduled GitHub Action for the engine, and Git as the database. The planned [community layer](#community-planned) keeps this for everything that is graded; only its social features would need a hosted database.
 
 ## Included
 
 - **[Claim files](claims/):** One YAML file per claim, validated by a JSON Schema generated from the Python models. The template lives at `claims/_template.yaml`.
-- **[Event extractor](#4-event-extractor):** Turns a raw headline into a typed event (what happened, to whom, when) using an LLM with strict structured output, a cache and a hand-labeled gold set.
+- **[Event extractor](#4-event-extractor):** Turns a raw headline into a typed event (what happened, to whom, when). A free rule-based labeler is the default and Claude is optional; both write the same validated answers, and a hand-labeled gold set measures them. SEC filings need no labeler: the filing's item number fixes the event type.
 - **[Event-study engine](#5-event-study-engine):** Market model, abnormal returns, cumulative abnormal returns, bootstrap intervals and false-discovery-rate correction.
 - **[Prediction ledger](#6-prediction-ledger-and-timestamps):** Append-only, hashed, timestamped records of every forward call.
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
 - **[Claim chains and the news map](#8-claim-chains-and-the-news-map):** each claim drawn as a readable chain (who → what happens → which market), and a news-by-market map of every claim.
-- **[Web app](#9-web-app):** A calm, finance-app-style interface with dark and light themes, built in TypeScript.
+- **[Web app](#9-web-app):** A calm, finance-app-style interface with one dark theme, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
 - **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
 
@@ -120,6 +125,12 @@ It also treats a third problem as a first-class feature: **most market moves are
 | Quantopian (shut down in 2020) | Community backtesting platform | Spillover emphasizes pre-registration and forward grading over backtest optimization |
 | Open-source replication projects in academic finance (e.g. Chen and Zimmermann) | Reproduce published return predictors | Closest in spirit; Spillover is aimed at news-driven claims and hobbyist contribution |
 | OpenBB | Open-source terminal for market data | A data and research terminal; Spillover is a ledger of falsifiable claims |
+| [Metaculus](https://www.metaculus.com/) | No-money forecasting with reputation, public track records and community forecasts on moderated questions | The closest neighbor to the planned community layer. Its questions are one-off ("will X happen by a date?") and resolved by a person; Spillover tests repeatable "when X happens, Y moves" patterns, graded automatically by market data against a baseline |
+| [Manifold](https://manifold.markets/) | Play-money markets that anyone can create | Each market's creator resolves it, so quality varies widely; nothing is measured statistically |
+| [Good Judgment Open](https://www.gjopen.com/) | Curated forecasting questions with precise criteria written in advance | Mostly geopolitical, one-off questions with scored forecasters; no market-data grading |
+| Estimize | Crowdsourced earnings estimates with accuracy rankings | Crowd estimates of reported numbers, not claims about how news moves markets |
+| Reddit, Stocktwits, Seeking Alpha, Blossom | Communities that discuss markets and show members' activity or portfolios | Claims are never frozen in advance or graded, so hindsight settles every argument; Spillover's planned social layer sits around a record that discussion cannot change |
+| Prediction markets (Polymarket, Kalshi) | Live prices on whether one event happens | Real-money bets on single outcomes; Spillover has no money, no bets and no trade signals |
 
 > [!IMPORTANT]
 > The claim here is **not** "nobody has combined these ideas." The claim is narrower and checkable: as of this writing, no project found combines (a) typed, falsifiable news-to-market claims, (b) public pre-registration with anchored timestamps, (c) forward grading against a naive baseline, and (d) a standard fork-and-pull-request contribution flow for hobbyists. If you know of one, please [open an issue](https://github.com/McMuf/Spillover/issues) so it can be credited here.
@@ -154,7 +165,7 @@ stateDiagram-v2
 
 1. **Draft.** You copy `claims/_template.yaml`, fill it in and run `make test-claim CLAIM=claims/your_claim.yaml`. The engine reports whether enough historical events exist to say anything at all.
 2. **Proposed.** After review (for clarity and testability only, never for whether the idea is "good") the claim is merged. CI stamps `registered_at`. From this moment, forward events count.
-3. **Forward log.** Each qualifying live headline creates a frozen prediction. Predictions are hashed and committed before the window closes.
+3. **Forward log.** Each qualifying live event (a scheduled release, an SEC filing or a labeled headline) creates a frozen prediction. Predictions are hashed and committed before the window closes.
 4. **Verdict.** Once the claim has enough forward events (set in the claim itself, with a floor in the rules file), it moves to **Supported**, **Not supported** or stays **Inconclusive**. Verdicts are never deleted.
 5. **Versioning.** Changing a claim's trigger, instrument, window or success rule creates `_v2`. The forward counter resets to zero. Old versions stay visible so nobody can quietly edit their way to a win.
 
@@ -232,60 +243,49 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 4. **Direction, not judgment.** Green and red say which way a number moved; whether a claim was right is said in words (Supported, Not supported, Inconclusive) and only after the window closes.
 5. **Mobile first.** Most hobbyists will check this on a phone. Desktop gets a side sheet; mobile gets a bottom sheet.
 6. **Accessible by default.** WCAG AA contrast, keyboard-reachable graph, text alternatives for every chart (a table view is always one tab away).
-7. **No dark patterns.** No streaks, no "hot claims," no red-dot urgency. This is a research tool.
+7. **No dark patterns.** No streaks, no red-dot urgency, no engagement bait. "Trending" ranks claims by evidence activity (a new event just tested it, new results arrived) before popularity, and the planned community layer weighs people's signals by their track record. This is a research tool.
 
-### Screen 1: Claims map (home)
+### Screen 1: Home (trending claims)
 
-```text
-┌──────────────────────────────────────────────┐
-│ Spillover                  [Search claims…]  │
-│ Claims · Events · Scoreboard · Submit        │
-├──────────────────────────────────────────────┤
-│ Filters: All ▾  Status ▾  Instrument ▾  Venue▾│
-│                                              │
-│ ┌──────────────────────────────────────────┐ │
-│ │ SUPPORTED   clm_semis_korea_us_v1        │ │
-│ │ Large Korean memory-chip moves lead US   │ │
-│ │ ADRs and Micron next session             │ │
-│ │ Evidence ▓▓▓▓▓▓▓░░░  14 of 20 events     │ │
-│ │ ◆ MU · Nasdaq   ◆ Memory ADR basket            │ │
-│ └──────────────────────────────────────────┘ │
-│ ┌──────────────────────────────────────────┐ │
-│ │ INCONCLUSIVE  clm_bigtech_fcf_mags_v1    │ │
-│ │ …                                        │ │
-│ └──────────────────────────────────────────┘ │
-│ [ Show as graph ]                            │
-└──────────────────────────────────────────────┘
-```
-
-- **Cards** are the default view (fast, accessible, mobile-friendly). The **graph** is one toggle away.
+- **Trending claims** at the top: each card leads with a plain-language headline, the market it is about (with the company or index logo), a status badge and the evidence meter.
+- **Recent events** below, and a short "how it works" explanation at the bottom for first-time visitors.
+- **Explore** (`#/explore`) lists every claim with filters, and its **Map** tab is the news-by-market table: rows are kinds of news, columns are markets, and an empty cell is a pair nobody has tested.
 - **Evidence meter** shows forward events collected versus required, so "Inconclusive" reads as "not enough data yet," not "failed."
-- **Instrument chips** always include the venue.
 
 ### Screen 2: Claim page (tabs)
 
-Tabs: **Overview · Evidence · Forward log · Challenge**
+Tabs: **Situation overview · Markets · Opposite sides · Evidence · Forward log**
 
 | Tab | Shows | Why it exists |
 |---|---|---|
-| **Overview** | Statement in plain English, status badge, effect size with interval, the mini graph, the YAML in a collapsible block | A non-expert can understand the claim in ten seconds |
+| **Situation overview** | Statement in plain English, status badge, what the past data says (with its interval), the claim chain, the YAML in a collapsible block | A non-expert can understand the claim in ten seconds |
+| **Markets** | The market the claim is about and the factor it is measured against | Says exactly what is being compared with what |
+| **Opposite sides** | Challenges and replications, and how to start one | Makes disagreement a structured activity |
 | **Evidence** | Event-window chart (price indexed to 100, event line, shaded windows), distribution of abnormal returns, table of every historical event, placebo comparison | Lets a skeptic audit the claim |
 | **Forward log** | Every frozen prediction with its hash, timestamp, status (open, closed, graded) and outcome | The pre-registration proof |
-| **Challenge** | Open challenges, replications, and a button to start one | Makes disagreement a structured activity |
 
 A claim detail page on mobile keeps a **sticky footer** with the two most useful actions: *Challenge* and *Copy citation*. (Spillover has no trade buttons; nothing on the site executes a trade.)
 
-### Screen 3: Event page
+### Screen 3: News and story pages
 
-One event: the headline, source links (title and URL only), the extracted structure (event type, entities, timestamp), the extractor's confidence, a **Needs review** label if confidence is low, and every claim that fired on it with its frozen prediction and, later, its outcome.
+**News** (`#/news`) has two views. **Latest headlines** shows current market news from outlets worldwide, via the [GDELT Project](https://www.gdeltproject.org/), refreshed whenever the site rebuilds; a headline that matches a kind of event claims can be tested on is tagged *Testable*. These headlines are shown only and never enter the record. **On the record** lists the events claims are tested on (scheduled releases, SEC filings, labeled headlines), with the next scheduled events under *Coming up*.
 
-Why: events are shared inputs. One earnings headline can trigger several claims, and readers should see them side by side.
+Each event opens as a **story** with four tabs:
+
+| Tab | Shows |
+|---|---|
+| **About** | What happened, how it entered the record and how far to trust that, and links to the sources (titles and links only, never article text) |
+| **Market implications** | What past events of this kind did to markets, from every registered claim about them; if there is none, a button to write one with the event type already chosen |
+| **Stakeholders** | The company or institution involved and the markets claims are watching |
+| **Data** | This event's measured move, its frozen prediction and timestamp proof, and earlier events of the same kind |
+
+Why: events are shared inputs. One filing can trigger several claims, and readers should see them side by side.
 
 ### Screen 4: Submit a claim
 
-A guided form that generates the YAML and validates it live against the engine's own JSON Schema. A **feasibility check** (how many historical events match, how many are independent with overlapping windows removed, and whether the claim is testable at all) needs the engine, which does not run in the browser: *today the form tells you to run `make test-claim` locally; an in-browser check is planned.*
+A guided form that starts with **From a news story to a claim** (start from the news; name the kind of event, not the one story; say what moves, which way and how fast; say what would prove you wrong), then generates the YAML and validates it live against the engine's own JSON Schema. As you type it flags statements about one specific day, shows how many past events of the chosen type are in the data, warns when the market you name has no prices yet, and reads the claim back as one plain sentence. A **feasibility check** (how many historical events match, how many are independent with overlapping windows removed, and whether the claim is testable at all) needs the engine, which does not run in the browser: *today the form tells you to run `make test-claim` locally; an in-browser check is planned.*
 
-Fields: statement (plain English), event type (dropdown from the taxonomy), instrument (searchable, venue required), window (presets plus custom), expected sign, success rule (presets), and a "what would prove me wrong?" line that is mandatory.
+Fields: statement (plain English), event type (grouped by where its events come from, with past-event counts), instrument (venue required), window (presets plus custom), expected sign, success rule (presets), and a "what would prove me wrong?" line that is mandatory.
 
 The form ends with *Open pull request*, which pre-fills a branch name and a PR body containing the checklist.
 
@@ -297,6 +297,9 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 
 ### Also built
 
+- **People** (`#/people`): a profile for everyone with a claim, challenge or replication on the record, with their track record once claims are graded. Author names across the site link to it.
+- **Discussion** on claim and story pages (giscus, GitHub Discussions): loads nothing from giscus.app until someone opens it, and never changes a result.
+- **Label page** (`#/label`): people label recent headlines blind (the labeler's own answer is hidden), download the file, and add it to `labels/gold.jsonl`; the page then shows the labeler's measured accuracy.
 - **Method page** (`#/method`): the steps behind every number, what each status means, what the method cannot tell you, a glossary, and a reading list of standard references. A test fails if its constants (estimation window, gap, bootstrap size) drift from the engine's.
 - **Embed widget:** every claim page has an "Embed this claim" box with a one-line `<iframe>` snippet. It shows a read-only card (status, evidence meter, backtest label, the not-advice line) with no site chrome, and links back. Checked in a browser by framing it on a separate page.
 
@@ -447,12 +450,12 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 - **Rules (free, the live default).** Phrase rules decide *what* happened, one per event type; a committed snapshot of NYSE and Nasdaq company names and tickers from [Wikidata](https://www.wikidata.org/) (CC0, `labels/companies.json`, refreshed on purpose with `spillover company-names`) decides *who*. Everyday words that are also company names ("Target", "Block") count only next to a corporate suffix or an exchange ticker, and for a regulatory action only the company the action is *against* counts, not one merely mentioned. When the event is clear but the company is not a listed one, the label is low confidence and goes to human review instead of guessing. Deterministic, so the same headline always gets the same label.
 - **Claude (paid, optional).** More capable, especially at naming companies; needs `ANTHROPIC_API_KEY` and account credit. Set `engine = "claude"` in the `[extractor]` settings.
 
-The 50-headline gold set is **not labeled yet**, so neither labeler has a published accuracy number; until it does, treat extracted events as unmeasured. Each label records which labeler and version produced it.
+The first hand-labeled gold set (45 regulator press releases, labeled November 17, 2026) gives the rules labeler **82% type accuracy**; every miss was it seeing a regulatory action where the person saw none. Those headlines were mostly routine notices, so the set checks that the labeler does not invent events more than that it finds them; general news from the News tab is now offered for labeling to measure that. The current number is on the label page. Each label records which labeler and version produced it.
 
 **How.**
-- `spillover ingest-headlines` reads the official feeds in `data/sources.toml` (titles, links, ids and publication times only), skips anything already stored, and sends each new headline to Claude (`claude-haiku-5-5` by default, low effort) with a strict structured-output schema whose event type is an enum of the taxonomy in `engine/spillover/taxonomy.py`. The answer is validated again by Pydantic and rejected if it does not parse. A per-run cost cap (`max_new_per_run`) bounds spend.
+- `spillover ingest-headlines` reads the official feeds in `data/sources.toml` (titles, links, ids and publication times only), skips anything already stored, and sends each new headline to the configured labeler: the free rules by default, or Claude (`claude-haiku-5-5`, low effort) with a strict structured-output schema whose event type is an enum of the taxonomy in `engine/spillover/taxonomy.py`. The answer is validated again by Pydantic and rejected if it does not parse. A per-run cost cap (`max_new_per_run`) bounds spend.
 - Responses are **cached by content hash** (extractor version, source, title) under `events/extractions/` and committed, so CI is deterministic and fork CI never calls an API. A prompt change changes the version, so old answers are never silently reused. Accepted events are appended to `events/YYYY-MM.jsonl`, which is append-only; the same story from several sources becomes one event when the cache is built.
-- A **50-headline hand-labeled gold set** (`labels/gold.jsonl`, labeled by people) measures accuracy with `spillover eval-extractor`; `spillover gold-template` writes unlabeled candidates to label. The report is tied to a hash of the labels and to the extractor version.
+- A **hand-labeled gold set** (`labels/gold.jsonl`, labeled by people on the site's label page) measures accuracy with `spillover eval-extractor`; `spillover gold-template` writes unlabeled candidates to label. The report is tied to a hash of the labels and to the extractor version.
 - Low-confidence results get a **Needs review** label and are excluded from scoring until a person lists their `event_key` in `labels/confirmed.txt`. Headlines are untrusted text: the schema bounds what a hostile one can make the model output, but a feed you do not trust is still a risk, which is why only official feeds are listed.
 - The **extractor version is frozen inside every prediction**, so improving the extractor never rewrites history.
 
@@ -532,7 +535,7 @@ The 50-headline gold set is **not labeled yet**, so neither labeler has a publis
 - *Tailwind with tokens:* fast to iterate and consistent; one dark theme, defined once in `design/tokens.ts`.
 - *Radix primitives:* accessibility (focus management, keyboard behavior, ARIA) is easy to get wrong and expensive to retrofit.
 - *Lightweight Charts:* small, fast, finance-native and Apache-2.0 licensed. Its license requires a **visible attribution link**, which the footer includes.
-- *No client-side secrets and no backend:* nothing to leak, nothing to scale.
+- *No client-side secrets and no backend:* nothing to leak, nothing to scale. The planned [community layer](#community-planned) changes this only for social features, never for the record.
 - *Testing:* Vitest for components and logic, plus Playwright browser tests: a smoke test that loads the built site, opens a claim and reads its chain, and an axe-core audit of every page for WCAG A/AA violations. Automated audits catch only part of what a person would, so manual review still matters. More tests are welcome.
 
 ### 10. Automation
@@ -544,14 +547,59 @@ The 50-headline gold set is **not labeled yet**, so neither labeler has a publis
 | `check.yml` | `pull_request`, push to `main` | read-only, no secrets | Lint, type-check, test, schema-validate, verify the ledger, and block PRs that edit registered claims or hand-edit generated outputs |
 | `register.yml` | push to `main` adding a claim, challenge or replication | write to `main`; checks out only trusted code | Stamp `registered_at` / `submitted_at` on **only the files that push added** (never every draft on `main`, because registration freezes a claim). Templates are excluded |
 | `comment.yml` | `workflow_run` after `check.yml` | can comment; **never runs fork code** | Reads the PR's changed files through the GitHub API as plain text, validates them with trusted code from `main`, and posts or updates one comment. Everything taken from the PR is shown inertly (code spans, length-limited) and the bot only edits its own comment |
-| `ingest.yml` | schedule on `main` | secrets for data keys; write to `main` | Build the price cache, draw placebo dates, freeze predictions, and (only if `EXTRACT_HEADLINES` is set) fetch headlines and extract events. **Off by default** (repository variable `INGEST_ENABLED`) |
+| `ingest.yml` | schedule on `main` | secrets for data keys; write to `main` | Build the price cache, draw placebo dates, add company events from SEC 8-K filings (with the `SEC_CONTACT` secret), freeze predictions, and (only if `EXTRACT_HEADLINES` is set) fetch headlines and extract events. **Off by default** (repository variable `INGEST_ENABLED`) |
 | `score.yml` | schedule on `main` | `FRED_API_KEY` secret; write to `main` | Grade closed windows against real prices, rebuild scoreboard data. Same off-by-default switch |
-| `site.yml` | push to `main`, weekdays after scoring | Pages deploy; the FRED key in one step that runs before any npm package | Build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
+| `site.yml` | push to `main`, after every ingest run, weekdays after scoring | Pages deploy; the data keys in one step that runs before any npm package | Fetch the latest GDELT headlines for the News tab (display only; the previous build's are reused if GDELT refuses), then build and deploy the static site. With `INGEST_ENABLED` on it shows **real results** (backtests on FRED data, the live ledger); otherwise the synthetic demo, labeled as such |
 | `stamp.yml` | schedule on `main` | write to `main` | Verify ledger hashes, submit new predictions to OpenTimestamps, upgrade confirmed proofs |
 
 `check.yml` (engine and web jobs), `comment.yml`, `register.yml`, `stamp.yml`, `site.yml`, `ingest.yml` and `score.yml` all exist. `ingest.yml` and `score.yml` stay off until the `FRED_API_KEY` secret exists and the repository variable `INGEST_ENABLED` is `true`; that part costs nothing. On this repository both are set: ingestion has been running live since November 16, 2026. Headline labeling has its own switch, the variable `EXTRACT_HEADLINES` (`true` to run it). With the default rule-based labeler it is free; switching the labeler to Claude (`engine = "claude"`) costs roughly a cent per hundred headlines with Haiku and needs `ANTHROPIC_API_KEY` plus account credit. Calendar and placebo claims never need it. Company events from SEC 8-K filings need only the secret `SEC_CONTACT` (a contact email, which SEC requires of automated tools); without it that step does nothing. `comment.yml` is covered by tests against a fake GitHub, but has not yet run on a real pull request. `site.yml` deploys only after you switch Settings > Pages > Source to "GitHub Actions".
 
 **Why this design.** See [CI and fork security](#ci-and-fork-security).
+
+## Community (planned)
+
+The goal is a place where anyone, at any experience level, can bring something they saw in the news, shape it into a testable claim with other people, and watch the market grade it. Friendly to join, formal where it counts. It borrows from discussion forums (threads, upvotes, topic spaces), from forecasting sites (a live number that updates as evidence arrives) and from social investing apps (profiles and public track records), but it is none of them.
+
+### Two layers, and the line between them
+
+| | The record | The community layer |
+|---|---|---|
+| **Holds** | Claims, frozen predictions, events, outcomes, scoreboard | Questions, discussion, upvotes, backing and doubting, follows, profiles |
+| **Tone** | Formal: the claim form is the only way in | Casual: anyone can ask a half-formed question |
+| **Stored in** | Git, timestamped and append-only (as now) | GitHub Discussions first; a hosted database later |
+| **Can change a grade?** | It *is* the grade | **Never.** Votes, comments and popularity cannot touch a result |
+
+Two boundaries are deliberate and stay in place:
+
+1. **Git stays the database for everything that is graded.** If the social layer needs a hosted database, that is the only part that does, and this README will say so when it happens.
+2. **No money, no bets, no trade signals.** Backing or doubting a claim stakes reputation only. The share of backers is a crowd forecast that is itself graded, to measure how well-calibrated forecasters are, and it is labeled as research, never as a signal.
+
+### How someone would use it
+
+1. **See something** in Spillover's News tab or anywhere else.
+2. **Ask.** Post a question or observation ("Airlines fell after the outage. Does that always happen?"). No form, low bar.
+3. **Shape.** Others reply; the guided claim form turns the best idea into a testable claim, and anyone can suggest a draft.
+4. **Register.** The claim is frozen, timestamped and enters the record, exactly as today.
+5. **Watch it live.** Events counted, the current estimate and its uncertainty, progress to a verdict, and when the next event is due.
+6. **Earn a track record.** Verdicts, forecasts and challenges build a public profile that others can follow.
+
+### Identity, anonymity and spam
+
+- **Reading and drafting need no account; posting does.** Fully anonymous posting invites flooding.
+- **Anonymous means a pseudonym, not no account.** People can post as a pseudonym; the account behind it still has rate limits and can be banned, its track record still accrues, and it can reveal its name later. Today the record stores the registrant's GitHub handle; pseudonymous claims would store a private ID instead, and timestamp proofs work either way.
+- **Spam defenses, cheapest first:** the claim form itself (a kind of event, a market and a falsifier are required), duplicate detection ("this claim exists; back it instead"), rate limits for new accounts, a "New" queue that reaches the main feed after automatic checks and one or two reviewers, and reporting with moderators.
+
+### Trending without easy-to-game votes
+
+Ranking leans on signals that are hard to fake: a real event just tested the claim, new evidence or a verdict arrived, backing and doubting from established accounts weighted by their track record, discussion and replications, all fading with time. A **Most contested** view shows claims where backers and doubters are close to evenly split.
+
+### Phases
+
+| Phase | What | Needs |
+|---|---|---|
+| **1** *(built)* | Discussion threads on every claim and story (via [giscus](https://giscus.app/), backed by GitHub Discussions, with reactions as upvotes) and public profile pages built from the record (`#/people`) | No database; a GitHub account to post. Threads appear once a maintainer enables Discussions and sets the category id in `web/src/lib/community.ts` |
+| **2** | Questions, backing and doubting, follows, pseudonymous accounts, sign-in without GitHub, submitting claims from the site (a bot opens the pull request) | A hosted database and auth (for example Supabase), a privacy policy, data deletion and moderation |
+| **3** | Reputation, topic spaces, moderation tools | Phase 2 in use |
 
 ## Tech stack and rationale
 
@@ -766,14 +814,16 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | **M1: Engine on fixtures** *(done; also runs on real data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** *(live: forward predictions frozen since November 16, 2026; timestamp proofs are requested as they are frozen)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
-| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot and guide are built. 7 claims are registered (5 tests plus 2 placebo versions); headline-based claims wait for headline labeling, and seed claim 2 for a stock price source.* |
+| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot, guide, the guided claim form, the News tab and the label page are built. 7 claims are registered (5 tests plus 2 placebo versions). Company claims wait for single-stock prices (the Alpha Vantage connection is built; it needs a key from their open-source program).* |
+| **M5: Community, phase 1** *(built; threads switch on with GitHub Discussions)* | People discuss claims and see each other's records | Discussion threads on claims and stories, and profile pages; see [Community](#community-planned) |
+| **M6: Community, phases 2 and 3** *(planned)* | Questions, backing, follows, pseudonyms, reputation | A hosted social layer that never changes a grade |
 
 ### Seed claims
 
 | # | Claim | Role | Notes |
 |---|---|---|---|
 | 1 | Hyperscaler capex raise leads a supplier basket higher over day 0 to +5 | Core | Rough event count, to be verified. The engine supports the basket; events come from headlines, so this waits on live ingestion |
-| 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag. The engine supports it: events come from price moves (`LARGE_MOVE_UP` / `LARGE_MOVE_DOWN`, beyond 3 standard deviations of the previous 60 days, fixed in the taxonomy) and each market keeps its own holidays. Needs a price source for SK Hynix and the US names whose terms you have checked |
+| 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag. The engine supports it: events come from price moves (`LARGE_MOVE_UP` / `LARGE_MOVE_DOWN`, beyond 3 standard deviations of the previous 60 days, fixed in the taxonomy) and each market keeps its own holidays. Needs a price source for SK Hynix (Korea Exchange) and the US names (Alpha Vantage, pending its key) |
 | 3 | Mag-7 negative free-cash-flow headline hits MAGS beyond the company's weight | Thin | Few events; tests the weight decomposition |
 | 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
 | 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified. The engine supports the two-factor baseline; needs crypto prices and an unlock calendar |
@@ -794,6 +844,7 @@ Build order: claims **4** and **6** first, because they have plenty of events an
 
 ### Later
 
+- A one-off **Event check**: whether a market moved unusually after a single event, with no verdict and kept off the scoreboard (needs single-stock prices).
 - "What if" mode with liquidation-distance education.
 - Cross-venue claims (equity versus perpetual) including closed-market behavior.
 - Optional read-only MCP server.
@@ -811,6 +862,7 @@ Build order: claims **4** and **6** first, because they have plenty of events an
 | **No contributors** | An empty commons looks dead | Seed ~20 starter claims including replications; pitch university clubs; weekly triage |
 | **Maintainer burnout** | One person cannot review everything | Weekly triage hour; recruit a co-maintainer; clear lanes; automation does the mechanical review |
 | **Misuse as trading advice** | Readers may treat a hobby result as a signal | "Research, not advice" on every page; every backtest number is labeled as a backtest; no trade buttons |
+| **Spam and brigading** *(community layer)* | Flooding or coordinated voting could bury good claims | Posting needs an account; rate limits; a reviewed "New" queue; duplicate detection; trending weighted by track record, not raw votes; grades never depend on votes |
 | **Pump-and-dump abuse** | A claim about a tiny asset could be used to promote it | Liquidity and market-cap floors for instruments; moderation rule |
 | **Timestamp disputes** | Git times can be rewritten | OpenTimestamps proofs |
 | **Stack indicative only** | Hiring signals change | Choices are justified by project needs, not by trend |
@@ -825,6 +877,9 @@ Build order: claims **4** and **6** first, because they have plenty of events an
 
 **Is this a trading bot or signal service?**
 No. It never places trades and publishes no recommendations.
+
+**Do I need an account?**
+Not to read anything, draft a claim or label headlines. Submitting a claim today means opening a pull request, which needs a GitHub account. The planned [community layer](#community-planned) would let people post under a pseudonym.
 
 **Is this just manual data labeling?**
 Partly, by design. The *claims* are human-written because the interesting part is the hypothesis. The *extraction* of events from headlines is automated and measured. The *grading* is fully automatic. The human contribution is the idea; the machine's contribution is the unbiased referee.

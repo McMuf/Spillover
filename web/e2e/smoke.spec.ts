@@ -163,3 +163,14 @@ test("latest headlines link out safely, tag testable ones, and switch to the rec
   await page.getByRole("button", { name: /On the record/ }).click();
   await expect(page.getByText(/Events in the record/)).toBeVisible();
 });
+
+test("a claim's author links to a profile with their claims and track record", async ({ page }) => {
+  await page.goto("/#/claims/clm_fomc_abs_move_spx_v1");
+  await page.getByRole("link", { name: "McMuf" }).first().click();
+  await expect(page).toHaveURL(/#\/people\/McMuf$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("McMuf");
+  await expect(page.getByRole("heading", { name: "Track record" })).toBeVisible();
+  await expect(page.getByText("No verdicts yet.", { exact: false })).toBeVisible();
+  await page.goto("/#/people/no-such-person");
+  await expect(page.getByText(/has anything on the record/)).toBeVisible();
+});

@@ -1,3 +1,6 @@
+import { Discussion } from "../components/Discussion";
+import { PersonLink } from "../components/PersonLink";
+import { discussionTerm } from "../lib/community";
 import * as Tabs from "@radix-ui/react-tabs";
 import { lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -66,7 +69,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
         <blockquote className="border-l-2 border-line pl-4 text-[15px] leading-relaxed">{clean(c.statement)}</blockquote>
         <p className="mt-2 text-xs text-muted">
           <span className="font-mono">{c.id}</span>
-          {" · "}by {c.registered_by}
+          {" · "}by <PersonLink handle={c.registered_by} />
           {c.registered_at !== "set_by_ci_on_merge" ? ` · frozen ${c.registered_at.slice(0, 10)}` : " · not registered yet"}
         </p>
 
@@ -492,6 +495,9 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
           <Tabs.Content value="sides"><Sides item={item} site={site} /></Tabs.Content>
           <Tabs.Content value="evidence"><Evidence item={item} site={site} /></Tabs.Content>
           <Tabs.Content value="forward"><ForwardLogTable rows={item.forward_log} /></Tabs.Content>
+          <div className="mt-8">
+            <Discussion term={discussionTerm("claim", item.claim.id)} label="claim" />
+          </div>
         </Tabs.Root>
 
         {/* Where a market page has its order ticket: the evidence so far and the citation. Nothing to buy. */}

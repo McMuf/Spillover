@@ -1,7 +1,9 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Discussion } from "../components/Discussion";
 import { Logo } from "../components/Logo";
+import { discussionTerm } from "../lib/community";
 import { Ready } from "../components/Ready";
 import { BackButton, Card, TAB_CLASS, Tag, TickerChip } from "../components/ui";
 import type { SiteData } from "../generated/site";
@@ -250,6 +252,7 @@ function StoryPage({ story, site }: { story: Story; site: SiteData }) {
         <Tabs.Content value="stakeholders"><Stakeholders story={story} site={site} /></Tabs.Content>
         <Tabs.Content value="data"><Data story={story} site={site} /></Tabs.Content>
       </Tabs.Root>
+      <Discussion term={discussionTerm("event", story.event_id)} label="story" />
     </div>
   );
 }

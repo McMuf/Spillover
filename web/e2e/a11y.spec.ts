@@ -14,6 +14,8 @@ const PAGES = [
   ["method", "/#/method"],
   ["embed card", "/#/embed/claims/clm_fomc_abs_move_spx_v1"],
   ["submit", "/#/submit"],
+  ["people", "/#/people"],
+  ["person", "/#/people/McMuf"],
 ] as const;
 
 {

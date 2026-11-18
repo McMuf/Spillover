@@ -57,7 +57,11 @@ jobs:
 
       - name: Commit outcomes and scoreboard
         run: |
-          git add outcomes scoreboard replications/results
+          # Only paths that exist: git stops with a fatal error on a path that matches nothing
+          # (replications/results appears only after the first replication runs).
+          for p in outcomes scoreboard replications/results; do
+            if [ -e "$p" ]; then git add "$p"; fi
+          done
           if git diff --cached --quiet; then
             echo "nothing new"
             exit 0

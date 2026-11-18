@@ -201,3 +201,23 @@ def test_a_secret_holding_workflow_is_only_chained_after_workflows_no_pull_reque
             assert not (by_name[upstream]["_triggers"] & {"pull_request", "pull_request_target"}), (
                 f"{path.name} holds secrets and runs after {upstream}, which a pull request can start"
             )
+
+
+def test_a_commit_step_never_adds_a_path_that_may_not_exist() -> None:
+    """`git add missing/path` is a fatal error (exit 128) that silently discards a run's results.
+
+    Every plain `git add` must name paths that are in the repository; anything that appears only
+    later is added inside an existence check.
+    """
+    root = Path(__file__).resolve().parents[2]
+    for path in sorted((root / ".github" / "workflows").glob("*.yml")):
+        for line in path.read_text().splitlines():
+            cmd = line.strip()
+            if not cmd.startswith("git add ") or "$" in cmd:
+                continue
+            for target in cmd.split()[2:]:
+                if target.startswith("-"):
+                    continue
+                assert (root / target).exists(), (
+                    f"{path.name}: `{cmd}` adds {target}, which may not exist"
+                )

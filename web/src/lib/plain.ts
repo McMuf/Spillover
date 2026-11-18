@@ -22,7 +22,6 @@ const CATEGORY: Record<string, string> = {
   CYBER_INCIDENT: "Filings",
   BANKRUPTCY: "Filings",
   RESTATEMENT: "Filings",
-  DELISTING_NOTICE: "Filings",
   RANDOM_DATE: "Control test",
 };
 
@@ -50,7 +49,6 @@ const EVENT_LABEL: Record<string, string> = {
   CYBER_INCIDENT: "a company reports a serious cyberattack to the SEC",
   BANKRUPTCY: "a company files for bankruptcy",
   RESTATEMENT: "a company says its past financial statements can't be relied on",
-  DELISTING_NOTICE: "a company is warned it may be delisted",
 };
 
 export function eventLabel(eventType: string): string {
@@ -78,7 +76,6 @@ const EVENT_SHORT: Record<string, string> = {
   CYBER_INCIDENT: "reported cyberattacks",
   BANKRUPTCY: "bankruptcies",
   RESTATEMENT: "restated accounts",
-  DELISTING_NOTICE: "delisting warnings",
 };
 
 /** How a symbol reads mid-sentence. Indices and funds take "the". */

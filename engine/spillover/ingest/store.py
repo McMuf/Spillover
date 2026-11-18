@@ -15,9 +15,11 @@ import polars as pl
 from spillover.eventstore import (
     CONFIRMED_FILE,
     EVENTS_DIR,
+    RETRACTED_FILE,
     events_frame,
     load_records,
     read_confirmed,
+    read_retracted,
 )
 from spillover.ingest.config import Config, EventsSpec, SeriesSpec
 from spillover.ingest.fomc import FOMC_URL, fetch_fomc
@@ -304,7 +306,10 @@ def build_events(
         elif spec.type == "store":
             root = spec.path or EVENTS_DIR
             built = events_frame(
-                load_records(root), read_confirmed(spec.confirmed or CONFIRMED_FILE), EVENT_SCHEMA
+                load_records(root),
+                read_confirmed(spec.confirmed or CONFIRMED_FILE),
+                EVENT_SCHEMA,
+                frozenset(read_retracted(RETRACTED_FILE)),
             )
             if built.n_needs_review:
                 skipped.append(

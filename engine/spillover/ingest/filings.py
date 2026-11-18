@@ -6,12 +6,13 @@ type, with no reading of text and so nothing to label or review:
 
     1.03  Bankruptcy or Receivership                         -> BANKRUPTCY
     1.05  Material Cybersecurity Incidents                   -> CYBER_INCIDENT
-    3.01  Notice of Delisting or Failure to Satisfy a Rule   -> DELISTING_NOTICE
     4.02  Non-Reliance on Previously Issued Financial Stmts  -> RESTATEMENT
 
-Other items are ambiguous on their own (5.02 covers a CEO leaving and a director's pay change
-alike), so they are ignored rather than guessed. Amendments (8-K/A) are ignored: they repeat an
-event that was already filed.
+Other items are ambiguous on their own, so they are ignored rather than guessed: 5.02 covers a CEO
+leaving and a director's pay change alike, and 3.01 covers both a delisting warning and a company
+voluntarily moving its listing to another exchange. (Rules version 1 mapped 3.01 to a delisting
+notice; those events are retracted in labels/retracted.txt.) Amendments (8-K/A) are ignored:
+they repeat an event that was already filed.
 
 Source: EDGAR's "latest filings" Atom feed. SEC data is a US government work (public domain). SEC
 asks automated clients to declare themselves with a contact email in the User-Agent and to stay
@@ -37,10 +38,9 @@ from spillover.ingest.http import Fetcher, FetchError
 ITEMS: dict[str, tuple[str, str]] = {
     "1.03": ("BANKRUPTCY", "Bankruptcy or Receivership"),
     "1.05": ("CYBER_INCIDENT", "Material Cybersecurity Incidents"),
-    "3.01": ("DELISTING_NOTICE", "Notice of Delisting or Failure to Satisfy a Listing Rule"),
     "4.02": ("RESTATEMENT", "Non-Reliance on Previously Issued Financial Statements"),
 }
-RULES_VERSION = "sec-8k-items/1"
+RULES_VERSION = "sec-8k-items/2"
 SOURCE = "sec-8k"
 PAGE_SIZE = 100  # the most EDGAR's feed returns per request
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"

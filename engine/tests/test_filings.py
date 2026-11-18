@@ -82,7 +82,7 @@ SAMPLE = feed(
         "Private Debt Issuer",
         555,
         "0000000555-26-000005",
-        ["3.01"],
+        ["1.05"],
         "2026-11-17T08:00:00-05:00",
     ),
 )
@@ -120,13 +120,13 @@ def test_only_unambiguous_items_become_events_and_amendments_are_ignored() -> No
     assert no_ticker == ["Private Debt Issuer (0000000555-26-000005)"]
     for r in records:
         assert r.confidence == "high" and not r.needs_review
-        assert r.source == "sec-8k" and r.extractor_version == "sec-8k-items/1"
+        assert r.source == "sec-8k" and r.extractor_version == "sec-8k-items/2"
     cyber = next(r for r in records if r.event_type == "CYBER_INCIDENT")
     assert cyber.title == "Acme Air Inc (ACAIR) 8-K Item 1.05: Material Cybersecurity Incidents"
 
 
 def test_filing_types_are_in_the_taxonomy_but_never_from_headlines() -> None:
-    new = {"CYBER_INCIDENT", "BANKRUPTCY", "RESTATEMENT", "DELISTING_NOTICE"}
+    new = {"CYBER_INCIDENT", "BANKRUPTCY", "RESTATEMENT"}
     assert new <= ALL_NAMES and not new & EXTRACTABLE_NAMES
 
 
@@ -237,3 +237,62 @@ def test_the_sec_fetcher_sends_secs_documented_declaration(monkeypatch: pytest.M
     # "Sample Company Name AdminContact@<sample company domain>.com" (sec.gov/os/accessing-edgar-data)
     assert seen["user_agent"] == "Spillover Research Project someone@example.com"
     assert seen["headers"] == {"Accept-Encoding": "gzip, deflate"}
+
+
+def test_item_3_01_is_ignored_because_it_also_covers_moving_exchanges() -> None:
+    """3.01 is "Notice of Delisting...; Transfer of Listing": a warning or a voluntary move."""
+    moving = feed(
+        entry(
+            "8-K",
+            "Healthy Corp",
+            111,
+            "0000000111-26-000009",
+            ["3.01", "7.01"],
+            "2026-11-17T16:30:00-05:00",
+        )
+    )
+    filings, _ = parse_current(moving)
+    records, _ = filing_records(filings, parse_tickers(tickers_json()))
+    assert records == []
+    assert "DELISTING_NOTICE" not in ALL_NAMES
+
+
+def test_retracted_events_stay_in_the_store_but_leave_every_analysis(tmp_path: Path) -> None:
+    import polars as pl
+
+    from spillover.eventstore import append_records, events_frame, make_record, read_retracted
+    from spillover.ingest.store import EVENT_SCHEMA
+
+    def rec(hid: str, ticker: str) -> object:
+        from datetime import UTC, datetime
+
+        return make_record(
+            headline_id=hid,
+            title=f"{ticker} 8-K",
+            url="https://www.sec.gov/x",
+            source="sec-8k",
+            published_at=datetime(2026, 11, 17, 21, tzinfo=UTC),
+            event_type="RESTATEMENT",
+            entities=[ticker],
+            confidence="high",
+            needs_review=False,
+            extractor_version="t",
+        )
+
+    append_records(tmp_path, [rec("a", "AAA"), rec("b", "BBB")])  # type: ignore[list-item]
+    listed = tmp_path / "retracted.txt"
+    listed.write_text("# wrong rule\nRESTATEMENT|AAA|2026-11-17  # why\n")
+    retracted = frozenset(read_retracted(listed))
+    frame = events_frame(load_records(tmp_path), set(), EVENT_SCHEMA, retracted).events
+    assert frame["entity"].to_list() == ["BBB"]
+    assert len(load_records(tmp_path)) == 2, "the store itself is never edited"
+    assert isinstance(frame, pl.DataFrame)
+
+
+def test_the_committed_retractions_name_real_stored_events() -> None:
+    from spillover.eventstore import RETRACTED_FILE, read_retracted
+
+    root = Path(__file__).resolve().parents[2]
+    keys = read_retracted(root / RETRACTED_FILE)
+    stored = {r.event_key for r in load_records(root / "events")}
+    assert keys <= stored, f"retracted keys not in the store: {sorted(keys - stored)[:3]}"

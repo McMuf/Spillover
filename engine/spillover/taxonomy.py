@@ -124,12 +124,6 @@ TAXONOMY: tuple[EventType, ...] = (
         "(SEC Form 8-K Item 4.02). From filings, never from headlines.",
         origin="filings",
     ),
-    EventType(
-        "DELISTING_NOTICE",
-        "A company reports a delisting notice or a failure to meet a listing rule (SEC Form 8-K "
-        "Item 3.01). From filings, never from headlines.",
-        origin="filings",
-    ),
 )
 
 EXTRACTABLE: tuple[EventType, ...] = tuple(t for t in TAXONOMY if t.extractable)

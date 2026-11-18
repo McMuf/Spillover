@@ -1,0 +1,21 @@
+# Event keys withdrawn after they were stored. One per line; # starts a comment.
+#
+# The event store (events/) is append-only: a stored line is never edited or deleted. When a stored
+# event turns out to be wrong, its key is listed here, in a pull request with the reason, and it is
+# left out of every analysis, backtest, prediction and the news. The original line stays visible.
+
+# 2026-11-18. SEC 8-K item 3.01 is not one kind of event: its title is "Notice of Delisting or
+# Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing", so it covers both
+# a delisting warning and a company voluntarily moving to another exchange. Rules version 1
+# (sec-8k-items/1) mapped every 3.01 filing to DELISTING_NOTICE; version 2 ignores item 3.01.
+# No claim used DELISTING_NOTICE, so no prediction was frozen from these.
+DELISTING_NOTICE|XMAX|2026-11-16  # XMax Inc. (XMAX) 8-K Item 3.01: Notice of Delisting or Failure to Sati
+DELISTING_NOTICE|LABT|2026-11-16  # Lakewood-Amedex Biotherapeutics Inc. (LABT) 8-K Item 3.01: Notice of D
+DELISTING_NOTICE|CABO|2026-11-16  # Cable One, Inc. (CABO) 8-K Item 3.01: Notice of Delisting or Failure t
+DELISTING_NOTICE|BNAI|2026-11-17  # Brand Engagement Network Inc. (BNAI) 8-K Item 3.01: Notice of Delistin
+DELISTING_NOTICE|ITGR|2026-11-17  # Integer Holdings Corp (ITGR) 8-K Item 3.01: Notice of Delisting or Fai
+DELISTING_NOTICE|PCRX|2026-11-17  # Pacira BioSciences, Inc. (PCRX) 8-K Item 3.01: Notice of Delisting or 
+DELISTING_NOTICE|LVWR|2026-11-17  # LiveWire Group, Inc. (LVWR) 8-K Item 3.01: Notice of Delisting or Fail
+DELISTING_NOTICE|MERC|2026-11-17  # MERCER INTERNATIONAL INC. (MERC) 8-K Item 3.01: Notice of Delisting or
+DELISTING_NOTICE|HUBG|2026-11-17  # Hub Group, Inc. (HUBG) 8-K Item 3.01: Notice of Delisting or Failure t
+DELISTING_NOTICE|ALDX|2026-11-17  # Aldeyra Therapeutics, Inc. (ALDX) 8-K Item 3.01: Notice of Delisting o

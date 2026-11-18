@@ -23,6 +23,9 @@ from spillover.taxonomy import NONE
 
 EVENTS_DIR = Path("events")
 CONFIRMED_FILE = Path("labels/confirmed.txt")
+# Event keys withdrawn after they were stored (a wrong rule, a wrong label). The store stays
+# append-only; a retraction is a new, reviewed line here with its reason, never an edit.
+RETRACTED_FILE = Path("labels/retracted.txt")
 _NAME = r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
 
 
@@ -126,6 +129,11 @@ def append_records(root: Path, records: Iterable[EventRecord]) -> int:
     return written
 
 
+def read_retracted(path: Path) -> set[str]:
+    """Event keys withdrawn from analysis (same format as the confirmed list)."""
+    return read_confirmed(path)
+
+
 def read_confirmed(path: Path) -> set[str]:
     """Event keys a human has confirmed (one per line; # starts a comment)."""
     if not path.exists():
@@ -142,12 +150,16 @@ class StoreFrame:
 
 
 def events_frame(
-    records: list[EventRecord], confirmed: set[str], schema: Mapping[str, Any]
+    records: list[EventRecord],
+    confirmed: set[str],
+    schema: Mapping[str, Any],
+    retracted: frozenset[str] = frozenset(),
 ) -> StoreFrame:
     """One row per (event, entity), for the engine's cache.
 
-    Excludes NONE, and low-confidence events unless confirmed. Several headlines with the same
-    event_key become one event, dated and sourced by the earliest publication.
+    Excludes NONE, retracted event keys, and low-confidence events unless confirmed. Several
+    headlines with the same event_key become one event, dated and sourced by the earliest
+    publication.
     """
     groups: dict[str, list[EventRecord]] = {}
     for r in records:
@@ -156,7 +168,7 @@ def events_frame(
     review = 0
     for key, recs in sorted(groups.items()):
         first = min(recs, key=lambda r: (r.published_at, r.headline_id))
-        if first.event_type == NONE or not first.entities:
+        if first.event_type == NONE or not first.entities or key in retracted:
             continue
         if any(r.needs_review for r in recs) and key not in confirmed:
             review += 1

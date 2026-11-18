@@ -16,6 +16,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+import polars as pl
 from pydantic import BaseModel, ConfigDict
 
 from spillover.data import DataError, MarketData
@@ -45,7 +46,7 @@ from spillover.replicate import load_result, result_path
 from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import load_outcome, outcome_files, prediction_symbols, window_closed
-from spillover.taxonomy import EXTRACTABLE, NONE
+from spillover.taxonomy import EXTRACTABLE, NONE, TAXONOMY
 
 REPO = "McMuf/Spillover"
 
@@ -256,6 +257,9 @@ class SiteMeta(_M):
     rules_version: str
     data_synthetic: bool
     data_as_of: date
+    # Symbols with daily prices in the cache: a claim on any other symbol can freeze predictions
+    # but cannot be graded until a price source for it is added.
+    priced_symbols: list[str]
 
 
 class LabelCandidate(_M):
@@ -304,6 +308,15 @@ class Labeling(_M):
     accuracy: LabelerAccuracy | None
 
 
+class TaxonomyEntry(_M):
+    """An event type a claim can name, where its events come from, and how many are in the data."""
+
+    name: str
+    definition: str
+    origin: Literal["headlines", "calendar", "prices", "filings", "control"]
+    past_events: int
+
+
 class SiteData(_M):
     schema_version: Literal[1]
     meta: SiteMeta
@@ -311,6 +324,7 @@ class SiteData(_M):
     events: list[SiteEvent]
     scoreboard: Scoreboard
     labeling: Labeling
+    taxonomy: list[TaxonomyEntry]
 
 
 def site_json_schema() -> dict[str, Any]:
@@ -322,6 +336,22 @@ def site_json_schema() -> dict[str, Any]:
 
 
 # --- building ----------------------------------------------------------------------------------
+
+
+def build_taxonomy(data: MarketData) -> list[TaxonomyEntry]:
+    counts: dict[str, int] = {}
+    if data.events.height:
+        per = data.events.group_by("event_type").agg(pl.col("event_id").n_unique())
+        counts = dict(zip(per["event_type"].to_list(), per["event_id"].to_list(), strict=True))
+    return [
+        TaxonomyEntry(
+            name=t.name,
+            definition=t.definition,
+            origin=t.origin,
+            past_events=int(counts.get(t.name, 0)),
+        )
+        for t in TAXONOMY
+    ]
 
 
 def _event_types() -> list[EventTypeInfo]:
@@ -646,10 +676,12 @@ def build_site_data(
             rules_version=RULES_VERSION,
             data_synthetic=data.synthetic,
             data_as_of=data.as_of,
+            priced_symbols=sorted(data.returns),
         ),
         claims=site_claims,
         events=sorted(events, key=lambda e: (e.date, e.event_id)),
         scoreboard=board,
         labeling=labeling
         or Labeling(candidates=[], event_types=_event_types(), gold_rows=0, gold=[], accuracy=None),
+        taxonomy=build_taxonomy(data),
     )

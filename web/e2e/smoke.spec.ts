@@ -61,7 +61,7 @@ test("submit form validates live and the scoreboard states what is missing", asy
 
   await page.getByLabel("Claim id").fill("clm_demo_v1");
   await page.getByLabel(/Statement/).fill("After a headline, the stock falls by more than the market explains.");
-  await page.getByLabel("Event type").fill("DEMO_EVENT");
+  await page.getByLabel(/Event type/).selectOption("FOMC_DECISION");
   await page.getByLabel(/Trigger entities/).fill("ABC");
   await page.getByLabel("Instrument symbol").fill("ABC");
   await page.getByLabel(/What would prove me wrong/).fill("The interval includes zero after eight forward events.");
@@ -86,4 +86,18 @@ test("submit form validates live and the scoreboard states what is missing", asy
   await expect(table.getByText("Proposed")).toHaveCount(registered);
   await expect(table.getByText("0 of 8")).toHaveCount(registered);
   await expect(page.getByText("No placebo claim has shown a significant result.")).toBeVisible();
+});
+
+test("the claim form guides a one-off idea and fits a phone screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#/submit");
+  await expect(page.getByRole("heading", { name: "From a news story to a claim" })).toBeVisible();
+  await page.getByLabel(/Statement/).fill("All flights were grounded today, so airline stocks will fall.");
+  await expect(page.getByText(/sounds like one specific event/)).toBeVisible();
+  await page.getByLabel(/Event type/).selectOption("FOMC_DECISION");
+  await expect(page.getByText(/past events in the data/)).toBeVisible();
+  await page.getByLabel("Instrument symbol").fill("NOT_PRICED");
+  await expect(page.getByText(/NOT_PRICED is not priced yet/)).toBeVisible();
+  await expect(page.getByTestId("plain-sentence")).toContainText("When the Federal Reserve announces");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });

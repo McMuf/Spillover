@@ -11,8 +11,11 @@ test.beforeEach(async ({ page }) => {
   // Serve the real site data with a few headlines to label (the local store has none yet).
   await page.route("**/data/site.json", async (route) => {
     const res = await route.fetch();
-    const site = (await res.json()) as { labeling: { candidates: unknown[] } };
+    const site = (await res.json()) as { labeling: { candidates: unknown[]; gold: unknown[]; gold_rows: number } };
     site.labeling.candidates = HEADLINES;
+    // Start from no committed labels, whatever labels/gold.jsonl holds today.
+    site.labeling.gold = [];
+    site.labeling.gold_rows = 0;
     await route.fulfill({ response: res, json: site });
   });
 });

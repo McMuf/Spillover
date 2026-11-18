@@ -67,7 +67,7 @@ export function makeClaim(id = "clm_demo_v1", over: Partial<SiteClaim> = {}): Si
 export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
   return {
     schema_version: 1,
-    meta: { repo: "McMuf/Spillover", engine_version: "0", rules_version: "0.1", data_synthetic: true, data_as_of: "2025-12-26" },
+    meta: { repo: "McMuf/Spillover", engine_version: "0", rules_version: "0.1", data_synthetic: true, data_as_of: "2025-12-26", priced_symbols: ["SPX", "ABC"] },
     claims,
     events: [{ event_id: "ev1", event_type: "DEMO_EVENT", entities: ["ABC"], date: "2025-01-02", scheduled: false, source: "test", claims: [] }],
     scoreboard: {
@@ -83,5 +83,10 @@ export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
       notes: [],
     },
     labeling: { candidates: [], event_types: [{ name: "NONE", definition: "None of the above." }], gold_rows: 0, gold: [], accuracy: null },
+    taxonomy: [
+      { name: "FOMC_DECISION", definition: "A Fed rate decision.", origin: "calendar", past_events: 40 },
+      { name: "CYBER_INCIDENT", definition: "A company discloses a cyber incident.", origin: "filings", past_events: 3 },
+      { name: "RANDOM_DATE", definition: "A random date.", origin: "control", past_events: 50 },
+    ],
   };
 }

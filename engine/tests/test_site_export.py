@@ -140,3 +140,17 @@ def test_a_superseded_unpriced_claim_says_so_plainly(market: MarketData, tmp_pat
     assert v1.backtest_error.startswith("Superseded by clm_x_v2")
     assert "No price data for ZZZ" in v1.backtest_error
     assert str(market.root) not in v1.backtest_error and "/" not in v1.backtest_error
+
+
+def test_the_claim_form_gets_every_event_type_with_its_history(
+    site: SiteData, market: MarketData
+) -> None:
+    from spillover.taxonomy import TAXONOMY
+
+    assert [t.name for t in site.taxonomy] == [t.name for t in TAXONOMY]
+    by_name = {t.name: t for t in site.taxonomy}
+    assert by_name["FOMC_DECISION"].origin == "calendar"
+    assert by_name["CYBER_INCIDENT"].origin == "filings"
+    fomc = market.events.filter(market.events["event_type"] == "FOMC_DECISION")
+    assert by_name["FOMC_DECISION"].past_events == fomc["event_id"].n_unique()
+    assert site.meta.priced_symbols == sorted(market.returns)

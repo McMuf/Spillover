@@ -1646,6 +1646,13 @@
           "title": "Engine Version",
           "type": "string"
         },
+        "priced_symbols": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Priced Symbols",
+          "type": "array"
+        },
         "repo": {
           "title": "Repo",
           "type": "string"
@@ -1660,7 +1667,8 @@
         "engine_version",
         "rules_version",
         "data_synthetic",
-        "data_as_of"
+        "data_as_of",
+        "priced_symbols"
       ],
       "title": "SiteMeta",
       "type": "object"
@@ -1684,6 +1692,43 @@
         "min_forward_events"
       ],
       "title": "Success",
+      "type": "object"
+    },
+    "TaxonomyEntry": {
+      "additionalProperties": false,
+      "description": "An event type a claim can name, where its events come from, and how many are in the data.",
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "headlines",
+            "calendar",
+            "prices",
+            "filings",
+            "control"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "past_events": {
+          "title": "Past Events",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "definition",
+        "origin",
+        "past_events"
+      ],
+      "title": "TaxonomyEntry",
       "type": "object"
     },
     "Window": {
@@ -1739,6 +1784,13 @@
     },
     "scoreboard": {
       "$ref": "#/$defs/Scoreboard"
+    },
+    "taxonomy": {
+      "items": {
+        "$ref": "#/$defs/TaxonomyEntry"
+      },
+      "title": "Taxonomy",
+      "type": "array"
     }
   },
   "required": [
@@ -1747,7 +1799,8 @@
     "claims",
     "events",
     "scoreboard",
-    "labeling"
+    "labeling",
+    "taxonomy"
   ],
   "title": "Spillover site data",
   "type": "object"

@@ -49,13 +49,6 @@ h3 {
   outline-offset: 2px;
 }
 
-/* The brand wash: lavender sky to peach, as at dawn over the mountains. Hero bands and the logo. */
-.wash {
-  background: linear-gradient(180deg, var(--c-wash-from) 0%, var(--c-wash-via) 55%, var(--c-wash-to) 100%);
-}
-.wash-x {
-  background: linear-gradient(120deg, var(--c-wash-from) 0%, var(--c-wash-via) 50%, var(--c-wash-to) 100%);
-}
 /* Things that float above the page (the top bar, menus, the ask box): a soft violet-tinted shadow. */
 .float {
   box-shadow:

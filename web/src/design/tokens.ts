@@ -2,8 +2,8 @@
  * Design tokens. Spillover has one theme: dark plum, the lavender brand at dusk. No switcher.
  *
  * Components use semantic names (bg, fg, accent...) through CSS variables, never raw colors.
- * Green and red mean direction (up and down) and nothing else; the brand color (violet, with a
- * lavender-to-peach wash) carries identity: links, focus, active states, neutral charts, hero bands.
+ * Green and red mean direction (up and down) and nothing else; the brand color (violet) carries
+ * identity: links, focus, active states, neutral charts. Surfaces are flat: no gradients.
  */
 
 export type ThemeName = "dark";
@@ -34,10 +34,6 @@ export interface ColorTokens {
   negative: string;
   noticeBg: string;
   noticeFg: string;
-  /** The brand wash, top to bottom: lavender, lilac, peach (a sky at dawn over the mountains). */
-  washFrom: string;
-  washVia: string;
-  washTo: string;
 }
 
 /**
@@ -45,7 +41,7 @@ export interface ColorTokens {
  * carries its sign (+ or −) or a word.
  */
 export const color: Record<ThemeName, ColorTokens> = {
-  /** The same brand at dusk: plum-black page, lilac text accents, a dim violet-to-ember wash. */
+  /** Plum-black page, lilac text accents. */
   dark: {
     bg: "#110d18",
     surface: "#1a1424",
@@ -62,9 +58,6 @@ export const color: Record<ThemeName, ColorTokens> = {
     negative: "#ff7385",
     noticeBg: "#2e1f22",
     noticeFg: "#f2cdb9",
-    washFrom: "#251b3d",
-    washVia: "#2c1b35",
-    washTo: "#352124",
   },
 };
 
@@ -99,11 +92,6 @@ export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTo
   ["positive", "surfaceAlt"],
   ["negative", "surfaceAlt"],
   ["noticeFg", "noticeBg"],
-  ["fg", "washFrom"],
-  ["fg", "washTo"],
-  ["muted", "washFrom"],
-  ["muted", "washVia"],
-  ["muted", "washTo"],
 ]
 
 /** WCAG relative luminance and contrast ratio for #rrggbb colors. */

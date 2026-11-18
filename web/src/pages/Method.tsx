@@ -66,7 +66,7 @@ function WindowDiagram() {
           gap
         </div>
         <div className="relative flex flex-[0.9] items-center justify-center rounded-md bg-accent text-on-accent">0</div>
-        <div className="flex flex-[2.6] items-center justify-center rounded-r-xl bg-[var(--c-wash-to)] text-fg">window</div>
+        <div className="flex flex-[2.6] items-center justify-center rounded-r-xl bg-notice-bg text-fg">window</div>
       </div>
       <div className="mt-3 grid grid-cols-[12fr_1.6fr_0.9fr_2.6fr] gap-1 text-[12px] leading-snug text-muted" aria-hidden="true">
         <span>Estimation window: what a normal day looks like</span>
@@ -248,7 +248,7 @@ function Limits() {
       <ul className="grid gap-px overflow-hidden rounded-2xl bg-line sm:grid-cols-2 lg:grid-cols-3">
         {LIMITS.map((l) => (
           <li key={l.title} className="bg-bg p-5">
-            <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-full bg-[var(--c-wash-to)] text-notice-fg">
+            <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-full bg-notice-bg text-notice-fg">
               <Icon name="close" size={14} />
             </span>
             <h3 className="mt-3 font-bold">{l.title}</h3>
@@ -317,7 +317,7 @@ const JUMP = [
 export default function Method() {
   return (
     <div className="space-y-12">
-      <header className="wash-x relative overflow-hidden rounded-3xl">
+      <header className="relative overflow-hidden rounded-3xl bg-surface">
         <Landscape className="pointer-events-none absolute bottom-0 right-0 hidden h-full w-[48%] md:block" />
         <div className="relative px-6 py-10 md:w-[60%] md:px-10 md:py-14">
           <p className="text-sm font-semibold text-accent">How it works</p>

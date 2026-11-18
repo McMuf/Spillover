@@ -87,8 +87,6 @@ export function Shell() {
 
   return (
     <div className="relative isolate flex min-h-screen flex-col">
-      {/* The brand wash behind the top of every page, fading into the page color. */}
-      <div aria-hidden="true" className="wash pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] [mask-image:linear-gradient(to_bottom,black_55%,transparent)]" />
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-1 focus:text-on-accent">
         Skip to content
       </a>

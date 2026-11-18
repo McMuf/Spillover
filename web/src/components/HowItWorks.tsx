@@ -10,7 +10,7 @@ const STEPS: { icon: IconName; title: string; body: string }[] = [
 /** The plain-English answer to "what is this?", at the bottom of the home page. */
 export function HowItWorks() {
   return (
-    <section aria-labelledby="how-h" className="wash-x overflow-hidden rounded-3xl p-6 md:p-8">
+    <section aria-labelledby="how-h" className="overflow-hidden rounded-3xl bg-surface p-6 md:p-8">
       <h2 id="how-h" className="text-[24px] font-extrabold tracking-tight">
         What is Spillover?
       </h2>

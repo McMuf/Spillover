@@ -69,7 +69,7 @@ describe("news stories", () => {
   it("words swing sizes instead of colouring them as up or down", () => {
     const swing = makeClaim("clm_s_v1");
     swing.claim.measure = "abs_excess_return";
-    expect(measuredValue(swing, -0.0004)).toEqual({ text: "0.04% smaller swing than usual", cls: "text-fg" });
+    expect(measuredValue(swing, -0.0004)).toEqual({ text: "0.04% smaller swing than usual", cls: "text-negative" });
     expect(measuredValue(makeClaim(), -0.02)).toEqual({ text: "−2.00%", cls: "text-negative" });
   });
 });

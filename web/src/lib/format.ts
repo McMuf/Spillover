@@ -71,17 +71,16 @@ export interface Stat {
 }
 
 /**
- * A claim's statistic as text and colour. Red and green mean a price went down or up. A claim that
- * measures swing size ("moves more than usual", measure abs_excess_return) has a statistic that says
- * how much bigger or smaller the swing was than normal, in either direction, so it is worded and
- * shown in a neutral colour, never red or green.
+ * A claim's statistic as text and colour. Above zero is green, below zero is red, everywhere. A claim
+ * that measures swing size ("moves more than usual", measure abs_excess_return) is also worded, so a
+ * red number reads "smaller swing than usual" and never as a price that fell.
  */
 export function claimStat(measure: string, v: number | null | undefined): Stat {
   if (v === null || v === undefined || Number.isNaN(v)) return { value: "n/a", note: null, text: "n/a", cls: "text-muted", dir: "flat" };
   if (measure === "abs_excess_return") {
     const value = pct(Math.abs(v)).replace(/^[+−]/, "");
     const note = `${v >= 0 ? "bigger" : "smaller"} swing than usual`;
-    return { value, note, text: `${value} ${note}`, cls: "text-fg", dir: "flat" };
+    return { value, note, text: `${value} ${note}`, cls: dirText(v), dir: direction(v) };
   }
   return { value: pct(v), note: null, text: pct(v), cls: dirText(v), dir: direction(v) };
 }

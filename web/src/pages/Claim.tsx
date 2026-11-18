@@ -535,10 +535,10 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
                 <p data-testid="claim-number" className={`mt-1 text-[40px] font-extrabold leading-none tabular-nums ${claimStat(c.measure, b.mean).cls}`}>
                   <Ticker text={claimStat(c.measure, b.mean).value} />
                 </p>
-                {/* As on a quote: ▲ or ▼ for a move, ↕ for a swing size (either direction). */}
-                <p className={`mt-2 text-sm font-semibold ${claimStat(c.measure, b.mean).note ? "text-fg" : claimStat(c.measure, b.mean).cls}`}>
+                {/* As on a quote: ▲ in green above zero, ▼ in red below, with the meaning in words. */}
+                <p className={`mt-2 text-sm font-semibold ${claimStat(c.measure, b.mean).cls}`}>
                   <span aria-hidden="true">
-                    {claimStat(c.measure, b.mean).note ? "↕ " : claimStat(c.measure, b.mean).dir === "down" ? "▼ " : claimStat(c.measure, b.mean).dir === "up" ? "▲ " : ""}
+                    {claimStat(c.measure, b.mean).dir === "down" ? "▼ " : claimStat(c.measure, b.mean).dir === "up" ? "▲ " : ""}
                   </span>
                   {claimStat(c.measure, b.mean).note ?? "abnormal move"} <span className="font-normal text-muted">· past events</span>
                 </p>

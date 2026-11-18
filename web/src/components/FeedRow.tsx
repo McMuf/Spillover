@@ -206,7 +206,11 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
             <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" className="min-w-0 flex-1 text-[16px] leading-snug hover:underline">
               {h.title}
             </a>
-            {h.image && <NewsImage src={h.image} domain={h.domain} className="h-16 w-24 shrink-0 rounded-lg" />}
+            {h.image && (
+              <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
+                <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 rounded-xl md:h-24 md:w-36" />
+              </a>
+            )}
           </div>
         </Row>
       );

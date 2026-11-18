@@ -72,20 +72,35 @@ export function feedItems(site: SiteData, headlines: Headline[]): FeedItem[] {
 const newest = (a: FeedItem, b: FeedItem) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id);
 
 /**
- * Trending puts what the record can test first: the most active claims, events that just tested
- * claims, then headlines a claim could be about; everything else follows, newest first. Latest is
- * simply newest first.
+ * Trending weaves the kinds together so the top of the feed always has news with pictures, claims
+ * and the record side by side: headline, claim, headline, event, and round again. Within each kind:
+ * headlines a claim could test first, then ones with a picture, then newest; claims by activity;
+ * events that tested claims first, newest first. Latest is simply newest first.
  */
 export function ordered(items: FeedItem[], mode: "trending" | "latest", site: SiteData): FeedItem[] {
   if (mode === "latest") return [...items].sort(newest);
   const rank = new Map(byTrending(site.claims).map((c, i) => [`claim-${c.claim.id}`, i]));
-  const score = (it: FeedItem): number => {
-    if (it.kind === "claim") return 300 - (rank.get(it.id) ?? 99);
-    if (it.kind === "event" && it.story.claim_ids.length > 0) return 200;
-    if (it.kind === "headline" && it.headline.event_type !== "NONE") return 150;
-    return 0;
-  };
-  return [...items].sort((a, b) => score(b) - score(a) || newest(a, b));
+  const headlines = items
+    .filter((it): it is Extract<FeedItem, { kind: "headline" }> => it.kind === "headline")
+    .sort(
+      (a, b) =>
+        Number(b.headline.event_type !== "NONE") - Number(a.headline.event_type !== "NONE") ||
+        Number(!!b.headline.image) - Number(!!a.headline.image) ||
+        newest(a, b),
+    );
+  const claims = items.filter((it) => it.kind === "claim").sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99) || newest(a, b));
+  const events = items
+    .filter((it): it is Extract<FeedItem, { kind: "event" }> => it.kind === "event")
+    .sort((a, b) => Number(b.story.claim_ids.length > 0) - Number(a.story.claim_ids.length > 0) || newest(a, b));
+  const queues: FeedItem[][] = [headlines, claims, headlines, events];
+  const out: FeedItem[] = [];
+  const total = headlines.length + claims.length + events.length;
+  for (let i = 0; out.length < total; i++) {
+    const next = queues[i % queues.length]!.shift();
+    if (next) out.push(next);
+    else if (queues.every((q) => q.length === 0)) break;
+  }
+  return out;
 }
 
 export function topics(items: FeedItem[]): string[] {

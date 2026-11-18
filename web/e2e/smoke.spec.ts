@@ -182,10 +182,11 @@ test("a claim's author links to a profile with their claims and track record", a
   await expect(page.getByText(/has anything on the record/)).toBeVisible();
 });
 
-test("a swing-size claim reads as bigger or smaller than usual, never as a red or green move", async ({ page }) => {
+test("a swing-size claim is green when bigger and says so in words", async ({ page }) => {
   await page.goto("/#/claims/clm_fomc_abs_move_spx_v1");
   const summary = page.getByRole("complementary", { name: "Claim summary" });
   await expect(summary.getByText(/(bigger|smaller) swing than usual/)).toBeVisible();
   const big = summary.getByTestId("claim-number");
-  await expect(big).not.toHaveClass(/text-(positive|negative)/);
+  const words = (await summary.getByText(/(bigger|smaller) swing than usual/).first().textContent()) ?? "";
+  await expect(big).toHaveClass(words.includes("bigger") ? /text-positive/ : /text-negative/);
 });

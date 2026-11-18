@@ -48,16 +48,16 @@ describe("direction", () => {
 });
 
 describe("claimStat", () => {
-  it("words a swing size and never colours it as up or down", async () => {
+  it("colours a swing size by sign and words it, so red never reads as a fall", async () => {
     const { claimStat } = await import("./format");
     expect(claimStat("abs_excess_return", -0.0066)).toEqual({
       value: "0.66%",
       note: "smaller swing than usual",
       text: "0.66% smaller swing than usual",
-      cls: "text-fg",
-      dir: "flat",
+      cls: "text-negative",
+      dir: "down",
     });
-    expect(claimStat("abs_excess_return", 0.0083).note).toBe("bigger swing than usual");
+    expect(claimStat("abs_excess_return", 0.0083)).toMatchObject({ note: "bigger swing than usual", cls: "text-positive", dir: "up" });
   });
 
   it("keeps red and green for moves", async () => {

@@ -26,11 +26,12 @@ describe("the feed", () => {
     expect(latest[0]).toBe("headline");
   });
 
-  it("Trending puts what the record can test first", () => {
+  it("Trending weaves news and claims together so pictures reach the top", () => {
     const site = makeSite([makeClaim()]);
     const items = feedItems(site, [H(), H({ headline_id: "g2", url: "https://a.example/2", title: "SEC charges Acme", event_type: "REGULATORY_ACTION" })]);
     const kinds = ordered(items, "trending", site).map((i) => (i.kind === "headline" ? i.headline.event_type : i.kind));
-    expect(kinds).toEqual(["claim", "REGULATORY_ACTION", "NONE"]);
+    // Headline, claim, headline, event, and round again; testable headlines lead their kind.
+    expect(kinds).toEqual(["REGULATORY_ACTION", "claim", "NONE"]);
     expect(topics(items)).toContain("Headlines");
   });
 

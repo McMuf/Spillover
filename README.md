@@ -597,7 +597,7 @@ Ranking leans on signals that are hard to fake: a real event just tested the cla
 
 | Phase | What | Needs |
 |---|---|---|
-| **1** *(built)* | Discussion threads on every claim and story (via [giscus](https://giscus.app/), backed by GitHub Discussions, with reactions as upvotes) and public profile pages built from the record (`#/people`) | No database; a GitHub account to post. Threads appear once a maintainer enables Discussions and sets the category id in `web/src/lib/community.ts` |
+| **1** *(built)* | Discussion threads on every claim and story (via [giscus](https://giscus.app/), backed by GitHub Discussions, with reactions as upvotes) and public profile pages built from the record (`#/people`) | No database; a GitHub account to post. Live: threads go in the repository's Announcements category (set in `web/src/lib/community.ts`) |
 | **2** | Questions, backing and doubting, follows, pseudonymous accounts, sign-in without GitHub, submitting claims from the site (a bot opens the pull request) | A hosted database and auth (for example Supabase), a privacy policy, data deletion and moderation |
 | **3** | Reputation, topic spaces, moderation tools | Phase 2 in use |
 
@@ -815,7 +815,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | **M2: Ledger** *(live: forward predictions frozen since November 16, 2026; timestamp proofs are requested as they are frozen)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot, guide, the guided claim form, the News tab and the label page are built. 7 claims are registered (5 tests plus 2 placebo versions). Company claims wait for single-stock prices (the Alpha Vantage connection is built; it needs a key from their open-source program).* |
-| **M5: Community, phase 1** *(built; threads switch on with GitHub Discussions)* | People discuss claims and see each other's records | Discussion threads on claims and stories, and profile pages; see [Community](#community-planned) |
+| **M5: Community, phase 1** *(built)* | People discuss claims and see each other's records | Discussion threads on claims and stories, and profile pages; see [Community](#community-planned) |
 | **M6: Community, phases 2 and 3** *(planned)* | Questions, backing, follows, pseudonyms, reputation | A hosted social layer that never changes a grade |
 
 ### Seed claims

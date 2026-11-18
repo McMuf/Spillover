@@ -220,7 +220,7 @@ The graph is the product's face, so it follows one rule: **if a shape could mean
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
 - **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
-- **Blue is the one highlight color** for links, the active tab, names picked out in headlines and chart lines. Blue stays distinct from green and red for readers with red-green color blindness.
+- **Almost everything is black and white.** Green and red say direction; blue is kept for inline text links, the keyboard focus ring and the "Proposed" status, and nothing else. Lines whose direction does not apply (a swing size) are drawn in white. Panels sit flat on the black page, separated by hairlines; only things you can tap (chips, tiles, buttons) are rounded.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
 - **Index membership is its own edge type** (`weight`), drawn differently from `spillover`, so mechanical effects and real effects never share a line.
 - **The graph is capped at about 40 nodes** per view. Past that, the view collapses into a table. A graph nobody can read is decoration.
@@ -268,7 +268,7 @@ A claim detail page on mobile keeps a **sticky footer** with the two most useful
 
 ### Screen 3: News and story pages
 
-**News** (`#/news`) has two views. **Latest headlines** shows current market news from outlets worldwide, via the [GDELT Project](https://www.gdeltproject.org/), refreshed whenever the site rebuilds; a headline that matches a kind of event claims can be tested on is tagged *Testable*. These headlines are shown only and never enter the record. **On the record** lists the events claims are tested on (scheduled releases, SEC filings, labeled headlines), with the next scheduled events under *Coming up*.
+**News** (`#/news`) has two views. **Latest headlines** shows current market news from outlets worldwide, via the [GDELT Project](https://www.gdeltproject.org/), fetched live by the browser while the page is open (every few minutes, falling back to the copy from the last site build if GDELT is unreachable), each with the article's own preview image loaded from the publisher's site; a headline that matches a kind of event claims can be tested on is tagged *Testable*. These headlines are shown only and never enter the record. **On the record** lists the events claims are tested on (scheduled releases, SEC filings, labeled headlines), with the next scheduled events under *Coming up*.
 
 Each event opens as a **story** with four tabs:
 
@@ -278,6 +278,10 @@ Each event opens as a **story** with four tabs:
 | **Market implications** | What past events of this kind did to markets, from every registered claim about them; if there is none, a button to write one with the event type already chosen |
 | **Stakeholders** | The company or institution involved and the markets claims are watching |
 | **Data** | This event's measured move, its frozen prediction and timestamp proof, and earlier events of the same kind |
+
+The home page is a **feed** in the style of a markets app: a daily briefing written from the data by fixed rules (no AI), claims, events on record and live headlines in one list, with Trending and Latest orders and topic chips. Numbers roll into place and roll to new values when the site's data refreshes (every five minutes while a page is open); the latest point on every chart pulses.
+
+**Privacy:** live headlines are requested by the visitor's browser from GDELT, and preview images load from each publisher, so those sites see the visitor's IP address, as with any embedded image. No referrer is sent with images, nothing is stored, and no cookies are set by Spillover.
 
 Why: events are shared inputs. One filing can trigger several claims, and readers should see them side by side.
 

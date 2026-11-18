@@ -47,7 +47,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const concept = CONCEPT[key];
   if (concept) {
     return (
-      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center rounded-full bg-surface-alt text-accent">
+      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center rounded-full bg-surface-alt text-fg">
         <Icon name={concept} size={Math.round(size * 0.5)} />
       </span>
     );

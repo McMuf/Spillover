@@ -1,4 +1,4 @@
-/** Picks out names in a headline in the accent color, the way news sites highlight who a story is about. */
+/** Marks the names in a headline (who and which market) without colouring them: the headline stays one colour. */
 export function Highlight({ text, terms }: { text: string; terms: string[] }) {
   const usable = terms.filter((t) => t.trim().length > 1).sort((a, b) => b.length - a.length);
   if (usable.length === 0) return <>{text}</>;
@@ -9,7 +9,7 @@ export function Highlight({ text, terms }: { text: string; terms: string[] }) {
     <>
       {parts.map((p, i) =>
         i % 2 === 1 ? (
-          <span key={i} className="text-accent">
+          <span key={i} className="text-fg">
             {p}
           </span>
         ) : (

@@ -1054,6 +1054,17 @@
           "title": "Headline Id",
           "type": "string"
         },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Image"
+        },
         "seen_at": {
           "format": "date-time",
           "title": "Seen At",
@@ -1074,6 +1085,7 @@
         "url",
         "domain",
         "seen_at",
+        "image",
         "event_type",
         "entities",
         "confidence"

@@ -12,7 +12,7 @@ describe("area chart", () => {
     expect(nums.every((n) => n >= 0 && n <= 100)).toBe(true);
   });
 
-  it("is decoration in one accent color, with no gradient", () => {
+  it("is decoration with no gradient, drawn as a line with a live dot", () => {
     const { container } = render(<AreaChart values={[1, 2, 3]} markIndex={1} />);
     expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
     expect(container.querySelector("linearGradient, radialGradient")).toBeNull();

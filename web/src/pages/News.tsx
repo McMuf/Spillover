@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Logo } from "../components/Logo";
 import { Ready } from "../components/Ready";
+import { NewsImage } from "../components/NewsImage";
 import { UpcomingStrip } from "../components/UpcomingStrip";
 import { ActionLink, Segmented, Tag, TickerChip } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { claimsFor, ORIGIN_TAG, storySentence, storyTitle, type Origin, type Story } from "../lib/news";
+import { useLiveNews, type LiveNews } from "../lib/liveNews";
 import { eventLabel } from "../lib/plain";
 
 type Filter = "all" | Origin;
@@ -54,48 +56,73 @@ function HeadlineLink({ h, className = "" }: { h: Headline; className?: string }
   );
 }
 
-function Headlines({ site }: { site: SiteData }) {
-  const now = useMemo(() => Date.now(), []);
-  const testable = site.headlines.filter((h) => h.event_type !== "NONE").length;
-  // The lead is the newest headline a claim could be tested on, else simply the newest.
-  const lead = site.headlines.find((h) => h.event_type !== "NONE") ?? site.headlines[0];
-  const rest = site.headlines.filter((h) => h !== lead);
+function Meta({ h, now }: { h: Headline; now: number }) {
+  return (
+    <p className="mt-1 text-xs text-muted">
+      {h.domain.replace(/^www\./, "")} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
+    </p>
+  );
+}
+
+function Headlines({ live }: { live: LiveNews }) {
+  const now = live.updatedAt ?? Date.now();
+  const list = live.headlines;
+  const testable = list.filter((h) => h.event_type !== "NONE").length;
+  // The lead is the newest headline with a picture that a claim could be tested on, else the newest
+  // with a picture, else simply the newest.
+  const lead = list.find((h) => h.event_type !== "NONE" && h.image) ?? list.find((h) => h.image) ?? list[0];
+  const rest = list.filter((h) => h !== lead);
   const cut = Math.ceil(rest.length * 0.6);
-  const [list, side] = [rest.slice(0, cut), rest.slice(cut)];
+  const [main, side] = [rest.slice(0, cut), rest.slice(cut)];
   return (
     <div>
       <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted">
-        The latest market news from outlets worldwide, refreshed every time the site rebuilds. A headline marked{" "}
-        <span className="font-semibold text-fg">testable</span> matches a kind of event that claims can be tested on
-        ({testable} of {site.headlines.length} right now). Tags come from a free automatic labeler and can be wrong;{" "}
+        <span className="mr-2 inline-flex items-center gap-1.5 font-semibold text-fg">
+          <span className="relative inline-block h-2 w-2">
+            {live.source === "live" && <span className="live-halo absolute inset-0 rounded-full bg-positive" />}
+            <span className={`absolute inset-0 rounded-full ${live.source === "live" ? "bg-positive" : "bg-muted"}`} />
+          </span>
+          {live.source === "live" ? "Live" : "From the last build"}
+        </span>
+        Market news from outlets worldwide{live.source === "live" ? ", refreshed every few minutes while this page is open" : ""}. Pictures load from
+        each publisher. A headline marked <span className="font-semibold text-fg">testable</span> matches a kind of event that claims can be tested on (
+        {testable} of {list.length} right now). Tags come from a free automatic labeler and can be wrong;{" "}
         <Link to="/label" className="text-accent underline underline-offset-2">
           help check them
         </Link>
         .
       </p>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0">
           {lead && (
-            <article className="border-b border-line pb-6">
+            <article className={`border-b border-line pb-6 ${live.fresh.has(lead.headline_id) ? "arrive" : ""}`}>
+              {lead.image && (
+                <a href={lead.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true">
+                  <NewsImage src={lead.image} domain={lead.domain} className="mb-4 aspect-[2/1] max-h-[380px] w-full rounded-2xl" />
+                </a>
+              )}
               <h2 className="text-[26px] font-extrabold leading-tight md:text-[30px]">
                 <HeadlineLink h={lead} />
               </h2>
-              <p className="mt-2 text-sm text-muted">
-                {lead.domain} · <time dateTime={lead.seen_at}>{ago(lead.seen_at, now)}</time>
-              </p>
+              <Meta h={lead} now={now} />
               <Testable h={lead} />
             </article>
           )}
           <ul>
-            {list.map((h) => (
-              <li key={h.headline_id} className="border-b border-line py-4">
-                <h3 className="text-[17px] font-bold leading-snug">
-                  <HeadlineLink h={h} />
-                </h3>
-                <p className="mt-1 text-xs text-muted">
-                  {h.domain} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
-                </p>
-                <Testable h={h} />
+            {main.map((h) => (
+              <li key={h.headline_id} className={`flex gap-4 border-b border-line py-4 ${live.fresh.has(h.headline_id) ? "arrive" : ""}`}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[17px] font-bold leading-snug">
+                    <HeadlineLink h={h} />
+                  </h3>
+                  <Meta h={h} now={now} />
+                  <Testable h={h} />
+                </div>
+                {h.image && (
+                  <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
+                    <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 rounded-xl md:h-24 md:w-36" />
+                  </a>
+                )}
               </li>
             ))}
           </ul>
@@ -105,12 +132,17 @@ function Headlines({ site }: { site: SiteData }) {
             <h2 className="mb-1 text-[17px] font-bold">More news</h2>
             <ul>
               {side.map((h) => (
-                <li key={h.headline_id} className="border-b border-line py-3">
-                  <HeadlineLink h={h} className="text-sm font-semibold leading-snug" />
-                  <p className="mt-0.5 text-xs text-muted">
-                    {h.domain} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
-                  </p>
-                  <Testable h={h} />
+                <li key={h.headline_id} className={`flex gap-3 border-b border-line py-3 ${live.fresh.has(h.headline_id) ? "arrive" : ""}`}>
+                  <div className="min-w-0 flex-1">
+                    <HeadlineLink h={h} className="text-sm font-semibold leading-snug" />
+                    <Meta h={h} now={now} />
+                    <Testable h={h} />
+                  </div>
+                  {h.image && (
+                    <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
+                      <NewsImage src={h.image} domain={h.domain} className="h-14 w-20 rounded-lg" />
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -122,8 +154,9 @@ function Headlines({ site }: { site: SiteData }) {
         <a href="https://www.gdeltproject.org/" className="underline" rel="noopener noreferrer">
           GDELT Project
         </a>
-        . Spillover links to articles and never copies them. These headlines are shown only; they do not enter the record
-        until the labeler's measured accuracy on general news holds up.
+        . Spillover links to articles and never copies them; pictures are each article's own preview image, shown from the
+        publisher's site. These headlines are shown only; they do not enter the record until the labeler's measured
+        accuracy on general news holds up.
       </p>
     </div>
   );
@@ -237,7 +270,8 @@ function OnRecord({ site }: { site: SiteData }) {
 type View = "headlines" | "record";
 
 function News({ site }: { site: SiteData }) {
-  const [view, setView] = useState<View>(site.headlines.length > 0 ? "headlines" : "record");
+  const live = useLiveNews(site);
+  const [view, setView] = useState<View>("headlines");
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -247,17 +281,19 @@ function News({ site }: { site: SiteData }) {
           value={view}
           onChange={setView}
           options={[
-            { value: "headlines", label: `Latest headlines (${site.headlines.length})` },
+            { value: "headlines", label: `Latest headlines (${live.headlines.length})` },
             { value: "record", label: `On the record (${site.news.length})` },
           ]}
         />
       </div>
       <UpcomingStrip site={site} />
       {view === "headlines" ? (
-        site.headlines.length > 0 ? (
-          <Headlines site={site} />
+        live.headlines.length > 0 ? (
+          <Headlines live={live} />
         ) : (
-          <p className="text-muted">No live headlines in this build. They are fetched each time the site rebuilds.</p>
+          <p className="text-muted" role="status">
+            {live.checked ? "No headlines right now. They are fetched live while this page is open." : "Loading the latest headlines…"}
+          </p>
         )
       ) : (
         <OnRecord site={site} />

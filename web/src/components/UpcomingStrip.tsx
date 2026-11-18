@@ -24,18 +24,18 @@ function countdown(date: string): string | null {
 export function UpcomingStrip({ site }: { site: SiteData }) {
   if (site.upcoming.length === 0) return null;
   return (
-    <section aria-labelledby="upcoming-strip-h" className="mb-8 rounded-[20px] bg-surface">
-      <h2 id="upcoming-strip-h" className="px-5 pt-4 text-xs font-semibold uppercase tracking-wider text-muted">
+    <section aria-labelledby="upcoming-strip-h" className="mb-8">
+      <h2 id="upcoming-strip-h" className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
         Coming up
       </h2>
-      <ul className="no-scrollbar flex overflow-x-auto px-2 pb-3 pt-2">
-        {site.upcoming.slice(0, 8).map((s, i) => {
+      <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
+        {site.upcoming.slice(0, 8).map((s) => {
           const soon = countdown(s.date);
           return (
-            <li key={s.event_id} className={`w-[190px] shrink-0 px-3 py-1 ${i > 0 ? "border-l border-line" : ""}`}>
-              <Link to={`/events/${s.event_id}`} className="group block">
+            <li key={s.event_id} className="w-[180px] shrink-0">
+              <Link to={`/events/${s.event_id}`} className="group block rounded-2xl bg-surface px-4 py-3 hover:bg-surface-alt">
                 <span className="block text-xs text-muted">{categoryOf(s.event_type)}</span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-accent group-hover:underline">{SHORT[s.event_type] ?? storyTitle(s)}</span>
+                <span className="mt-0.5 block truncate text-sm font-semibold text-fg group-hover:underline">{SHORT[s.event_type] ?? storyTitle(s)}</span>
                 <span className="mt-0.5 block text-xs">
                   <time dateTime={s.date} className="text-fg">
                     {s.date}

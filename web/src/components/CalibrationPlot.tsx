@@ -35,8 +35,8 @@ export function CalibrationPlot({ bins }: { bins: CalibrationBin[] }) {
           const ci = b.hit_rate_ci;
           return (
             <g key={b.range[0]}>
-              {ci && <line x1={cx} x2={cx} y1={y(Math.max(0.5, ci[0]))} y2={y(Math.max(0.5, ci[1]))} stroke="var(--c-accent)" strokeWidth="2" />}
-              <circle cx={cx} cy={y(Math.max(0.5, b.hit_rate as number))} r={3 + Math.min(6, Math.sqrt(b.n))} fill="var(--c-accent)" />
+              {ci && <line x1={cx} x2={cx} y1={y(Math.max(0.5, ci[0]))} y2={y(Math.max(0.5, ci[1]))} stroke="var(--c-fg)" strokeWidth="2" />}
+              <circle cx={cx} cy={y(Math.max(0.5, b.hit_rate as number))} r={3 + Math.min(6, Math.sqrt(b.n))} fill="var(--c-fg)" />
             </g>
           );
         })}

@@ -1,6 +1,7 @@
 import { Discussion } from "../components/Discussion";
 import { Identicon } from "../components/Identicon";
 import { PersonLink } from "../components/PersonLink";
+import { Ticker } from "../components/Ticker";
 import { discussionTerm } from "../lib/community";
 import * as Tabs from "@radix-ui/react-tabs";
 import { lazy, Suspense, useState } from "react";
@@ -27,7 +28,7 @@ import { factorNames } from "../lib/paths";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
 
 // The charting library is large, so it loads only when the Evidence tab is opened.
-const TONE: Record<Direction, "up" | "down" | "accent"> = { up: "up", down: "down", flat: "accent" };
+const TONE: Record<Direction, "up" | "down" | "neutral"> = { up: "up", down: "down", flat: "neutral" };
 
 
 const EventWindowChart = lazy(() =>
@@ -92,7 +93,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
                 const ev = findEvent(e.event_id);
                 return (
                   <li key={e.event_id} className="flex gap-6 text-[15px]">
-                    <span className="w-24 shrink-0 text-sm font-semibold text-accent">{e.event_date}</span>
+                    <span className="w-24 shrink-0 text-sm font-semibold">{e.event_date}</span>
                     <Link to={`/events/${e.event_id}`} className="hover:underline">
                       {ev ? eventHeadline(ev) : e.event_id}
                     </Link>
@@ -236,7 +237,7 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
           {m.main && chart && <AreaChart values={chart.mean} markIndex={chart.days.indexOf(0)} height={170} tone={TONE[claimStat(c.measure, b?.mean).dir]} />}
           {m.main && (
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setTab("evidence")} className="rounded-full bg-primary py-2.5 font-bold text-on-primary hover:opacity-90">
+              <button type="button" onClick={() => setTab("evidence")} className="rounded-full bg-fg py-2.5 font-bold text-bg hover:opacity-90">
                 View evidence
               </button>
               <button type="button" onClick={() => setTab("sides")} className="rounded-full bg-surface-alt py-2.5 font-bold hover:bg-line">
@@ -360,7 +361,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
           </div>
           {mode === "chart" ? (
             <Suspense fallback={<p className="text-muted">Loading chart…</p>}>
-              <EventWindowChart chart={chart} />
+              <EventWindowChart chart={chart} tone={TONE[claimStat(item.claim.measure, b?.mean).dir]} />
             </Suspense>
           ) : (
             <div tabIndex={0} role="region" aria-label="Mean path by day (scrollable)" className={`${tableWrap} max-h-80`}>
@@ -470,7 +471,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
   return (
     <div>
       <div className="mb-6">
-        <BackButton to="/" label="Back to trending claims" />
+        <BackButton to="/" label="Back to the feed" />
       </div>
 
       <header className="mb-8 max-w-4xl">
@@ -531,8 +532,16 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             {b ? (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest estimate</p>
-                <p className={`mt-1 text-4xl font-extrabold tabular-nums ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).value}</p>
-                {claimStat(c.measure, b.mean).note && <p className="mt-1 text-sm font-semibold">{claimStat(c.measure, b.mean).note}</p>}
+                <p data-testid="claim-number" className={`mt-1 text-[40px] font-extrabold leading-none tabular-nums ${claimStat(c.measure, b.mean).cls}`}>
+                  <Ticker text={claimStat(c.measure, b.mean).value} />
+                </p>
+                {/* As on a quote: ▲ or ▼ for a move, ↕ for a swing size (either direction). */}
+                <p className={`mt-2 text-sm font-semibold ${claimStat(c.measure, b.mean).note ? "text-fg" : claimStat(c.measure, b.mean).cls}`}>
+                  <span aria-hidden="true">
+                    {claimStat(c.measure, b.mean).note ? "↕ " : claimStat(c.measure, b.mean).dir === "down" ? "▼ " : claimStat(c.measure, b.mean).dir === "up" ? "▲ " : ""}
+                  </span>
+                  {claimStat(c.measure, b.mean).note ?? "abnormal move"} <span className="font-normal text-muted">· past events</span>
+                </p>
                 <p className="mt-1 text-xs text-muted">
                   n={b.n_effective} · {intervalText(b.ci_lo, b.ci_hi)}
                   {b.data_synthetic && " · synthetic data"}
@@ -549,7 +558,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
               </div>
             </div>
             <div className="grid gap-2">
-              <button type="button" onClick={copy} className="flex items-center justify-center gap-2 rounded-full bg-primary py-2.5 font-bold text-on-primary hover:opacity-90">
+              <button type="button" onClick={copy} className="flex items-center justify-center gap-2 rounded-full bg-fg py-2.5 font-bold text-bg hover:opacity-90">
                 <Icon name="copy" size={16} />
                 {copied ? "Copied" : "Copy citation"}
               </button>

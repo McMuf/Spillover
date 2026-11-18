@@ -108,7 +108,7 @@ function ExploreBody({ site }: { site: SiteData }) {
                       <div className="flex items-center gap-3">
                         <Logo symbol={c.instrument.symbol} size={36} />
                         <div>
-                          <p className="font-semibold text-accent">{c.instrument.symbol}</p>
+                          <p className="font-bold">{c.instrument.symbol}</p>
                           <p className="text-sm text-muted">{instrumentName(c.instrument.symbol)}</p>
                         </div>
                       </div>

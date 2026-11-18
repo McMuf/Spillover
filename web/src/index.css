@@ -65,3 +65,72 @@ h3 {
     scroll-behavior: auto !important;
   }
 }
+
+/* The live dot at the end of a chart: a soft halo that pulses outward, like a streaming quote. */
+@keyframes live-halo {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  80%,
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+.live-halo {
+  animation: live-halo 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Rolling digits for numbers that change (see components/Ticker.tsx). */
+.ticker-digit {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: -0.12em;
+}
+.ticker-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A new item arriving in a live list slides in once. */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.arrive {
+  animation: arrive 500ms ease-out both;
+}
+
+/* A number that just changed flashes its direction colour, then settles. */
+@keyframes flash-up {
+  from {
+    background-color: color-mix(in srgb, var(--c-positive) 25%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes flash-down {
+  from {
+    background-color: color-mix(in srgb, var(--c-negative) 25%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.flash-up {
+  animation: flash-up 1.2s ease-out;
+}
+.flash-down {
+  animation: flash-down 1.2s ease-out;
+}

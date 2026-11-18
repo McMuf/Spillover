@@ -46,7 +46,7 @@ export function Histogram({ values, title }: { values: number[]; title: string }
             y={H - PAD - (b.count / max) * (H - 2 * PAD)}
             width={Math.max(1, sx(b.to) - sx(b.from) - 2)}
             height={(b.count / max) * (H - 2 * PAD)}
-            fill="var(--c-accent)"
+            fill="var(--c-muted)"
             opacity="0.75"
           />
         ))}

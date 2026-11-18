@@ -169,7 +169,7 @@ function LabelBody({ site }: { site: SiteData }) {
             type="button"
             onClick={download}
             disabled={added === 0}
-            className="rounded-full bg-primary px-5 py-2.5 font-bold text-on-primary hover:brightness-110 disabled:opacity-50"
+            className="rounded-full bg-fg px-5 py-2.5 font-bold text-bg hover:brightness-110 disabled:opacity-50"
           >
             Download gold.jsonl
           </button>

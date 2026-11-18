@@ -26,7 +26,7 @@ function ClaimCell({ site, id, placebo }: { site: SiteData; id: string; placebo:
       <Logo symbol={symbol} size={28} />
       <span className="min-w-0">
         <span className="block text-sm font-semibold">
-          <span className="text-accent">{symbol}</span>{" "}
+          <span className="font-bold">{symbol}</span>{" "}
           <span className="group-hover:underline">{shortHeadline(item)}</span>
         </span>
         <span className="block font-mono text-[11px] text-muted">

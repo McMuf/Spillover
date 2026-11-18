@@ -3,16 +3,17 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 // A Content-Security-Policy for the production build only (the dev server needs inline scripts
-// for hot reload). The site is static and runs only its own scripts. The one outside origin is
-// giscus.app, for discussion threads: its comment box is framed (frame-src) and the bundled widget
-// exchanges a sign-in session with it (connect-src). No outside script runs in this page.
+// for hot reload). The site is static and runs only its own scripts; no outside script runs in this
+// page. Outside origins: giscus.app for discussion threads (a framed comment box, and the bundled
+// widget's sign-in exchange), api.gdeltproject.org for live headlines, and news images from any https
+// site, because each headline's preview image loads from its own publisher.
 const CSP = [
   "default-src 'none'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'", // charts and React set inline style attributes
-  "img-src 'self' data:",
+  "img-src 'self' data: https:", // news preview images load live from each publisher's own site
   "font-src 'self'", // the Inter font is bundled and served from this site, never a CDN
-  "connect-src 'self' https://giscus.app",
+  "connect-src 'self' https://giscus.app https://api.gdeltproject.org",
   "frame-src https://giscus.app",
   "base-uri 'self'",
   "form-action 'self'",

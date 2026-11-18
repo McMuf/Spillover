@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+// Live headlines come from GDELT while a page is open; tests use the site data only, so they never
+// depend on today's news or on GDELT being reachable.
+test.beforeEach(async ({ page }) => {
+  await page.route("https://api.gdeltproject.org/**", (route) => route.abort());
+});
+
+
 const CLAIM = "clm_fomc_abs_move_spx_v1";
 
 test("the embed card has no site chrome and keeps the disclaimer and the backtest label", async ({ page }) => {

@@ -5,7 +5,7 @@ import type { CalibrationBin, ForwardRow } from "../generated/site";
 import { STATUSES } from "../lib/format";
 import { makeClaim, makeSite } from "../test-utils";
 import { CalibrationPlot } from "./CalibrationPlot";
-import { ClaimPost } from "./ClaimPost";
+import { FeedRow } from "./FeedRow";
 import { dayToTime, timeToDay } from "./EventWindowChart";
 import { EvidenceMeter } from "./EvidenceMeter";
 import { ForwardLogTable } from "./ForwardLogTable";
@@ -118,40 +118,47 @@ describe("CalibrationPlot", () => {
   });
 });
 
-describe("ClaimPost", () => {
-  it("leads with who registered it, a plain headline, the plain-English test, the market and status", () => {
+describe("FeedRow", () => {
+  it("shows a claim as a post: who, the plain headline, its number and market, with a link to its profile", () => {
     const item = makeClaim();
     render(
       <MemoryRouter>
-        <ClaimPost item={item} />
+        <ul>
+          <FeedRow item={{ kind: "claim", id: "claim-x", at: "2026-11-16T00:00:00Z", topic: "Markets", claim: item }} site={makeSite([item])} />
+        </ul>
       </MemoryRouter>,
     );
-    expect(screen.getByText("Draft")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /ABC lags the market/ })[0]).toHaveAttribute("href", "/claims/clm_demo_v1");
+    expect(screen.getByRole("link", { name: /ABC lags the market/ })).toHaveAttribute("href", "/claims/clm_demo_v1");
     expect(screen.getByRole("link", { name: "someone" })).toHaveAttribute("href", "/people/someone");
-    expect(screen.getByText(/we check whether ABC falls/)).toBeInTheDocument();
-    expect(screen.getAllByText("ABC").length).toBeGreaterThan(0);
+    expect(screen.getByText("Claim")).toBeInTheDocument();
+    // The demo backtest is −1.23%: in red, with its minus sign, so colour is never the only cue.
+    expect(screen.getAllByText("−1.23%")[0]!.closest("span.font-bold")?.className).toContain("text-negative");
   });
 
-  it("colors a move by direction, words a swing size neutrally, and uses no gradients", () => {
+  it("links a headline out safely and shows its picture from the publisher", () => {
     const { container } = render(
       <MemoryRouter>
-        <ClaimPost item={makeClaim()} />
+        <ul>
+          <FeedRow
+            item={{
+              kind: "headline",
+              id: "h",
+              at: "2026-11-18T01:00:00Z",
+              topic: "Headlines",
+              headline: { headline_id: "g1", title: "Nvidia beats", url: "https://x.example/a", domain: "x.example", seen_at: "2026-11-18T01:00:00Z", image: "https://x.example/og.jpg", event_type: "NONE", entities: [], confidence: "low" },
+            }}
+            site={makeSite()}
+          />
+        </ul>
       </MemoryRouter>,
     );
+    const link = screen.getByRole("link", { name: "Nvidia beats" });
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    const img = container.querySelector("img")!;
+    expect(img.getAttribute("src")).toBe("https://x.example/og.jpg");
+    expect(img.getAttribute("referrerpolicy")).toBe("no-referrer");
+    expect(img.getAttribute("loading")).toBe("lazy");
     expect(container.innerHTML).not.toMatch(/gradient/);
-    // The demo backtest is −1.23%: shown in red, with its minus sign, so color is never the only cue.
-    expect(screen.getByText("−1.23").closest("p")?.className).toContain("text-negative");
-
-    const swing = makeClaim("clm_swing_v1");
-    swing.claim.measure = "abs_excess_return";
-    render(
-      <MemoryRouter>
-        <ClaimPost item={swing} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByText("smaller swing than usual")).toBeInTheDocument();
-    expect(screen.getByText("1.23").closest("p")?.className).not.toMatch(/text-(positive|negative)/);
   });
 });
 

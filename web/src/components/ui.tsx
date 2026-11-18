@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
 import { Logo } from "./Logo";
+import { Ticker } from "./Ticker";
 import type { Direction } from "../lib/format";
 
 /** A flat panel with a heading and an optional freshness stamp. No border: the fill separates it. */
@@ -21,7 +22,7 @@ export function Card({
 }) {
   const headingId = id ?? `card-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
-    <section aria-labelledby={headingId} className="rounded-[20px] bg-surface p-5 md:p-6">
+    <section aria-labelledby={headingId} className="border-t border-line pt-6">
       {kicker && <Kicker icon={kicker.icon}>{kicker.label}</Kicker>}
       <div className="mb-4 flex items-start justify-between gap-3">
         <h2 id={headingId} className="text-xl font-bold leading-tight">
@@ -84,28 +85,26 @@ export function OutlineTag({ children }: { children: ReactNode }) {
   );
 }
 
-/** A ticker pill: logo, symbol, an optional neutral number, and an arrow when it links somewhere. */
+/**
+ * A market pill: logo, symbol, an optional number, and an arrow for its direction (green up, red down,
+ * grey when direction does not apply). Filled and rounded because it is something you can tap.
+ */
 export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string; value?: string; to?: string; dir?: Direction }) {
+  const tone = { up: "text-positive", down: "text-negative", flat: "text-muted" }[dir];
   const body = (
     <>
-      <Logo symbol={symbol} size={18} />
-      <span className="font-semibold text-accent">{symbol}</span>
-      {value && <span className={`font-medium ${{ up: "text-positive", down: "text-negative", flat: "text-fg" }[dir]}`}>{value}</span>}
-      {to && (
-        <>
-          <span className="text-muted">
-            <Icon name="external" size={13} />
-          </span>
-          <span className="sr-only"> (open claim)</span>
-        </>
-      )}
+      <Logo symbol={symbol} size={22} />
+      <span className="font-semibold text-fg">{symbol}</span>
+      {value && <span className={`font-medium ${dir === "flat" ? "text-fg" : tone}`}>{value}</span>}
+      <span className={tone}>
+        <Icon name={dir === "down" ? "arrowDownRight" : "arrowUpRight"} size={14} />
+      </span>
+      {to && <span className="sr-only"> (open claim)</span>}
     </>
   );
-  // Like the ticker pills under a news story: a hairline outline, the symbol in blue and the number
-  // in green or red only when it is a move. No fill, so a row of them stays quiet.
-  const cls = "inline-flex items-center gap-1.5 rounded-full border border-line py-0.5 pl-0.5 pr-2.5 text-xs";
+  const cls = "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-alt py-1 pl-1 pr-3 text-[13px]";
   return to ? (
-    <Link to={to} className={`${cls} relative z-10 hover:border-muted`}>
+    <Link to={to} className={`${cls} relative z-10 hover:bg-line`}>
       {body}
     </Link>
   ) : (
@@ -134,7 +133,7 @@ export function PillButton({
       aria-label={label}
       onClick={onClick}
       className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ${
-        active ? "bg-surface-alt text-fg" : "text-muted hover:bg-surface hover:text-fg"
+        active ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"
       }`}
     >
       {icon && <Icon name={icon} size={14} />}
@@ -156,14 +155,14 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex gap-0.5 rounded-xl bg-surface p-1">
+    <div role="group" aria-label={label} className="inline-flex gap-2">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold ${value === o.value ? "bg-surface-alt text-fg" : "text-muted hover:text-fg"}`}
+          className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${value === o.value ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`}
         >
           {o.label}
         </button>
@@ -196,7 +195,7 @@ export function BackButton({ to, label = "Back" }: { to: string; label?: string 
 }
 
 export const TAB_CLASS =
-  "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-[17px] font-semibold text-muted hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg";
+  "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-[17px] font-semibold text-muted hover:text-fg data-[state=active]:border-fg data-[state=active]:text-fg";
 
 /** A call to action. Primary is a solid white button with an arrow; secondary is an outlined pill. */
 export function ActionLink({
@@ -230,7 +229,9 @@ export function StatRow({ items, label }: { items: { value: string; label: strin
         // dt before dd for screen readers; shown number-first. Hairline dividers once it is one row.
         <div key={it.label} className={`flex flex-row-reverse items-baseline justify-end gap-1.5 ${i > 0 ? "sm:ml-4 sm:border-l sm:border-line sm:pl-4" : ""}`}>
           <dt className="text-muted">{it.label}</dt>
-          <dd className="font-bold text-fg">{it.value}</dd>
+          <dd className="font-bold text-fg">
+            <Ticker text={it.value} />
+          </dd>
         </div>
       ))}
     </dl>

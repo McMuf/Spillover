@@ -18,7 +18,7 @@ export function EvidenceMeter({ value, max, label }: { value: number; max: numbe
         aria-valuetext={`${value} of ${max}`}
         className="h-2 overflow-hidden rounded-full bg-surface-alt"
       >
-        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-fg" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

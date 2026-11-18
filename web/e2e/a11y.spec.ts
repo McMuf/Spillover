@@ -1,6 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+// Live headlines come from GDELT while a page is open; tests use the site data only, so they never
+// depend on today's news or on GDELT being reachable.
+test.beforeEach(async ({ page }) => {
+  await page.route("https://api.gdeltproject.org/**", (route) => route.abort());
+});
+
+
 // Automated WCAG 2.x A/AA audit of every page, (the app is dark only). Automated checks catch roughly a
 // third of accessibility problems, so this is a floor, not a substitute for manual review.
 const PAGES = [

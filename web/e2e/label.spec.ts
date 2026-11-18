@@ -2,6 +2,13 @@ import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+// Live headlines come from GDELT while a page is open; tests use the site data only, so they never
+// depend on today's news or on GDELT being reachable.
+test.beforeEach(async ({ page }) => {
+  await page.route("https://api.gdeltproject.org/**", (route) => route.abort());
+});
+
+
 const HEADLINES = [
   { headline_id: "h1", title: "SEC charges Coinbase with operating an unregistered exchange", source: "sec-press", url: "https://www.sec.gov/x", published_at: "2026-11-16T12:00:00Z" },
   { headline_id: "h2", title: "Federal Reserve announces revised meeting schedule", source: "fed-press", url: "https://www.federalreserve.gov/x", published_at: "2026-11-15T12:00:00Z" },

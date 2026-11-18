@@ -69,7 +69,7 @@ function Implications({ story, site }: { story: Story; site: SiteData }) {
         </p>
         <Link
           to={`/submit?eventType=${encodeURIComponent(story.event_type)}`}
-          className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary"
+          className="mt-4 inline-block rounded-full bg-fg px-5 py-2 text-sm font-semibold text-bg"
         >
           Write a claim about events like this
         </Link>

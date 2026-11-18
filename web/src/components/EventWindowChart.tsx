@@ -1,4 +1,5 @@
-import { ColorType, LineSeries, LineStyle, createChart, type UTCTimestamp } from "lightweight-charts";
+import { ColorType, createChart, LastPriceAnimationMode, LineSeries, LineStyle } from "lightweight-charts";
+import type { UTCTimestamp } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
 import { color } from "../design/tokens";
 import type { Chart } from "../generated/site";
@@ -28,7 +29,7 @@ interface Overlay {
  * the event (day 0); the shaded bands are the estimation window and the event window.
  * A table of the same numbers is always one tab away on the claim page.
  */
-export function EventWindowChart({ chart }: { chart: Chart }) {
+export function EventWindowChart({ chart, tone = "neutral" }: { chart: Chart; tone?: "up" | "down" | "neutral" }) {
   const ref = useRef<HTMLDivElement>(null);
   const [overlay, setOverlay] = useState<Overlay | null>(null);
 
@@ -41,10 +42,10 @@ export function EventWindowChart({ chart }: { chart: Chart }) {
       autoSize: true,
       height: 280,
       layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: c.muted, fontFamily: "inherit" },
-      grid: { vertLines: { color: c.line }, horzLines: { color: c.line } },
-      rightPriceScale: { borderColor: c.line },
+      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      rightPriceScale: { borderVisible: false },
       timeScale: {
-        borderColor: c.line,
+        borderVisible: false,
         tickMarkFormatter: (t: number) => String(timeToDay(t, first)),
       },
       localization: { timeFormatter: (t: number) => `day ${timeToDay(t, first)}` },
@@ -52,22 +53,26 @@ export function EventWindowChart({ chart }: { chart: Chart }) {
       handleScale: false,
     });
 
-    const line = (values: number[], opts: { width: 1 | 2; dashed?: boolean; alpha?: string }) => {
+    // Green when the effect is up, red when down, white when direction does not apply.
+    const stroke = { up: c.positive, down: c.negative, neutral: c.fg }[tone];
+    const line = (values: number[], opts: { width: 1 | 2; dashed?: boolean; alpha?: string; live?: boolean }) => {
       const s = api.addSeries(LineSeries, {
-        color: c.accent + (opts.alpha ?? ""),
+        color: (opts.dashed ? c.muted : stroke) + (opts.alpha ?? ""),
         lineWidth: opts.width,
         lineStyle: opts.dashed ? LineStyle.Dashed : LineStyle.Solid,
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: !opts.dashed,
+        // The pulsing dot on the latest point, as on a live quote.
+        lastPriceAnimation: opts.live ? LastPriceAnimationMode.Continuous : LastPriceAnimationMode.Disabled,
       });
       s.setData(chart.days.map((d, i) => ({ time: dayToTime(d, first), value: values[i] ?? 100 })));
       return s;
     };
     line(chart.hi, { width: 1, dashed: true, alpha: "99" });
     line(chart.lo, { width: 1, dashed: true, alpha: "99" });
-    const mean = line(chart.mean, { width: 2 });
-    mean.createPriceLine({ price: 100, color: c.muted, lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: "start" });
+    const mean = line(chart.mean, { width: 2, live: true });
+    mean.createPriceLine({ price: 100, color: c.muted, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: false, title: "start" });
     api.timeScale().fitContent();
 
     const place = () => {
@@ -88,7 +93,7 @@ export function EventWindowChart({ chart }: { chart: Chart }) {
       ro.disconnect();
       api.remove();
     };
-  }, [chart]);
+  }, [chart, tone]);
 
   const band = (from: number | null, to: number | null, cls: string, label: string) =>
     from !== null && to !== null ? (
@@ -108,7 +113,7 @@ export function EventWindowChart({ chart }: { chart: Chart }) {
         {overlay && (
           <>
             {band(overlay.estFrom, overlay.estTo, "bg-surface-alt/60", "estimation window")}
-            {band(overlay.windowFrom, overlay.windowTo, "bg-accent/15", "event window")}
+            {band(overlay.windowFrom, overlay.windowTo, "bg-fg/[0.06]", "event window")}
             {overlay.event !== null && (
               <div
                 className="pointer-events-none absolute top-0 h-[250px] border-l-2 border-dashed border-fg/70"

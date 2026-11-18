@@ -352,6 +352,7 @@ class LiveHeadline(_M):
     url: str
     domain: str
     seen_at: datetime
+    image: str | None  # the publisher's preview image link (https), loaded live by the browser
     event_type: str  # NONE when it fits no event type
     entities: list[str]
     confidence: Literal["high", "medium", "low"]
@@ -428,6 +429,7 @@ def label_headlines(
                 url=h.url,
                 domain=h.domain,
                 seen_at=h.seen_at,
+                image=h.image,
                 event_type=ex.event_type,
                 entities=ex.entities,
                 confidence=ex.confidence,

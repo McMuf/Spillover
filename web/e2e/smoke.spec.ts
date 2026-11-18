@@ -1,6 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+// Live headlines come from GDELT while a page is open; tests use the site data only, so they never
+// depend on today's news or on GDELT being reachable.
+test.beforeEach(async ({ page }) => {
+  await page.route("https://api.gdeltproject.org/**", (route) => route.abort());
+});
+
+
 test("loads the site, opens a claim and reads its chain", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -179,6 +186,6 @@ test("a swing-size claim reads as bigger or smaller than usual, never as a red o
   await page.goto("/#/claims/clm_fomc_abs_move_spx_v1");
   const summary = page.getByRole("complementary", { name: "Claim summary" });
   await expect(summary.getByText(/(bigger|smaller) swing than usual/)).toBeVisible();
-  const big = summary.locator("p.text-4xl");
+  const big = summary.getByTestId("claim-number");
   await expect(big).not.toHaveClass(/text-(positive|negative)/);
 });

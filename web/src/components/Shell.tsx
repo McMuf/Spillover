@@ -6,7 +6,7 @@ import { categoryOf } from "../lib/plain";
 import { Icon, type IconName } from "./Icon";
 
 const NAV: { to: string; label: string; end: boolean; icon: IconName }[] = [
-  { to: "/", label: "Trending", end: true, icon: "home" },
+  { to: "/", label: "Feed", end: true, icon: "home" },
   { to: "/explore", label: "Explore", end: false, icon: "explore" },
   { to: "/news", label: "News", end: false, icon: "news" },
   { to: "/scoreboard", label: "Scoreboard", end: false, icon: "scoreboard" },
@@ -116,7 +116,7 @@ export function Shell() {
                 end={n.end}
                 className={({ isActive }) =>
                   `flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 pb-2.5 pt-1 text-[15px] font-medium ${
-                    isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"
+                    isActive ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg"
                   }`
                 }
               >
@@ -154,7 +154,7 @@ export function Shell() {
                     >
                       {({ isActive }) => (
                         <>
-                          <span className={isActive ? "text-accent" : ""}>
+                          <span className={isActive ? "text-fg" : ""}>
                             <Icon name={n.icon} size={19} />
                           </span>
                           {n.label}

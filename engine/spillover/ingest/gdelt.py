@@ -49,6 +49,9 @@ class GdeltHeadline:
     url: str
     domain: str
     seen_at: datetime
+    # The article's own preview image on the publisher's site (its og:image), as a link. The site
+    # loads it from the publisher when someone views the page; Spillover never stores images.
+    image: str | None = None
 
 
 def doc_url(query: str = QUERY, timespan: str = "1d", max_records: int = MAX_RECORDS) -> str:
@@ -140,7 +143,9 @@ def parse_doc(text: str, keep: int = KEEP) -> list[GdeltHeadline]:
             continue
         seen.add(key)
         hid = "gdelt-" + hashlib.sha256(url.encode()).hexdigest()[:16]
-        out.append(GdeltHeadline(hid, title[:300], url, domain[:100], when))
+        image = str(a.get("socialimage", "")).strip()
+        safe_image = image if image.startswith("https://") and len(image) <= MAX_URL_CHARS else None
+        out.append(GdeltHeadline(hid, title[:300], url, domain[:100], when, safe_image))
         if len(out) >= keep:
             break
     return out
@@ -181,6 +186,7 @@ def save_cache(items: list[GdeltHeadline], path: Path, now: datetime) -> None:
             "url": h.url,
             "domain": h.domain,
             "seen_at": h.seen_at.isoformat(),
+            "image": h.image,
         }
         for h in items
     ]
@@ -203,6 +209,7 @@ def load_cache(path: Path, now: datetime) -> list[GdeltHeadline] | None:
                 str(r["url"]),
                 str(r["domain"]),
                 datetime.fromisoformat(r["seen_at"]),
+                r.get("image") if str(r.get("image") or "").startswith("https://") else None,
             )
             for r in body["headlines"]
             if str(r["url"]).startswith("https://")

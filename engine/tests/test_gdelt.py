@@ -255,3 +255,26 @@ def test_off_topic_spam_and_syndicated_copies_are_left_out() -> None:
         "Nvidia Exceeds Q3 Expectations Amid CEO Huang Exit",
         "China Expand Tariff Relief as Carney Meets Xi",
     ]
+
+
+def test_only_https_preview_images_are_kept_as_links() -> None:
+    body = json.dumps(
+        {
+            "articles": [
+                {
+                    **article("Stocks rally on rate hopes", "https://a.example/1"),
+                    "socialimage": "https://a.example/og.jpg",
+                },
+                {
+                    **article("Oil slides on supply news", "https://b.example/2"),
+                    "socialimage": "http://b.example/og.jpg",
+                },
+                {
+                    **article("Chipmaker earnings beat", "https://c.example/3"),
+                    "socialimage": "javascript:alert(1)",
+                },
+            ]
+        }
+    )
+    got = parse_doc(body)
+    assert [h.image for h in got] == ["https://a.example/og.jpg", None, None]

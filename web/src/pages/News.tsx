@@ -83,6 +83,27 @@ function News({ site }: { site: SiteData }) {
           <Segmented label="Show news from" value={filter} onChange={setFilter} options={options} />
         </div>
       )}
+      {site.upcoming.length > 0 && (
+        <section aria-labelledby="upcoming-h" className="mb-8 rounded-2xl bg-surface p-5">
+          <h2 id="upcoming-h" className="mb-3 text-[17px] font-bold">Coming up</h2>
+          <ul className="space-y-2 text-sm">
+            {site.upcoming.map((s) => (
+              <li key={s.event_id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <Link to={`/events/${s.event_id}`} className="hover:underline">
+                  {storyTitle(s)}
+                </Link>
+                <span className="text-xs text-muted">
+                  <time dateTime={s.date}>{s.date}</time>
+                  {s.claim_ids.length > 0 && ` · ${s.claim_ids.length} claim${s.claim_ids.length === 1 ? "" : "s"} waiting`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted">
+            Scheduled in advance. Predictions for these are frozen and timestamped before they happen.
+          </p>
+        </section>
+      )}
       {shown.length > 0 ? (
         <ul>
           {shown.map((s) => (

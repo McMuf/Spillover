@@ -213,5 +213,8 @@ def test_news_lists_recent_real_events_with_their_sources(
     acme = next(s for s in site.news if s.event_id == rec.event_id)
     assert acme.origin == "filings" and acme.claim_ids == []
     assert acme.sources[0].title == "Acme Air reports a cyberattack"
+    assert all(s.date <= market.as_of for s in site.news), "future dates are never news"
+    assert all(s.scheduled and s.date > market.as_of for s in site.upcoming)
+    assert [s.date for s in site.upcoming] == sorted(s.date for s in site.upcoming)
     fomc = [s for s in site.news if s.event_type == "FOMC_DECISION"]
     assert fomc and all(s.claim_ids for s in fomc), "calendar events link the claims they trigger"

@@ -1917,6 +1917,13 @@
       },
       "title": "Taxonomy",
       "type": "array"
+    },
+    "upcoming": {
+      "items": {
+        "$ref": "#/$defs/NewsStory"
+      },
+      "title": "Upcoming",
+      "type": "array"
     }
   },
   "required": [
@@ -1927,7 +1934,8 @@
     "scoreboard",
     "labeling",
     "taxonomy",
-    "news"
+    "news",
+    "upcoming"
   ],
   "title": "Spillover site data",
   "type": "object"

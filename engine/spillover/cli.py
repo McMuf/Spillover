@@ -220,9 +220,10 @@ def export_site(
     """Write the single typed JSON file the static website reads (generated, never committed)."""
     try:
         claims = [(load_claim(p), p.read_text(encoding="utf-8")) for p in claim_files(claims_dir)]
+        market = load_market_data(data)
         site = build_site_data(
             claims,
-            load_market_data(data),
+            market,
             predictions,
             outcomes,
             n_boot=n_boot,
@@ -231,6 +232,8 @@ def export_site(
             results_dir=RESULTS_DIR,
             labeling=build_labeling(),
             store=EVENTS_DIR,
+            # Real data: news runs to today. Synthetic fixtures end in the past, so use their end.
+            today=None if market.synthetic else datetime.now(UTC).date(),
         )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc

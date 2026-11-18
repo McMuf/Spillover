@@ -89,5 +89,6 @@ export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
       { name: "RANDOM_DATE", definition: "A random date.", origin: "control", past_events: 50 },
     ],
     news: [],
+    upcoming: [],
   };
 }

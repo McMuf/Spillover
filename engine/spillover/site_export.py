@@ -354,6 +354,7 @@ class SiteData(_M):
     labeling: Labeling
     taxonomy: list[TaxonomyEntry]
     news: list[NewsStory]
+    upcoming: list[NewsStory]  # the next scheduled events (claims already wait for them)
 
 
 def site_json_schema() -> dict[str, Any]:
@@ -383,14 +384,26 @@ def build_taxonomy(data: MarketData) -> list[TaxonomyEntry]:
     ]
 
 
+UPCOMING_MAX = 8
+
+
 def build_news(
-    data: MarketData, event_to_claims: dict[str, list[str]], store: Path | None
-) -> list[NewsStory]:
+    data: MarketData,
+    event_to_claims: dict[str, list[str]],
+    store: Path | None,
+    today: date | None = None,
+) -> tuple[list[NewsStory], list[NewsStory]]:
+    """(news, upcoming): what already happened, newest first, and the next scheduled events.
+
+    Scheduled dates are known months ahead (predictions are frozen before them), so anything after
+    ``today`` is "coming up", never news.
+    """
+    today = today or data.as_of
     origin: dict[str, Origin] = {t.name: t.origin for t in TAXONOMY}
     ev = data.events
     if ev.height == 0:
-        return []
-    cutoff = data.as_of - timedelta(days=NEWS_DAYS)
+        return [], []
+    cutoff = today - timedelta(days=NEWS_DAYS)
     recent = ev.filter(
         (pl.col("date") >= cutoff) & ~pl.col("event_id").str.starts_with(BACKTEST_ONLY_PREFIX)
     )
@@ -431,8 +444,13 @@ def build_news(
                 claim_ids=sorted(set(event_to_claims.get(event_id, []))),
             )
         )
-    stories.sort(key=lambda s: (s.date, s.event_id), reverse=True)
-    return stories[:NEWS_MAX]
+    past = sorted(
+        (s for s in stories if s.date <= today), key=lambda s: (s.date, s.event_id), reverse=True
+    )
+    ahead = sorted(
+        (s for s in stories if s.date > today and s.scheduled), key=lambda s: (s.date, s.event_id)
+    )
+    return past[:NEWS_MAX], ahead[:UPCOMING_MAX]
 
 
 def _event_types() -> list[EventTypeInfo]:
@@ -665,6 +683,7 @@ def build_site_data(
     results_dir: Path | None = None,
     labeling: Labeling | None = None,
     store: Path | None = None,
+    today: date | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
     board = Scoreboard.model_validate(
@@ -750,6 +769,7 @@ def build_site_data(
             )
         )
 
+    news, upcoming = build_news(data, event_to_claims, store, today)
     return SiteData(
         schema_version=1,
         meta=SiteMeta(
@@ -766,5 +786,6 @@ def build_site_data(
         labeling=labeling
         or Labeling(candidates=[], event_types=_event_types(), gold_rows=0, gold=[], accuracy=None),
         taxonomy=build_taxonomy(data),
-        news=build_news(data, event_to_claims, store),
+        news=news,
+        upcoming=upcoming,
     )

@@ -95,6 +95,32 @@ TAXONOMY: tuple[EventType, ...] = (
         "of its previous 60 trading days. Derived from prices, never from headlines.",
         extractable=False,
     ),
+    # From SEC 8-K filings: the filing's item number fixes the type (see ingest/filings.py). Dated
+    # by when SEC accepted the filing, which can be days after the news first broke.
+    EventType(
+        "CYBER_INCIDENT",
+        "A company discloses a material cybersecurity incident (SEC Form 8-K Item 1.05). From "
+        "filings, never from headlines.",
+        extractable=False,
+    ),
+    EventType(
+        "BANKRUPTCY",
+        "A company reports a bankruptcy or receivership (SEC Form 8-K Item 1.03). From filings, "
+        "never from headlines.",
+        extractable=False,
+    ),
+    EventType(
+        "RESTATEMENT",
+        "A company says its previously issued financial statements should no longer be relied on "
+        "(SEC Form 8-K Item 4.02). From filings, never from headlines.",
+        extractable=False,
+    ),
+    EventType(
+        "DELISTING_NOTICE",
+        "A company reports a delisting notice or a failure to meet a listing rule (SEC Form 8-K "
+        "Item 3.01). From filings, never from headlines.",
+        extractable=False,
+    ),
 )
 
 EXTRACTABLE: tuple[EventType, ...] = tuple(t for t in TAXONOMY if t.extractable)

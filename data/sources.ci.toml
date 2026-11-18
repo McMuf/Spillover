@@ -82,6 +82,11 @@ name = "sec-press"
 url = "https://www.sec.gov/news/pressreleases.rss"
 terms = "US federal government work, public domain; SEC asks automated clients to stay under 10 requests per second and to identify themselves"
 
+# Company events from SEC 8-K filings, typed by item number (no labeler). Runs only when the
+# SEC_CONTACT repository variable holds a contact email, which SEC requires of automated tools.
+[[filings]]
+terms = "US federal government work, public domain; SEC asks automated clients to declare a contact email and stay under 10 requests per second"
+
 [extractor]
 # "rules" is free: phrase rules plus the committed company list (labels/companies.json). Switch to
 # "claude" (and add ANTHROPIC_API_KEY plus credit) for the more capable, paid labeler.

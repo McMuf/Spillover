@@ -77,6 +77,16 @@ class FeedSpec(_Strict):
     terms: Annotated[str, Field(min_length=3)]
 
 
+class FilingsSpec(_Strict):
+    """SEC filings whose item numbers fix the event type (see spillover.ingest.filings)."""
+
+    name: Literal["sec-8k"] = "sec-8k"
+    form: Literal["8-K"] = "8-K"
+    # Pages of 100 filings read per run, newest first. 5 pages is about two days of 8-Ks.
+    max_pages: Annotated[int, Field(ge=1, le=20)] = 5
+    terms: Annotated[str, Field(min_length=3)]
+
+
 class ExtractorSettings(_Strict):
     # "rules": the free, deterministic labeler (phrase rules + a company list). "claude": the
     # Claude API (needs ANTHROPIC_API_KEY and credit). Both write the same validated answers.
@@ -94,6 +104,7 @@ class Config(_Strict):
     series: Annotated[list[SeriesSpec], Field(min_length=1)]
     events: list[EventsSpec] = Field(default_factory=lambda: list[EventsSpec]())
     headlines: list[FeedSpec] = Field(default_factory=lambda: list[FeedSpec]())
+    filings: list[FilingsSpec] = Field(default_factory=lambda: list[FilingsSpec](), max_length=1)
     extractor: ExtractorSettings = ExtractorSettings()
 
     @model_validator(mode="after")

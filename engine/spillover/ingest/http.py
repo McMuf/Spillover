@@ -53,10 +53,12 @@ class SafeRedirects(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def http_get(url: str, timeout: float = 30.0, opener: Any = None) -> str:
+def http_get(
+    url: str, timeout: float = 30.0, opener: Any = None, user_agent: str = USER_AGENT
+) -> str:
     if urllib.parse.urlsplit(url).scheme != "https":
         raise FetchError(f"GET {redact(url)} refused: only https is allowed")
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    request = urllib.request.Request(url, headers={"User-Agent": user_agent})
     opener = opener or urllib.request.build_opener(SafeRedirects)
     try:
         with opener.open(request, timeout=timeout) as response:
@@ -70,3 +72,26 @@ def http_get(url: str, timeout: float = 30.0, opener: Any = None) -> str:
     if len(body) > MAX_BYTES:
         raise FetchError(f"GET {redact(url)} refused: response larger than {MAX_BYTES // 2**20} MB")
     return body.decode("utf-8", errors="replace")
+
+
+_EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+")
+
+
+def sec_fetcher(contact: str) -> Fetcher:
+    """A fetcher that declares itself to SEC as it asks: tool name plus a contact email.
+
+    The contact comes from the environment (a repository variable), is checked to be a single
+    email address (so it cannot inject other headers), and is never printed.
+    """
+    contact = contact.strip()
+    if not _EMAIL.fullmatch(contact):
+        raise FetchError("SEC_CONTACT must be one email address, for example you@example.com")
+    agent = f"{USER_AGENT} {contact}"
+
+    def fetch(url: str) -> str:
+        host = urllib.parse.urlsplit(url).hostname or ""
+        if not same_site(host, "sec.gov"):
+            raise FetchError(f"the SEC fetcher only fetches from sec.gov, not {host}")
+        return http_get(url, user_agent=agent)
+
+    return fetch

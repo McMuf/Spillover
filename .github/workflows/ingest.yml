@@ -11,6 +11,8 @@ name: ingest
 #   4. Set the variable EXTRACT_HEADLINES to "true". With the default rule-based labeler
 #      (engine = "rules" in data/sources.ci.toml) it is free. With engine = "claude" it costs
 #      Claude API credit and needs the secret ANTHROPIC_API_KEY; the cap is max_new_per_run.
+#   5. Add the secret SEC_CONTACT (a contact email; SEC requires one from automated tools) to add
+#      company events from SEC 8-K filings. Free.
 #
 # It never runs pull-request code: scheduled and manual runs only, from main.
 on:
@@ -62,6 +64,15 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         # --strict: a missing key or a rejected account fails the run (red) instead of passing quietly.
         run: uv run spillover ingest-headlines --config data/sources.ci.toml --strict
+
+      - name: Add company events from SEC filings
+        # Does nothing until the SEC_CONTACT secret holds a contact email (SEC requires one from
+        # automated tools; a secret so it is masked in logs). The event type comes from the
+        # filing's item number, with no labeler.
+        if: ${{ !cancelled() && steps.verify.outcome == 'success' }}
+        env:
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
+        run: uv run spillover ingest-filings --config data/sources.ci.toml
 
       # The steps below still run if headline extraction failed (that failure already turns the
       # run red), so a headline problem never stops calendar and placebo predictions. They never

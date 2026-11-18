@@ -31,6 +31,7 @@ from spillover.eventstudy import (
 )
 from spillover.extractor import ExtractionError
 from spillover.gold import GOLD_FILE, GoldError, GoldRow, evaluate_gold, load_gold
+from spillover.ingest.filings import SOURCE as FILINGS_SOURCE
 from spillover.lanes import describe_changes, lane_files, load_challenge, load_replication
 from spillover.ledger import (
     RULES_VERSION,
@@ -364,7 +365,8 @@ def build_labeling(
     )
     for r in records:
         key = (r.source, r.title)
-        if key in done or key in seen:
+        # Filing events take their type from the filing's item number: there is nothing to label.
+        if r.source == FILINGS_SOURCE or key in done or key in seen:
             continue
         seen.add(key)
         candidates.append(

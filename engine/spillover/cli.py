@@ -31,10 +31,12 @@ from spillover.gold import (
     write_candidates,
 )
 from spillover.ingest.config import ConfigError, load_config
+from spillover.ingest.filings import ITEMS as FILING_ITEMS
+from spillover.ingest.filings import FilingsError, run_filings
 from spillover.ingest.fomc import FomcParseError
 from spillover.ingest.headline_run import HeadlineSummary, run_headlines
 from spillover.ingest.headlines import FeedError
-from spillover.ingest.http import FetchError, http_get, redact
+from spillover.ingest.http import FetchError, http_get, redact, sec_fetcher
 from spillover.ingest.prices import PriceError
 from spillover.ingest.store import IngestError, build_cache
 from spillover.lanes import (
@@ -614,6 +616,52 @@ def ingest_headlines(
     problem = headline_run_problem(summary)
     if strict and problem:
         raise _fail(problem)
+
+
+@app.command("ingest-filings")
+def ingest_filings(
+    config: Annotated[
+        Path, typer.Option("--config", help="Sources file (see data/sources.example.toml).")
+    ] = Path("data/sources.toml"),
+) -> None:
+    """Add company events from SEC 8-K filings (typed by item number) to events/.
+
+    Needs SEC_CONTACT: a contact email, which SEC requires automated tools to send.
+    """
+    import os
+
+    try:
+        cfg = load_config(config)
+        if not cfg.filings:
+            raise _fail(f"{config} lists no [[filings]] source")
+        spec = cfg.filings[0]
+        contact = os.environ.get("SEC_CONTACT", "")
+        if not contact.strip():
+            typer.echo(
+                "skipped: SEC_CONTACT is not set. SEC requires a contact email from automated "
+                "tools: add a repository secret named SEC_CONTACT (Settings > Secrets and "
+                "variables > Actions)."
+            )
+            return
+        summary = run_filings(sec_fetcher(contact), cfg.extractor.store, spec.form, spec.max_pages)
+    except (ConfigError, StoreError, FetchError, FilingsError) as exc:
+        raise _fail(redact(str(exc))) from exc
+    typer.echo(
+        f"{spec.name}: read {summary.filings} filing(s) in {summary.pages} page(s); "
+        f"{summary.matched} event(s) from items {', '.join(FILING_ITEMS)}; "
+        f"new records written {summary.written}"
+    )
+    if summary.no_ticker:
+        typer.echo(
+            f"  note: {len(summary.no_ticker)} matching filing(s) skipped (company has no listed "
+            f"ticker): {'; '.join(summary.no_ticker[:5])}"
+        )
+    if summary.reached_limit:
+        typer.echo(
+            f"  note: every page was full, so filings older than {summary.pages} page(s) were not "
+            "read this run (runs were probably skipped); raise max_pages to catch up",
+            err=True,
+        )
 
 
 def headline_run_problem(summary: HeadlineSummary) -> str | None:

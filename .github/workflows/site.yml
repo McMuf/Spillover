@@ -75,12 +75,21 @@ jobs:
           key: gdelt-headlines-${{ github.run_id }}
           restore-keys: gdelt-headlines-
 
+      # Real icons for news outlets, companies and contributors, kept between builds so only new
+      # names are looked up. A cache, not a commit: icons are never written to the repository.
+      - name: Restore the previous build's icons
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: data/icons
+          key: site-icons-${{ github.run_id }}
+          restore-keys: site-icons-
+
       # The workflow's own token, read-only, given to this one step (before any npm package runs).
       - name: Export the site data from the engine
         env:
           SPILLOVER_DATA: ${{ steps.cache.outcome == 'success' && 'data/cache' || 'fixtures/synthetic' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run spillover export-site --live-headlines --discussions
+        run: uv run spillover export-site --live-headlines --discussions --icons
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:

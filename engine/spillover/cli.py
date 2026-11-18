@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -45,6 +46,8 @@ from spillover.ingest.gkg import fetch_recent as fetch_gkg
 from spillover.ingest.headline_run import HeadlineSummary, run_headlines
 from spillover.ingest.headlines import FeedError
 from spillover.ingest.http import FetchError, http_get, http_get_bytes, redact, sec_fetcher
+from spillover.ingest.icons import ICON_DIR
+from spillover.ingest.icons import resolve as resolve_icons
 from spillover.ingest.prices import PriceError
 from spillover.ingest.store import IngestError, build_cache
 from spillover.lanes import (
@@ -69,12 +72,17 @@ from spillover.scoring import ScoreError, grade_all, verify_outcomes
 from spillover.site_export import (
     Community,
     LiveHeadline,
+    SiteData,
     build_labeling,
     build_site_data,
     community_from,
     headline_candidates,
     label_headlines,
+    outlet,
     site_json_schema,
+    site_people,
+    site_symbols,
+    with_icons,
 )
 from spillover.stamp import StampError, ots_binary, stamp_new, upgrade_pending
 
@@ -225,6 +233,29 @@ def schema(
             typer.echo(f"wrote {path}")
 
 
+def attach_icons(site: SiteData, public: Path) -> SiteData:
+    """Fetch (or reuse) real icons, copy them next to the site, and attach the manifest."""
+    found = resolve_icons(
+        domains={outlet(h.domain) for h in site.headlines},
+        symbols=site_symbols(site),
+        handles=site_people(site),
+        get_bytes=lambda url, limit: http_get_bytes(url, limit, timeout=20.0),
+        get_text=http_get,
+        now=datetime.now(UTC),
+    )
+    public.mkdir(parents=True, exist_ok=True)
+    for name in {*found.domains.values(), *found.symbols.values(), *found.people.values()}:
+        shutil.copyfile(ICON_DIR / name, public / name)
+    before = len(site.headlines)
+    site = with_icons(site, found.domains, found.symbols, found.people)
+    typer.echo(
+        f"icons: {len(found.domains)} outlet(s), {len(found.symbols)} company(ies), "
+        f"{len(found.people)} person(s); "
+        f"{before - len(site.headlines)} headline(s) without one left out"
+    )
+    return site
+
+
 @app.command("export-site")
 def export_site(
     claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
@@ -238,6 +269,13 @@ def export_site(
         typer.Option(
             "--live-headlines",
             help="Fetch the latest market headlines from GDELT for the News tab (display only).",
+        ),
+    ] = False,
+    icons: Annotated[
+        bool,
+        typer.Option(
+            "--icons",
+            help="Fetch real icons for outlets, companies and people, stored with the site.",
         ),
     ] = False,
     discussions: Annotated[
@@ -305,6 +343,8 @@ def export_site(
         )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc
+    if icons:
+        site = attach_icons(site, out.parent / "icons")
     out.mkdir(parents=True, exist_ok=True)
     (out / "site.json").write_text(site.model_dump_json(indent=2) + "\n", encoding="utf-8")
     typer.echo(

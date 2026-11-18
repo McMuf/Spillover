@@ -8,6 +8,7 @@ import { UpcomingStrip } from "../components/UpcomingStrip";
 import { ActionLink, Segmented, Tag, TickerChip } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { claimsFor, ORIGIN_TAG, storySentence, storyTitle, type Origin, type Story } from "../lib/news";
+import { SourceIcon } from "../components/SourceIcon";
 import { useLiveNews, type LiveNews } from "../lib/liveNews";
 import { eventLabel } from "../lib/plain";
 
@@ -58,8 +59,11 @@ function HeadlineLink({ h, className = "" }: { h: Headline; className?: string }
 
 function Meta({ h, now }: { h: Headline; now: number }) {
   return (
-    <p className="mt-1 text-xs text-muted">
-      {h.domain.replace(/^www\./, "")} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
+    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+      <SourceIcon domain={h.domain} size={16} />
+      <span className="min-w-0 truncate">
+        {h.domain.replace(/^www\./, "")} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
+      </span>
     </p>
   );
 }
@@ -206,13 +210,7 @@ function StoryItem({ story, site }: { story: Story; site: SiteData }) {
         </div>
         {/* Where a news site puts a thumbnail: who the story is about. */}
         <div aria-hidden="true" className="hidden shrink-0 sm:block">
-          {entity ? (
-            <Logo symbol={entity} size={56} />
-          ) : (
-            <span className="grid h-14 w-14 place-items-center rounded-full bg-surface-alt text-muted">
-              <Icon name="calendar" size={22} />
-            </span>
-          )}
+          {entity && <Logo symbol={entity} size={56} />}
         </div>
       </div>
     </li>

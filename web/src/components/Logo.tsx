@@ -1,10 +1,12 @@
 import { luminance } from "../design/tokens";
 import { Icon, type IconName } from "./Icon";
 import { brandFor } from "../lib/brands";
+import { symbolIcon, useIcons } from "../lib/icons";
 
 /**
  * The company mark for a symbol. Lookup order: a file in `src/assets/logos/SYMBOL.(svg|png|webp)`,
- * then the bundled brand set, then colored initials. Always bundled; never fetched at runtime.
+ * then the bundled brand set, then the company's site icon stored with the site at build time.
+ * Never a stand-in: a symbol with no real mark shows none. Never fetched from a third party.
  */
 const FILES = import.meta.glob<string>("../assets/logos/*.{svg,png,webp}", {
   eager: true,
@@ -30,10 +32,10 @@ const CONCEPT: Record<string, IconName> = {
   USD: "currency",
   USDJPY: "currency",
   WTI: "drop",
-  BLS: "calendar", // the Bureau of Labor Statistics appears as the source of release dates
 };
 
 export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
+  const icons = useIcons();
   const box = { width: size, height: size };
   const key = symbol.toUpperCase();
   const url = logoFor(key);
@@ -65,14 +67,15 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
       </span>
     );
   }
-  // No mark on file for this symbol: quiet initials. Add a file to src/assets/logos/ to replace them.
-  return (
-    <span
-      aria-hidden="true"
-      style={{ ...box, fontSize: Math.max(9, size * 0.3) }}
-      className="grid shrink-0 place-items-center rounded-full bg-surface-alt font-bold tracking-tight text-fg"
-    >
-      {symbol.replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase()}
-    </span>
-  );
+  // The company's own site icon, fetched when the site was built (see lib/icons.ts).
+  const site = symbolIcon(icons, key);
+  if (site) {
+    return (
+      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-line">
+        <img src={site} alt="" style={{ width: "62%", height: "62%" }} className="object-contain" loading="lazy" decoding="async" />
+      </span>
+    );
+  }
+  // No real mark anywhere: show nothing rather than a stand-in.
+  return null;
 }

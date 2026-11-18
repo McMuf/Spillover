@@ -286,6 +286,8 @@ The home page is a **feed** in the style of a markets app: a daily briefing writ
 
 **Privacy:** live headlines are requested by the visitor's browser from GDELT, and preview images load from each publisher, so those sites see the visitor's IP address, as with any embedded image. No referrer is sent with images, nothing is stored, and no cookies are set by Spillover.
 
+**Icons, never placeholders.** Every news outlet, company and contributor is shown with its real icon: the outlet's own site icon, the company's mark (bundled, or its official website's icon, found through Wikidata's public ticker data), and the contributor's GitHub profile picture. The site build fetches these (from Google's and DuckDuckGo's public favicon services, asked only for domain names) and stores them with the site, so visitors' browsers load icons from Spillover itself. Nothing ever draws a letter or stand-in: a headline whose outlet has no icon anywhere is left out, and a story without a picture shows none. A test fails if a component draws initials.
+
 Why: events are shared inputs. One filing can trigger several claims, and readers should see them side by side.
 
 ### Screen 4: Submit a claim

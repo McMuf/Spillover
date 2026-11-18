@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from
 import { useEffect, useRef } from "react";
 import type { SiteData } from "../generated/site";
 import { useSiteState } from "../lib/data";
-import { categoryOf } from "../lib/plain";
+import { categoryOf, TOPIC_ICON } from "../lib/plain";
 import { BrandMark } from "./BrandMark";
 import { Icon, type IconName } from "./Icon";
 
@@ -192,8 +192,8 @@ export function Shell() {
                         className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm text-muted hover:bg-surface hover:text-fg"
                       >
                         <span className="flex items-center gap-3">
-                          <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-accent-soft text-[10px] font-bold text-accent">
-                            {topic.charAt(0)}
+                          <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-accent-soft text-accent">
+                            <Icon name={TOPIC_ICON[topic] ?? "layers"} size={13} />
                           </span>
                           {topic}
                         </span>

@@ -1,3 +1,4 @@
+import type { IconName } from "../components/Icon";
 import type { SiteClaim, SiteEvent } from "../generated/site";
 import { instrumentName, NAME_BY_SYMBOL } from "./brands";
 import { intervalText, pct } from "./format";
@@ -23,6 +24,23 @@ const CATEGORY: Record<string, string> = {
   BANKRUPTCY: "Filings",
   RESTATEMENT: "Filings",
   RANDOM_DATE: "Control test",
+};
+
+/** Each topic's icon in menus (a real symbol for the topic, never its first letter). */
+export const TOPIC_ICON: Record<string, IconName> = {
+  Earnings: "trend",
+  "AI & Tech": "bolt",
+  Crypto: "currency",
+  Deals: "tag",
+  Regulation: "scale",
+  Leadership: "people",
+  "Fed & Macro": "calendar",
+  "Price moves": "arrowUpRight",
+  Filings: "news",
+  "Control test": "shield",
+  Markets: "scoreboard",
+  Headlines: "news",
+  Questions: "message",
 };
 
 export function categoryOf(eventType: string): string {

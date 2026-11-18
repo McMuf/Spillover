@@ -231,3 +231,16 @@ def test_the_site_reads_discussions_but_can_never_write_them() -> None:
     assert "--discussions" in export["run"]
     for name, job in wf["jobs"].items():
         assert job.get("permissions", {}).get("discussions", "read") == "read", name
+
+
+def test_the_site_build_stores_real_icons_and_keeps_them_between_builds() -> None:
+    wf = load(ROOT / ".github" / "workflows" / "site.yml")
+    build = wf["jobs"]["build"]["steps"]
+    export = next(st for st in build if "export-site" in st.get("run", ""))
+    assert "--icons" in export["run"]
+    caches = [st for st in build if "actions/cache" in str(st.get("uses", ""))]
+    assert any(st["with"]["path"] == "data/icons" for st in caches)
+    icons_at = next(
+        i for i, st in enumerate(build) if st in caches and st["with"]["path"] == "data/icons"
+    )
+    assert icons_at < build.index(export)

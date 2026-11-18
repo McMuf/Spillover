@@ -1965,6 +1965,40 @@
       "title": "SiteEvent",
       "type": "object"
     },
+    "SiteIcons": {
+      "additionalProperties": false,
+      "description": "Real icons stored with the site (paths relative to the page): outlets, companies, people.\n\nBuilt by spillover.ingest.icons; a name missing here has no icon, and the site never draws a\nstand-in letter for it.",
+      "properties": {
+        "domains": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Domains",
+          "type": "object"
+        },
+        "people": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "People",
+          "type": "object"
+        },
+        "symbols": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Symbols",
+          "type": "object"
+        }
+      },
+      "required": [
+        "domains",
+        "symbols",
+        "people"
+      ],
+      "title": "SiteIcons",
+      "type": "object"
+    },
     "SiteMeta": {
       "additionalProperties": false,
       "properties": {
@@ -2116,6 +2150,9 @@
       "title": "Headlines",
       "type": "array"
     },
+    "icons": {
+      "$ref": "#/$defs/SiteIcons"
+    },
     "labeling": {
       "$ref": "#/$defs/Labeling"
     },
@@ -2163,7 +2200,8 @@
     "news",
     "upcoming",
     "headlines",
-    "community"
+    "community",
+    "icons"
   ],
   "title": "Spillover site data",
   "type": "object"

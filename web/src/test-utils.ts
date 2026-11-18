@@ -92,5 +92,6 @@ export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
     upcoming: [],
     headlines: [],
     community: { ask_category: null, questions: [], threads: [], fetched_at: null },
+    icons: { domains: {}, symbols: {}, people: {} },
   };
 }

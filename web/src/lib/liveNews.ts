@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { SiteData } from "../generated/site";
+import { outletKey } from "./icons";
 
 export type Headline = SiteData["headlines"][number];
 
@@ -142,6 +143,8 @@ export function useLiveNews(site: SiteData, everyMs = LIVE_NEWS_MS): LiveNews {
   const [state, setState] = useState<LiveNews>({ headlines: site.headlines, source: "build", fresh: new Set(), updatedAt: null, checked: false });
   const known = useRef(site.headlines);
   known.current = site.headlines;
+  const iconsRef = useRef(site.icons.domains);
+  iconsRef.current = site.icons.domains;
   useEffect(() => {
     let alive = true;
     let ids: Set<string> | null = null;
@@ -153,7 +156,10 @@ export function useLiveNews(site: SiteData, everyMs = LIVE_NEWS_MS): LiveNews {
         setState((s) => (s.checked ? s : { ...s, checked: true }));
         return;
       }
-      const list = mergeHeadlines(live, known.current);
+      // Only outlets whose real icon is stored with the site: never a stand-in letter.
+      const icons = iconsRef.current;
+      const shown = Object.keys(icons).length ? live.filter((h) => outletKey(h.domain) in icons) : live;
+      const list = mergeHeadlines(shown, known.current);
       const fresh = new Set(ids ? list.filter((h) => !ids!.has(h.headline_id)).map((h) => h.headline_id) : []);
       ids = new Set(list.map((h) => h.headline_id));
       setState({ headlines: list, source: "live", fresh, updatedAt: Date.now(), checked: true });

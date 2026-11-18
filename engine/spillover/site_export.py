@@ -383,6 +383,21 @@ class CommunityThread(_M):
     comments: int
 
 
+class SiteIcons(_M):
+    """Real icons stored with the site (paths relative to the page): outlets, companies, people.
+
+    Built by spillover.ingest.icons; a name missing here has no icon, and the site never draws a
+    stand-in letter for it.
+    """
+
+    domains: dict[str, str]  # news outlet domain (without "www.") -> "icons/<file>"
+    symbols: dict[str, str]  # ticker -> "icons/<file>", for companies without a bundled mark
+    people: dict[str, str]  # GitHub handle -> "icons/<file>"
+
+
+EMPTY_ICONS = SiteIcons(domains={}, symbols={}, people={})
+
+
 class Community(_M):
     """Questions and discussion counts from GitHub Discussions, read when the site was built.
 
@@ -412,6 +427,7 @@ class SiteData(_M):
     upcoming: list[NewsStory]  # the next scheduled events (claims already wait for them)
     headlines: list[LiveHeadline]  # latest general news (GDELT), display only
     community: Community  # questions and discussion counts (GitHub Discussions), display only
+    icons: SiteIcons  # real icons stored with the site, so nothing shows a placeholder
 
 
 EMPTY_COMMUNITY = Community(ask_category=None, questions=[], threads=[], fetched_at=None)
@@ -914,4 +930,50 @@ def build_site_data(
         upcoming=upcoming,
         headlines=headlines or [],
         community=community or EMPTY_COMMUNITY,
+        icons=EMPTY_ICONS,
     )
+
+
+# --- icons ----------------------------------------------------------------------------------------
+
+
+def site_symbols(site: SiteData) -> set[str]:
+    """Every ticker or entity the site may draw a logo for."""
+    out: set[str] = set()
+    for c in site.claims:
+        out.add(c.claim.instrument.symbol)
+        out.update(c.claim.trigger_entities)
+    for e in site.events:
+        out.update(e.entities)
+    for s in [*site.news, *site.upcoming]:
+        out.update(s.entities)
+    for h in site.headlines:
+        out.update(h.entities)
+    out.discard("NONE")
+    return out
+
+
+def site_people(site: SiteData) -> set[str]:
+    out = {c.claim.registered_by for c in site.claims}
+    for c in site.claims:
+        out.update(ch.submitted_by for ch in c.challenges)
+        out.update(r.submitted_by for r in c.replications)
+    out.update(q.author for q in site.community.questions if q.author)
+    return out
+
+
+def outlet(domain: str) -> str:
+    return domain.lower().removeprefix("www.")
+
+
+def with_icons(
+    site: SiteData, domains: dict[str, str], symbols: dict[str, str], people: dict[str, str]
+) -> SiteData:
+    """Attach the icons, and leave out headlines whose outlet has no icon (no stand-in letters)."""
+    icons = SiteIcons(
+        domains={d: f"icons/{f}" for d, f in domains.items()},
+        symbols={s: f"icons/{f}" for s, f in symbols.items()},
+        people={h: f"icons/{f}" for h, f in people.items()},
+    )
+    kept = [h for h in site.headlines if outlet(h.domain) in icons.domains]
+    return site.model_copy(update={"icons": icons, "headlines": kept})

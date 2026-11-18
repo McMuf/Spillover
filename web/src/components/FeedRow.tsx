@@ -12,6 +12,7 @@ import { Icon } from "./Icon";
 import { Identicon } from "./Identicon";
 import { Logo } from "./Logo";
 import { NewsImage } from "./NewsImage";
+import { SourceIcon } from "./SourceIcon";
 import { PersonLink } from "./PersonLink";
 import { Ticker } from "./Ticker";
 import { TickerChip } from "./ui";
@@ -40,7 +41,7 @@ function Row({
   chips,
   fresh,
 }: {
-  avatar: ReactNode;
+  avatar: ReactNode | null;
   name: ReactNode;
   when: string;
   label: string;
@@ -50,7 +51,7 @@ function Row({
 }) {
   return (
     <li className={`flex gap-3 border-b border-line py-5 ${fresh ? "arrive" : ""}`}>
-      <div className="shrink-0">{avatar}</div>
+      {avatar && <div className="w-10 shrink-0">{avatar}</div>}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-3">
           <p className="min-w-0 truncate text-[15px]">
@@ -65,11 +66,6 @@ function Row({
   );
 }
 
-const Initials = ({ text }: { text: string }) => (
-  <span aria-hidden="true" className="grid h-10 w-10 place-items-center rounded-full bg-surface-alt text-sm font-bold uppercase">
-    {text}
-  </span>
-);
 
 function SeeMore({ children, more }: { children: ReactNode; more: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -170,7 +166,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
       const claims = s.claim_ids.map((id) => site.claims.find((c) => c.claim.id === id)).filter((c): c is NonNullable<typeof c> => !!c);
       return (
         <Row
-          avatar={entity && entity !== "BLS" ? <Logo symbol={entity} size={40} /> : <Initials text={entity ? entity.slice(0, 2) : "EV"} />}
+          avatar={entity ? <Logo symbol={entity} size={40} /> : null}
           name={entityName({ entities: s.entities, event_type: s.event_type })}
           when={ago(`${s.date}T21:00:00Z`)}
           label={ORIGIN_TAG[s.origin]}
@@ -190,7 +186,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
       if (!isOwnDiscussion(q.url)) return null;
       return (
         <Row
-          avatar={q.author ? <Identicon handle={q.author} size={40} /> : <Initials text="?" />}
+          avatar={q.author ? <Identicon handle={q.author} size={40} /> : null}
           name={q.author ?? "Someone"}
           when={ago(q.created_at)}
           label={q.answered ? "Answered" : "Question"}
@@ -226,7 +222,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
       const h = item.headline;
       return (
         <Row
-          avatar={<Initials text={h.domain.replace(/^www\./, "").charAt(0)} />}
+          avatar={<SourceIcon domain={h.domain} size={40} />}
           name={h.domain.replace(/^www\./, "")}
           when={ago(h.seen_at)}
           label={h.event_type === "NONE" ? "Headline" : "Testable"}

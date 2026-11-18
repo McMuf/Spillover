@@ -82,3 +82,17 @@ describe("live headlines", () => {
     expect(tidy("tech issues , experts say ( for now ) : 5 %")).toBe("tech issues, experts say (for now): 5%");
   });
 });
+
+describe("live news", () => {
+  it("adds live headlines to the build's hour instead of replacing it, newest first, no repeats", async () => {
+    const { mergeHeadlines } = await import("./liveNews");
+    const build = [H({ headline_id: "b1", url: "https://a.example/old", title: "Fed holds rates", seen_at: "2026-11-18T13:00:00Z" })];
+    const live = [
+      H({ headline_id: "l1", url: "https://a.example/new", title: "Stocks jump on Nvidia", seen_at: "2026-11-18T14:45:00Z" }),
+      H({ headline_id: "l2", url: "https://b.example/dup", title: "Fed holds rates", seen_at: "2026-11-18T14:45:00Z" }),
+    ];
+    const merged = mergeHeadlines(live, build);
+    expect(merged.map((h) => h.headline_id)).toEqual(["l1", "l2"]);
+    expect(mergeHeadlines([], build)).toEqual(build);
+  });
+});

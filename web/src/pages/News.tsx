@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Logo } from "../components/Logo";
@@ -67,10 +67,17 @@ function Meta({ h, now }: { h: Headline; now: number }) {
 function Headlines({ live }: { live: LiveNews }) {
   const now = live.updatedAt ?? Date.now();
   const list = live.headlines;
+  const newest = list.reduce((m, h) => (h.seen_at > m ? h.seen_at : m), "");
   const testable = list.filter((h) => h.event_type !== "NONE").length;
-  // The lead is the newest headline with a picture that a claim could be tested on, else the newest
-  // with a picture, else simply the newest.
-  const lead = list.find((h) => h.event_type !== "NONE" && h.image) ?? list.find((h) => h.image) ?? list[0];
+  // Pictures that failed to load; the lead moves on to a story whose picture works.
+  const [broken, setBroken] = useState<Set<string>>(() => new Set());
+  const markBroken = useCallback((src: string) => setBroken((b) => (b.has(src) ? b : new Set(b).add(src))), []);
+  // The lead is the newest headline with a working picture and a readable title, testable ones
+  // first; else any with a picture; else simply the newest.
+  const pictured = list.filter((h) => h.image && !broken.has(h.image));
+  const readable = pictured.filter((h) => h.title.length <= 110);
+  const lead =
+    readable.find((h) => h.event_type !== "NONE") ?? readable[0] ?? pictured[0] ?? list[0];
   const rest = list.filter((h) => h !== lead);
   const cut = Math.ceil(rest.length * 0.6);
   const [main, side] = [rest.slice(0, cut), rest.slice(cut)];
@@ -82,9 +89,10 @@ function Headlines({ live }: { live: LiveNews }) {
             {live.source === "live" && <span className="live-halo absolute inset-0 rounded-full bg-positive" />}
             <span className={`absolute inset-0 rounded-full ${live.source === "live" ? "bg-positive" : "bg-muted"}`} />
           </span>
-          {live.source === "live" ? "Live" : "From the last build"}
+          {live.source === "live" ? "Live" : newest ? `Updated ${ago(newest, Date.now())}` : "From the last build"}
         </span>
-        Market news from outlets worldwide{live.source === "live" ? ", refreshed every few minutes while this page is open" : ""}. Pictures load from
+        The last hour of market news from outlets worldwide, picked by topic, refreshed every hour
+        {live.source === "live" ? " and every few minutes while this page is open" : ""}. Pictures load from
         each publisher. A headline marked <span className="font-semibold text-fg">testable</span> matches a kind of event that claims can be tested on (
         {testable} of {list.length} right now). Tags come from a free automatic labeler and can be wrong;{" "}
         <Link to="/label" className="text-accent underline underline-offset-2">
@@ -98,7 +106,7 @@ function Headlines({ live }: { live: LiveNews }) {
             <article className={`border-b border-line pb-6 ${live.fresh.has(lead.headline_id) ? "arrive" : ""}`}>
               {lead.image && (
                 <a href={lead.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true">
-                  <NewsImage src={lead.image} domain={lead.domain} className="mb-4 aspect-[2/1] max-h-[380px] w-full rounded-2xl" />
+                  <NewsImage key={lead.image} src={lead.image} domain={lead.domain} onFail={markBroken} className="mb-4 aspect-[2/1] max-h-[380px] w-full rounded-2xl" />
                 </a>
               )}
               <h2 className="text-[26px] font-extrabold leading-tight md:text-[30px]">

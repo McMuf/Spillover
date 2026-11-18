@@ -11,8 +11,11 @@ on:
     branches: [main]
   # Daily refresh after the weekday scoring job. Commits the bot pushes (new predictions, grades)
   # do not trigger workflows, so without this the site would not show them.
+  # Hourly as well, so the News tab always carries the last hour of headlines (GitHub may run a
+  # scheduled job late; the browser also fetches live news between builds).
   schedule:
     - cron: "15 23 * * 1-5"
+    - cron: "40 * * * *"
   # Rebuild as soon as an ingest run finishes, so new headlines, predictions and proofs show up
   # without waiting for the evening rebuild. ingest only ever runs on main (schedule or manual),
   # never on pull requests, so this never builds untrusted code.

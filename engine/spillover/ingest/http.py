@@ -69,6 +69,26 @@ def _decompress(body: bytes, encoding: str, url: str) -> bytes:
     return out
 
 
+def http_get_bytes(url: str, max_bytes: int, timeout: float = 60.0) -> bytes:
+    """A binary download (a zip file) over https, refused past ``max_bytes``."""
+    if urllib.parse.urlsplit(url).scheme != "https":
+        raise FetchError(f"GET {redact(url)} refused: only https is allowed")
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    opener = urllib.request.build_opener(SafeRedirects)
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            body: bytes = response.read(max_bytes + 1)
+    except FetchError:
+        raise
+    except urllib.error.HTTPError as exc:
+        raise FetchError(f"GET {redact(url)} failed: HTTP {exc.code}") from None
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise FetchError(f"GET {redact(url)} failed: {redact(str(exc))}") from None
+    if len(body) > max_bytes:
+        raise FetchError(f"GET {redact(url)} refused: larger than {max_bytes // 2**20} MB")
+    return body
+
+
 def http_get(
     url: str,
     timeout: float = 30.0,

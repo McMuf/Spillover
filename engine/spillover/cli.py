@@ -41,9 +41,10 @@ from spillover.ingest.gdelt import GdeltError
 from spillover.ingest.gdelt import fetch_headlines as fetch_gdelt
 from spillover.ingest.gdelt import load_cache as load_gdelt_cache
 from spillover.ingest.gdelt import save_cache as save_gdelt_cache
+from spillover.ingest.gkg import fetch_recent as fetch_gkg
 from spillover.ingest.headline_run import HeadlineSummary, run_headlines
 from spillover.ingest.headlines import FeedError
-from spillover.ingest.http import FetchError, http_get, redact, sec_fetcher
+from spillover.ingest.http import FetchError, http_get, http_get_bytes, redact, sec_fetcher
 from spillover.ingest.prices import PriceError
 from spillover.ingest.store import IngestError, build_cache
 from spillover.lanes import (
@@ -261,7 +262,13 @@ def export_site(
     if live_headlines:
         now = datetime.now(UTC)
         try:
-            fetched = fetch_gdelt(http_get)
+            # GDELT's raw 15-minute files first: no rate limit, the whole last hour. Its search
+            # API second: GitHub's shared runner addresses are usually over its limit.
+            try:
+                fetched = fetch_gkg(http_get, http_get_bytes)
+            except (FetchError, GdeltError) as exc:
+                typer.echo(f"warning: GDELT files unavailable ({redact(str(exc))[:80]})", err=True)
+                fetched = fetch_gdelt(http_get)
             save_gdelt_cache(fetched, GDELT_CACHE, now)
             headlines = label_headlines(fetched)
         except (FetchError, GdeltError) as exc:

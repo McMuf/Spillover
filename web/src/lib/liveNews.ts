@@ -81,7 +81,7 @@ export function parseGdelt(body: unknown, known: Headline[]): Headline[] {
 
 export interface LiveNews {
   headlines: Headline[];
-  /** "live": fetched from GDELT just now; "build": GDELT was unreachable, so the build's copy. */
+  /** "live": GDELT answered this browser recently; "build": the copy from the last site build. */
   source: "live" | "build";
   /** Headlines that arrived since the page opened, for a one-time arrival animation. */
   fresh: Set<string>;
@@ -91,6 +91,52 @@ export interface LiveNews {
 }
 
 export const LIVE_NEWS_MS = 5 * 60 * 1000;
+const MAX_SHOWN = 80;
+
+/**
+ * Live headlines on top of the build's: the search API answers with only its latest 15 minutes, while
+ * the build carries the last hour, so the two are merged (same link = same story), newest first.
+ */
+export function mergeHeadlines(live: Headline[], build: Headline[]): Headline[] {
+  const byUrl = new Map<string, Headline>();
+  for (const h of [...live, ...build]) if (!byUrl.has(h.url)) byUrl.set(h.url, h);
+  const seen = new Set<string>();
+  const out: Headline[] = [];
+  for (const h of [...byUrl.values()].sort((a, b) => b.seen_at.localeCompare(a.seen_at) || a.url.localeCompare(b.url))) {
+    const k = key(h.title);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(h);
+  }
+  return out.slice(0, MAX_SHOWN);
+}
+
+/**
+ * One request for the whole tab, however many pages ask: GDELT refuses a second request from the
+ * same address within 5 seconds, so each page asking for itself made the second one fail.
+ */
+let shared: { at: number; promise: Promise<Headline[] | null> } | null = null;
+
+function fetchShared(known: Headline[], everyMs: number): Promise<Headline[] | null> {
+  const now = Date.now();
+  if (shared && now - shared.at < Math.min(everyMs, LIVE_NEWS_MS) - 1000) return shared.promise;
+  const promise = (async () => {
+    try {
+      const res = await fetch(gdeltUrl(), { referrerPolicy: "no-referrer" });
+      if (!res.ok) return null;
+      return parseGdelt(await res.json(), known);
+    } catch {
+      return null; // unreachable, rate-limited or blocked: keep what we have
+    }
+  })();
+  shared = { at: now, promise };
+  return promise;
+}
+
+/** For tests: forget the shared request. */
+export function resetLiveNews(): void {
+  shared = null;
+}
 
 export function useLiveNews(site: SiteData, everyMs = LIVE_NEWS_MS): LiveNews {
   const [state, setState] = useState<LiveNews>({ headlines: site.headlines, source: "build", fresh: new Set(), updatedAt: null, checked: false });
@@ -98,21 +144,19 @@ export function useLiveNews(site: SiteData, everyMs = LIVE_NEWS_MS): LiveNews {
   known.current = site.headlines;
   useEffect(() => {
     let alive = true;
-    let ids = new Set<string>();
+    let ids: Set<string> | null = null;
     const load = async () => {
       if (document.visibilityState !== "visible") return;
-      try {
-        const res = await fetch(gdeltUrl(), { referrerPolicy: "no-referrer" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const list = parseGdelt(await res.json(), known.current);
-        if (!alive || list.length === 0) return;
-        const fresh = new Set(ids.size ? list.filter((h) => !ids.has(h.headline_id)).map((h) => h.headline_id) : []);
-        ids = new Set(list.map((h) => h.headline_id));
-        setState({ headlines: list, source: "live", fresh, updatedAt: Date.now(), checked: true });
-      } catch {
-        // Unreachable, rate-limited or blocked: keep showing what we have (the build's copy at first).
-        if (alive) setState((s) => (s.checked ? s : { ...s, checked: true }));
+      const live = await fetchShared(known.current, everyMs);
+      if (!alive) return;
+      if (!live || live.length === 0) {
+        setState((s) => (s.checked ? s : { ...s, checked: true }));
+        return;
       }
+      const list = mergeHeadlines(live, known.current);
+      const fresh = new Set(ids ? list.filter((h) => !ids!.has(h.headline_id)).map((h) => h.headline_id) : []);
+      ids = new Set(list.map((h) => h.headline_id));
+      setState({ headlines: list, source: "live", fresh, updatedAt: Date.now(), checked: true });
     };
     void load();
     const id = window.setInterval(() => void load(), everyMs);

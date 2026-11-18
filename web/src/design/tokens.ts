@@ -1,23 +1,23 @@
 /**
- * Design tokens. Spillover has one light theme, tinted lavender, and no switcher.
+ * Design tokens. Spillover has one theme: dark plum, the lavender brand at dusk. No switcher.
  *
  * Components use semantic names (bg, fg, accent...) through CSS variables, never raw colors.
  * Green and red mean direction (up and down) and nothing else; the brand color (violet, with a
  * lavender-to-peach wash) carries identity: links, focus, active states, neutral charts, hero bands.
  */
 
-export type ThemeName = "light";
+export type ThemeName = "dark";
 
 export interface ColorTokens {
-  /** Page background: near-white with a lavender tint. */
+  /** Page background: a plum-black. */
   bg: string;
-  /** Panels and raised areas (lavender). */
+  /** Panels and raised areas. */
   surface: string;
   /** Inputs, chips and raised areas inside a panel. */
   surfaceAlt: string;
   /** Hairline dividers. */
   line: string;
-  /** Text: a plum-black ink. */
+  /** Text. */
   fg: string;
   muted: string;
   /** The brand color (violet): links, focus, active states, neutral chart lines, Proposed status. */
@@ -25,7 +25,7 @@ export interface ColorTokens {
   onAccent: string;
   /** A soft lavender fill for active items, with `accent` or `fg` text on it. */
   accentSoft: string;
-  /** Main call-to-action buttons: ink pills, as on most finance sites. */
+  /** Main call-to-action buttons: light pills on the dark page. */
   primary: string;
   onPrimary: string;
   /** Up: a market number above zero, or a graded hit. */
@@ -41,31 +41,34 @@ export interface ColorTokens {
 }
 
 /**
- * Lavender page, plum ink, violet brand. Green and red are darkened so numbers stay readable on the
- * light tints; every colored number also carries its sign (+ or −) or a word.
+ * Plum-black page, light ink, lilac brand. Green and red say direction; every colored number also
+ * carries its sign (+ or −) or a word.
  */
 export const color: Record<ThemeName, ColorTokens> = {
-  light: {
-    bg: "#fbf9fd",
-    surface: "#f3eef9",
-    surfaceAlt: "#e9e2f3",
-    line: "#e3dbee",
-    fg: "#1e1729",
-    muted: "#5e5470",
-    accent: "#5f3fc0",
-    onAccent: "#ffffff",
-    accentSoft: "#ebe3fb",
-    primary: "#1e1729",
-    onPrimary: "#ffffff",
-    positive: "#07703a",
-    negative: "#bd1d38",
-    noticeBg: "#fbe8dc",
-    noticeFg: "#5b3826",
-    washFrom: "#e4dcf4",
-    washVia: "#f1e3f1",
-    washTo: "#fbe6d8",
+  /** The same brand at dusk: plum-black page, lilac text accents, a dim violet-to-ember wash. */
+  dark: {
+    bg: "#110d18",
+    surface: "#1a1424",
+    surfaceAlt: "#241c32",
+    line: "#2f2641",
+    fg: "#f2edf9",
+    muted: "#a9a0bb",
+    accent: "#b69eff",
+    onAccent: "#170f2b",
+    accentSoft: "#2b2146",
+    primary: "#f2edf9",
+    onPrimary: "#110d18",
+    positive: "#3fd98a",
+    negative: "#ff7385",
+    noticeBg: "#2e1f22",
+    noticeFg: "#f2cdb9",
+    washFrom: "#251b3d",
+    washVia: "#2c1b35",
+    washTo: "#352124",
   },
 };
+
+export const THEMES: ThemeName[] = ["dark"];
 
 export const radius = { card: "16px", pill: "999px" };
 export const font = {

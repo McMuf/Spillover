@@ -37,7 +37,7 @@ export function EventWindowChart({ chart, tone = "neutral" }: { chart: Chart; to
     const el = ref.current;
     if (!el) return;
     const first = chart.days[0] ?? 0;
-    const c = color.light;
+    const c = color.dark;
     const api = createChart(el, {
       autoSize: true,
       height: 280,

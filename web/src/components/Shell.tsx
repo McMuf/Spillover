@@ -104,7 +104,8 @@ export function Shell() {
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
               <Icon name="submit" size={16} />
-              Submit a claim
+              <span className="sm:hidden">Submit</span>
+              <span className="hidden sm:inline">Submit a claim</span>
             </Link>
             <a href={`https://github.com/${repo}`} aria-label="Source on GitHub" className="grid h-9 w-9 place-items-center rounded-full border border-line text-muted hover:text-fg">
               <Icon name="source" size={16} />

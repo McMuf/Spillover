@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NODE_TYPES } from "./nodes";
 import { applyTheme } from "./theme";
-import { color, contrast, luminance, textPairs } from "./tokens";
+import { color, contrast, luminance, textPairs, THEMES } from "./tokens";
 
 describe("design tokens", () => {
   it("computes WCAG contrast correctly", () => {
@@ -12,22 +12,23 @@ describe("design tokens", () => {
 
   it("every text pair meets WCAG AA (4.5:1)", () => {
     for (const [fg, bg] of textPairs) {
-      const ratio = contrast(color.light[fg], color.light[bg]);
+      const ratio = contrast(color.dark[fg], color.dark[bg]);
       expect(ratio, `${fg} on ${bg} is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
-  it("has one light, lavender-tinted theme and no switcher", () => {
-    expect(Object.keys(color)).toEqual(["light"]);
+  it("is dark only: one plum theme and no switcher", () => {
+    expect(THEMES).toEqual(["dark"]);
+    expect(Object.keys(color)).toEqual(["dark"]);
   });
 
   it("writes tokens onto the root element as CSS variables", () => {
     const el = document.createElement("html");
     applyTheme(el);
-    expect(el.dataset.theme).toBe("light");
-    expect(el.style.getPropertyValue("--c-bg")).toBe(color.light.bg);
-    expect(el.style.getPropertyValue("--c-surface-alt")).toBe(color.light.surfaceAlt);
-    expect(el.style.getPropertyValue("--c-on-accent")).toBe(color.light.onAccent);
+    expect(el.dataset.theme).toBe("dark");
+    expect(el.style.getPropertyValue("--c-bg")).toBe(color.dark.bg);
+    expect(el.style.getPropertyValue("--c-surface-alt")).toBe(color.dark.surfaceAlt);
+    expect(el.style.getPropertyValue("--c-on-accent")).toBe(color.dark.onAccent);
   });
 });
 

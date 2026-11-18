@@ -24,13 +24,14 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  color-scheme: light;
+  color-scheme: dark;
+  --identicon-l: 68%;
 }
 
 body {
   margin: 0;
-  background: var(--c-bg, #fbf9fd);
-  color: var(--c-fg, #1e1729);
+  background: var(--c-bg, #110d18);
+  color: var(--c-fg, #f2edf9);
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   line-height: 1.45;

@@ -94,7 +94,7 @@ Spillover is a **market research tool for hobbyists, students and curious people
 - **[Prediction ledger](#6-prediction-ledger-and-timestamps):** Append-only, hashed, timestamped records of every forward call.
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
 - **[Claim chains and the news map](#8-claim-chains-and-the-news-map):** each claim drawn as a readable chain (who → what happens → which market), and a news-by-market map of every claim.
-- **[Web app](#9-web-app):** A calm, finance-app-style interface with one light, lavender-tinted theme, built in TypeScript.
+- **[Web app](#9-web-app):** A calm, finance-app-style interface with one dark plum theme, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
 - **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
 
@@ -220,7 +220,8 @@ The graph is the product's face, so it follows one rule: **if a shape could mean
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
 - **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
-- **One brand color, one wash.** The page is near-white with a lavender tint; text is a plum-black ink. The brand violet marks links, the focus ring, active items, the "Proposed" status and chart lines whose direction does not apply (a swing size). A lavender-to-peach wash (a dawn sky) sits behind the top of every page and in hero bands. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
+- **Dark plum, one theme.** The lavender brand at dusk: a plum-black page, light text and lilac accents. There is no light mode and no switcher.
+- **One brand color, one wash.** The brand violet marks links, the focus ring, active items, the "Proposed" status and chart lines whose direction does not apply (a swing size). A dim violet-to-ember wash (the dawn sky at dusk) sits behind the top of every page and in hero bands. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
 - **Pictures before paragraphs.** Explanations lead with a diagram (the event window to scale, a status as the interval that produces it) and keep text to a sentence or two.
 - **The mark.** Two peaks with a river spilling out of the valley between them, under the dawn wash (`web/src/components/BrandMark.tsx`); the browser-tab icon `web/public/favicon.svg` is generated from the same drawing, and a test keeps them identical.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
@@ -235,7 +236,7 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 ## Screens and user experience
 
 > [!NOTE]
-> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a lavender-tinted light page, a violet brand color, flat lists, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
+> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a plum-black page, a violet brand color, flat lists, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
 
 ### Design principles
 
@@ -328,7 +329,7 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 | `EvidenceMeter` | Events collected versus required |
 | `InstrumentChip` | Symbol plus venue, never one without the other |
 
-Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one light theme. Contributors improve the system by changing tokens and components, not by adding one-off styles.
+Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one dark theme, checked for WCAG AA contrast by a test. Contributors improve the system by changing tokens and components, not by adding one-off styles.
 
 ## Scoring rules
 
@@ -539,7 +540,7 @@ The first hand-labeled gold set (45 regulator press releases, labeled November 1
 **Why this design.**
 - *React plus TypeScript:* the most widely known combination among front-end contributors and the stack many fintech teams use, which lowers the barrier to contribute and makes the work legible to reviewers.
 - *Vite over a full framework:* the site is static, so server rendering, routing conventions and a Node server would be complexity without benefit.
-- *Tailwind with tokens:* fast to iterate and consistent; one light theme, defined once in `design/tokens.ts`.
+- *Tailwind with tokens:* fast to iterate and consistent; one dark theme, defined once in `design/tokens.ts`.
 - *Radix primitives:* accessibility (focus management, keyboard behavior, ARIA) is easy to get wrong and expensive to retrofit.
 - *Lightweight Charts:* small, fast, finance-native and Apache-2.0 licensed. Its license requires a **visible attribution link**, which the footer includes.
 - *No client-side secrets and no backend:* nothing to leak, nothing to scale. The planned [community layer](#community-planned) changes this only for social features, never for the record.

@@ -25,7 +25,7 @@ export function Identicon({ handle, size = 44 }: { handle: string; size?: number
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" focusable="false" className="shrink-0 rounded-full bg-surface-alt">
       {identiconCells(handle).flatMap((row, r) =>
         row.map((on, c) =>
-          on ? <rect key={`${r}-${c}`} x={cell * (c + 1)} y={cell * (r + 1)} width={cell - 1} height={cell - 1} rx="1.5" fill={`hsl(${hue} 55% 46%)`} /> : null,
+          on ? <rect key={`${r}-${c}`} x={cell * (c + 1)} y={cell * (r + 1)} width={cell - 1} height={cell - 1} rx="1.5" style={{ fill: `hsl(${hue} 55% var(--identicon-l, 46%))` }} /> : null,
         ),
       )}
     </svg>

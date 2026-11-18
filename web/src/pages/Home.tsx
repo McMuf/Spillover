@@ -147,8 +147,8 @@ function Rail({ site }: { site: SiteData }) {
         ))}
         {items.length === 0 && <li className="text-sm text-muted">No events yet.</li>}
       </ul>
-      <Link to="/feed" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
-        Open the full feed <Icon name="chevronRight" size={14} />
+      <Link to="/news" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
+        Open the news <Icon name="chevronRight" size={14} />
       </Link>
     </section>
   );

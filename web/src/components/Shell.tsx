@@ -6,7 +6,7 @@ import { Icon } from "./Icon";
 const NAV = [
   { to: "/", label: "Trending", end: true },
   { to: "/explore", label: "Explore", end: false },
-  { to: "/feed", label: "Feed", end: false },
+  { to: "/news", label: "News", end: false },
   { to: "/scoreboard", label: "Scoreboard", end: false },
   { to: "/method", label: "How it works", end: false },
 ];
@@ -39,7 +39,7 @@ export function Shell() {
   const site = state.phase === "ready" ? state.site : null;
   const repo = site?.meta.repo ?? "McMuf/Spillover";
   // Listing and claim pages use the full width; reading pages stay at a readable measure.
-  const wide = ["/", "/explore", "/feed"].includes(pathname) || pathname.startsWith("/claims/");
+  const wide = ["/", "/explore"].includes(pathname) || pathname.startsWith("/claims/");
 
   return (
     <div className="flex min-h-screen flex-col">

@@ -154,3 +154,64 @@ def test_the_claim_form_gets_every_event_type_with_its_history(
     fomc = market.events.filter(market.events["event_type"] == "FOMC_DECISION")
     assert by_name["FOMC_DECISION"].past_events == fomc["event_id"].n_unique()
     assert site.meta.priced_symbols == sorted(market.returns)
+
+
+def test_news_lists_recent_real_events_with_their_sources(
+    market: MarketData, tmp_path: Path
+) -> None:
+    from datetime import UTC, timedelta
+
+    from spillover.eventstore import append_records, make_record
+
+    # A headline event inside the window, stored the way ingest stores it.
+    when = datetime.combine(market.as_of - timedelta(days=3), datetime.min.time(), tzinfo=UTC)
+    rec = make_record(
+        headline_id="h1",
+        title="Acme Air reports a cyberattack",
+        url="https://example.com/acme",
+        source="test-feed",
+        published_at=when,
+        event_type="CYBER_INCIDENT",
+        entities=["ACAIR"],
+        confidence="high",
+        needs_review=False,
+        extractor_version="t",
+    )
+    append_records(tmp_path / "events", [rec])
+    import polars as pl
+
+    extra = pl.DataFrame(
+        {
+            "event_id": [rec.event_id, "rnd_bt_2025-01", "placebo_live"],
+            "event_type": ["CYBER_INCIDENT", "RANDOM_DATE", "RANDOM_DATE"],
+            "entity": ["ACAIR", "NONE", "NONE"],
+            "date": [rec.date, market.as_of, market.as_of],
+            "scheduled": [False, True, True],
+            "source": [rec.url, "draw", "draw"],
+        }
+    ).with_columns(pl.col("date").cast(pl.Date))
+    data = MarketData(
+        market.root,
+        market.synthetic,
+        market.dates,
+        market.returns,
+        pl.concat([market.events, extra.select(market.events.columns)], how="vertical_relaxed"),
+    )
+    site = build_site_data(
+        claims_with_text(),
+        data,
+        tmp_path / "p",
+        tmp_path / "o",
+        n_boot=200,
+        store=tmp_path / "events",
+    )
+    ids = [s.event_id for s in site.news]
+    assert rec.event_id in ids
+    assert not any(s.origin == "control" for s in site.news), "placebo days are not news"
+    assert "rnd_bt_2025-01" not in ids
+    assert [s.date for s in site.news] == sorted((s.date for s in site.news), reverse=True)
+    acme = next(s for s in site.news if s.event_id == rec.event_id)
+    assert acme.origin == "filings" and acme.claim_ids == []
+    assert acme.sources[0].title == "Acme Air reports a cyberattack"
+    fomc = [s for s in site.news if s.event_type == "FOMC_DECISION"]
+    assert fomc and all(s.claim_ids for s in fomc), "calendar events link the claims they trigger"

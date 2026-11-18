@@ -88,5 +88,6 @@ export function makeSite(claims: SiteClaim[] = [makeClaim()]): SiteData {
       { name: "CYBER_INCIDENT", definition: "A company discloses a cyber incident.", origin: "filings", past_events: 3 },
       { name: "RANDOM_DATE", definition: "A random date.", origin: "control", past_events: 50 },
     ],
+    news: [],
   };
 }

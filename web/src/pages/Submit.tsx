@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Ready } from "../components/Ready";
 import type { SiteData } from "../generated/site";
 import {
@@ -95,7 +96,12 @@ function Guide() {
 
 function Form({ site }: { site: SiteData }) {
   const repo = site.meta.repo;
-  const [f, setF] = useState<ClaimForm>(EMPTY_FORM);
+  const [params] = useSearchParams();
+  // "Write a claim about events like this" on a news story pre-selects its event type.
+  const [f, setF] = useState<ClaimForm>(() => {
+    const t = params.get("eventType") ?? "";
+    return site.taxonomy.some((e) => e.name === t) ? { ...EMPTY_FORM, eventType: t } : EMPTY_FORM;
+  });
   const set = <K extends keyof ClaimForm>(k: K, v: ClaimForm[K]) => setF((p) => ({ ...p, [k]: v }));
   const text = useMemo(() => toYaml(f), [f]);
   const typeCheck = eventTypeCheck(f.eventType, site.taxonomy);

@@ -1,57 +1,273 @@
+import * as Tabs from "@radix-ui/react-tabs";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { BackButton, Card } from "../components/ui";
-import { Ready, Row } from "../components/Ready";
-import { findClaim, findEvent } from "../lib/data";
-import { dirText, pct } from "../lib/format";
+import { Logo } from "../components/Logo";
+import { Ready } from "../components/Ready";
+import { BackButton, Card, TAB_CLASS, Tag, TickerChip } from "../components/ui";
+import type { SiteData } from "../generated/site";
+import { NAME_BY_SYMBOL } from "../lib/brands";
+import {
+  claimsAboutType,
+  claimsFor,
+  findStory,
+  measuredValue,
+  measurements,
+  ORIGIN_TAG,
+  originNote,
+  pastEvents,
+  storySentence,
+  storyTitle,
+  type Story,
+} from "../lib/news";
+import { eventLabel, shortHeadline, shortName, whatPastDataSays } from "../lib/plain";
+
+const LINK = "text-accent underline underline-offset-2";
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+function About({ story }: { story: Story }) {
+  return (
+    <div className="space-y-6">
+      <Card title="What happened" id="about-what">
+        <p className="text-[15px] leading-relaxed">{storySentence(story)}</p>
+        <p className="mt-3 text-sm leading-relaxed text-muted">{originNote(story.origin)}</p>
+      </Card>
+      <Card title="Sources" id="about-sources">
+        <ul className="space-y-3">
+          {story.sources.map((s, i) => (
+            <li key={`${s.url ?? s.source}-${i}`} className="text-sm">
+              {s.url ? (
+                <a href={s.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+                  {s.title ?? s.url}
+                </a>
+              ) : (
+                <span>{s.title ?? s.source}</span>
+              )}
+              <span className="block text-xs text-muted">
+                {s.source}
+                {s.published_at && <> · {new Date(s.published_at).toUTCString().replace(":00 GMT", " UTC")}</>}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-xs text-muted">Spillover links to sources and never copies articles.</p>
+      </Card>
+    </div>
+  );
+}
+
+function Implications({ story, site }: { story: Story; site: SiteData }) {
+  const claims = claimsAboutType(site, story.event_type);
+  if (claims.length === 0) {
+    return (
+      <Card title="No claim tests events like this yet" id="impl-none">
+        <p className="text-sm leading-relaxed text-muted">
+          Nobody has registered a testable claim about what happens to markets when {eventLabel(story.event_type)}. A
+          claim says which market moves, which way and how fast, before the next event happens; it is then graded on
+          every new one.
+        </p>
+        <Link
+          to={`/submit?eventType=${encodeURIComponent(story.event_type)}`}
+          className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-on-primary"
+        >
+          Write a claim about events like this
+        </Link>
+      </Card>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-muted">
+        What past events like this one did to markets, according to each registered claim. History is practice: a claim
+        only counts once it holds up on new events.
+      </p>
+      {claims.map((c) => {
+        const v = whatPastDataSays(c);
+        const triggered = story.claim_ids.includes(c.claim.id);
+        return (
+          <article key={c.claim.id} className="rounded-2xl bg-surface p-5">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <TickerChip symbol={c.claim.instrument.symbol} to={`/claims/${c.claim.id}`} />
+              <Tag>{c.status}</Tag>
+              {!triggered && <span className="text-xs text-muted">Not triggered by this event</span>}
+            </div>
+            <h2 className="text-[17px] font-bold leading-snug">
+              <Link to={`/claims/${c.claim.id}`} className="hover:underline">
+                {shortHeadline(c)}
+              </Link>
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed">{v.headline}.</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted">{v.detail}</p>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function Stakeholders({ story, site }: { story: Story; site: SiteData }) {
+  const markets = [...new Set(claimsFor(site, story).map((c) => c.claim.instrument.symbol))];
+  const priced = new Set(site.meta.priced_symbols);
+  return (
+    <div className="space-y-6">
+      <Card title="Who it is about" id="who">
+        {story.entities.length === 0 ? (
+          <p className="text-sm text-muted">No single company or institution is named.</p>
+        ) : (
+          <ul className="space-y-3">
+            {story.entities.map((e) => (
+              <li key={e} className="flex items-center gap-3">
+                <Logo symbol={e} size={36} />
+                <div className="min-w-0">
+                  <p className="font-semibold">{NAME_BY_SYMBOL[e] ?? e}</p>
+                  <p className="text-xs text-muted">
+                    <span className="font-mono">{e}</span>
+                    {priced.has(e) ? " · priced daily" : ""}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+      <Card title="Markets being watched" id="markets-watched">
+        {markets.length === 0 ? (
+          <p className="text-sm text-muted">No registered claim watches a market for this kind of event yet.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {markets.map((m) => (
+                <TickerChip key={m} symbol={m} />
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted">Markets that a registered claim says this event should move.</p>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+const STATUS_WORDS = { open: "window still open", closed: "window closed, waiting to be graded", graded: "graded" } as const;
+
+function Data({ story, site }: { story: Story; site: SiteData }) {
+  const rows = measurements(site, story);
+  if (rows.length === 0) {
+    return (
+      <Card title="No measurements" id="data-none">
+        <p className="text-sm text-muted">No registered claim measures this event, so there is nothing to show yet.</p>
+      </Card>
+    );
+  }
+  return (
+    <div className="space-y-6">
+      {rows.map(({ claim, forward, value, counted }) => {
+        const past = pastEvents(site, claim, story.date);
+        return (
+          <section key={claim.claim.id} aria-labelledby={`data-${claim.claim.id}`} className="rounded-2xl bg-surface p-5">
+            <h2 id={`data-${claim.claim.id}`} className="text-[17px] font-bold leading-snug">
+              {capitalize(shortName(claim.claim.instrument.symbol))}:{" "}
+              <Link to={`/claims/${claim.claim.id}`} className="font-normal text-muted hover:underline">
+                {shortHeadline(claim)}
+              </Link>
+            </h2>
+            <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-muted">This event</dt>
+                <dd className={`text-xl font-bold ${counted ? measuredValue(claim, value).cls : "text-muted"}`}>
+                  {counted ? measuredValue(claim, value).text : "Not measured yet"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Forward prediction</dt>
+                <dd>
+                  {forward ? (
+                    <>
+                      Frozen {forward.created_at.slice(0, 10)}, {STATUS_WORDS[forward.status]}
+                      {forward.proof === "present" ? " · timestamp proof attached" : ""}
+                    </>
+                  ) : (
+                    <span className="text-muted">None: the event came before the claim was registered</span>
+                  )}
+                </dd>
+              </div>
+            </dl>
+            {past.length > 0 && (
+              <div className="mt-5">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Earlier events like this</h3>
+                <table className="w-full text-sm">
+                  <caption className="sr-only">Measured value for earlier events of the same type</caption>
+                  <thead>
+                    <tr className="text-left text-xs text-muted">
+                      <th scope="col" className="py-1 font-medium">Date</th>
+                      <th scope="col" className="py-1 text-right font-medium">Measured</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {past.map(({ event, value: v }) => (
+                      <tr key={event.event_id} className="border-t border-line">
+                        <td className="py-1.5">
+                          <Link to={`/events/${event.event_id}`} className="hover:underline">
+                            {event.date}
+                          </Link>
+                        </td>
+                        <td className={`py-1.5 text-right font-mono ${measuredValue(claim, v).cls}`}>
+                          {measuredValue(claim, v).text}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function StoryPage({ story, site }: { story: Story; site: SiteData }) {
+  const [tab, setTab] = useState("about");
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <BackButton to="/news" label="Back to the news" />
+      <header>
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+          <Tag>{ORIGIN_TAG[story.origin]}</Tag>
+          <time dateTime={story.date}>{story.date}</time>
+        </div>
+        <h1 className="text-[28px] font-extrabold leading-tight md:text-[34px]">{storyTitle(story)}</h1>
+      </header>
+      <Tabs.Root value={tab} onValueChange={setTab} className="min-w-0">
+        <Tabs.List aria-label="Story sections" className="no-scrollbar mb-6 flex gap-7 overflow-x-auto border-b border-line">
+          <Tabs.Trigger value="about" className={TAB_CLASS}>About</Tabs.Trigger>
+          <Tabs.Trigger value="implications" className={TAB_CLASS}>Market implications</Tabs.Trigger>
+          <Tabs.Trigger value="stakeholders" className={TAB_CLASS}>Stakeholders</Tabs.Trigger>
+          <Tabs.Trigger value="data" className={TAB_CLASS}>Data</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="about"><About story={story} /></Tabs.Content>
+        <Tabs.Content value="implications"><Implications story={story} site={site} /></Tabs.Content>
+        <Tabs.Content value="stakeholders"><Stakeholders story={story} site={site} /></Tabs.Content>
+        <Tabs.Content value="data"><Data story={story} site={site} /></Tabs.Content>
+      </Tabs.Root>
+    </div>
+  );
+}
 
 export default function EventPage() {
   const { id } = useParams();
   return (
     <Ready>
       {(site) => {
-        const ev = findEvent(site, id);
-        if (!ev) return <p>No event named <code className="font-mono">{id}</code>. <Link className="underline" to="/">Back</Link>.</p>;
-        return (
-          <div className="space-y-6">
-            <BackButton to="/feed" label="Back to the feed" />
-            <header>
-              <p className="font-mono text-xs text-muted">{ev.event_id}</p>
-              <h1 className="mt-2 text-[28px] font-extrabold leading-tight">{ev.event_type.replace(/_/g, " ").toLowerCase()} on {ev.date}</h1>
-            </header>
-
-            <Card title="Extracted structure" id="structure">
-              <dl>
-                <Row label="Event type"><span className="font-mono text-xs">{ev.event_type}</span></Row>
-                <Row label="Entities">{ev.entities.join(", ")}</Row>
-                <Row label="Date">{ev.date}</Row>
-                <Row label="Source">{ev.source}</Row>
-                <Row label="Scheduled event">{ev.scheduled ? "yes" : "no"}</Row>
-                <Row label="Extractor">none: events are supplied directly (no headline extractor yet)</Row>
-              </dl>
-            </Card>
-
-            <section aria-labelledby="claims-h">
-              <h2 id="claims-h" className="mb-2 text-[22px] font-extrabold">Claims that use this event</h2>
-              <p className="mb-3 text-xs text-muted">
-                One event can feed several claims, and readers should see them side by side. Values are backtest statistics, not forward outcomes.
-              </p>
-              <ul className="space-y-2">
-                {ev.claims.map((c) => {
-                  const claim = findClaim(site, c.claim_id)?.claim;
-                  return (
-                    <li key={c.claim_id} className="rounded-2xl bg-surface p-4 text-sm">
-                      <Link className="font-mono text-xs underline" to={`/claims/${c.claim_id}`}>{c.claim_id}</Link>
-                      {claim && <p className="mt-1">{claim.statement.replace(/\s+/g, " ").trim()}</p>}
-                      <p className="mt-1 text-xs text-muted">
-                        {c.effective ? <>Statistic <span className={`font-semibold ${dirText(c.value)}`}>{pct(c.value)}</span></> : "Not counted: dropped by the history, overlap or scheduled-event rules"}
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          </div>
-        );
+        const story = findStory(site, id);
+        if (!story) {
+          return (
+            <p>
+              No event named <code className="font-mono">{id}</code>. <Link className="underline" to="/news">Back to the news</Link>.
+            </p>
+          );
+        }
+        return <StoryPage story={story} site={site} />;
       }}
     </Ready>
   );

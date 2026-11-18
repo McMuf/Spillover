@@ -7,7 +7,7 @@ const PAGES = [
   ["claims", "/#/"],
   ["claim overview", "/#/claims/clm_fomc_abs_move_spx_v1"],
   ["explore", "/#/explore"],
-  ["feed", "/#/feed"],
+  ["news", "/#/news"],
   ["label", "/#/label"],
   ["event", "/#/events/fomc_2025-12-17"],
   ["scoreboard", "/#/scoreboard"],
@@ -43,6 +43,17 @@ const PAGES = [
       const summary = results.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node(s))`);
       expect(summary, summary.join("\n")).toEqual([]);
     });
+
+    for (const tab of ["Market implications", "Stakeholders", "Data"]) {
+      test(`news story ${tab} tab has no violations`, async ({ page }) => {
+        await page.goto("/#/events/fomc_2025-12-17");
+        await page.getByRole("tab", { name: tab }).click();
+        await expect(page.getByRole("tabpanel")).toBeVisible();
+        const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+        const summary = results.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node(s))`);
+        expect(summary, summary.join("\n")).toEqual([]);
+      });
+    }
 
     test("claim evidence tab (chart) has no violations", async ({ page }) => {
       await page.goto("/#/claims/clm_fomc_abs_move_spx_v1");

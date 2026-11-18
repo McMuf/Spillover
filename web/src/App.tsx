@@ -1,15 +1,15 @@
 import { lazy, Suspense } from "react";
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Shell } from "./components/Shell";
 import { SiteProvider } from "./lib/data";
 import ClaimPage from "./pages/Claim";
 import EmbedClaim from "./pages/Embed";
 import EventPage from "./pages/Event";
 import ExplorePage from "./pages/Explore";
-import FeedPage from "./pages/Feed";
 import LabelPage from "./pages/Label";
 import Home from "./pages/Home";
 import Method from "./pages/Method";
+import NewsPage from "./pages/News";
 import NotFound from "./pages/NotFound";
 import ScoreboardPage from "./pages/Scoreboard";
 
@@ -28,7 +28,8 @@ export default function App() {
               <Route index element={<Home />} />
               <Route path="claims/:id" element={<ClaimPage />} />
               <Route path="explore" element={<ExplorePage />} />
-              <Route path="feed" element={<FeedPage />} />
+              <Route path="news" element={<NewsPage />} />
+              <Route path="feed" element={<Navigate to="/news" replace />} />
               <Route path="label" element={<LabelPage />} />
               <Route path="events/:id" element={<EventPage />} />
               <Route path="scoreboard" element={<ScoreboardPage />} />

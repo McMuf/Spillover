@@ -12,7 +12,7 @@ import typer
 
 from spillover.company_names import fetch_companies, write_companies
 from spillover.data import DataError, load_market_data
-from spillover.eventstore import StoreError
+from spillover.eventstore import EVENTS_DIR, StoreError
 from spillover.eventstudy import (
     DEFAULT_BOOT,
     DEFAULT_SEED,
@@ -230,6 +230,7 @@ def export_site(
             replications_dir=Path("replications"),
             results_dir=RESULTS_DIR,
             labeling=build_labeling(),
+            store=EVENTS_DIR,
         )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc

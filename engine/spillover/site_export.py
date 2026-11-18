@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import tempfile
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -42,11 +42,12 @@ from spillover.ledger import (
     prediction_files,
 )
 from spillover.models import Claim, superseded_ids
+from spillover.placebo_events import BACKTEST_ONLY_PREFIX
 from spillover.replicate import load_result, result_path
 from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import load_outcome, outcome_files, prediction_symbols, window_closed
-from spillover.taxonomy import EXTRACTABLE, NONE, TAXONOMY
+from spillover.taxonomy import EXTRACTABLE, NONE, TAXONOMY, Origin
 
 REPO = "McMuf/Spillover"
 
@@ -317,6 +318,33 @@ class TaxonomyEntry(_M):
     past_events: int
 
 
+class NewsSource(_M):
+    """Where a story was reported. Spillover links to sources; it never copies articles."""
+
+    title: str | None  # the headline, when the event came from a headline or a filing
+    url: str | None
+    source: str  # feed name (fed-press, sec-8k, ...) or a plain description for calendars
+    published_at: datetime | None
+
+
+class NewsStory(_M):
+    """A recent real-world event, whether or not any claim is about it yet."""
+
+    event_id: str
+    event_type: str
+    origin: Literal["headlines", "calendar", "prices", "filings", "control"]
+    date: date
+    entities: list[str]
+    scheduled: bool
+    sources: list[NewsSource]
+    claim_ids: list[str]  # registered claims this event triggers
+
+
+NEWS_DAYS = 120  # stories from this many days before the data's last day
+NEWS_MAX = 150
+NEWS_SOURCES_MAX = 5
+
+
 class SiteData(_M):
     schema_version: Literal[1]
     meta: SiteMeta
@@ -325,6 +353,7 @@ class SiteData(_M):
     scoreboard: Scoreboard
     labeling: Labeling
     taxonomy: list[TaxonomyEntry]
+    news: list[NewsStory]
 
 
 def site_json_schema() -> dict[str, Any]:
@@ -352,6 +381,58 @@ def build_taxonomy(data: MarketData) -> list[TaxonomyEntry]:
         )
         for t in TAXONOMY
     ]
+
+
+def build_news(
+    data: MarketData, event_to_claims: dict[str, list[str]], store: Path | None
+) -> list[NewsStory]:
+    origin: dict[str, Origin] = {t.name: t.origin for t in TAXONOMY}
+    ev = data.events
+    if ev.height == 0:
+        return []
+    cutoff = data.as_of - timedelta(days=NEWS_DAYS)
+    recent = ev.filter(
+        (pl.col("date") >= cutoff) & ~pl.col("event_id").str.starts_with(BACKTEST_ONLY_PREFIX)
+    )
+    by_event: dict[str, list[NewsSource]] = {}
+    if store is not None:
+        for r in sorted(load_records(store), key=lambda r: (r.published_at, r.headline_id)):
+            by_event.setdefault(r.event_id, []).append(
+                NewsSource(title=r.title, url=r.url, source=r.source, published_at=r.published_at)
+            )
+    stories: list[NewsStory] = []
+    for event_id in recent["event_id"].unique(maintain_order=True).to_list():
+        rows = recent.filter(pl.col("event_id") == event_id)
+        first = rows.row(0, named=True)
+        kind: Origin = origin.get(first["event_type"], "headlines")
+        if kind == "control":
+            continue  # placebo days are a test of the engine, not news
+        sources = by_event.get(event_id, [])[:NEWS_SOURCES_MAX]
+        if not sources:
+            src = str(first["source"])
+            is_url = src.startswith(("https://", "http://"))
+            sources = [
+                NewsSource(
+                    title=None,
+                    url=src if is_url else None,
+                    source=src if not is_url else src.split("/")[2],
+                    published_at=None,
+                )
+            ]
+        stories.append(
+            NewsStory(
+                event_id=event_id,
+                event_type=first["event_type"],
+                origin=kind,
+                date=first["date"],
+                entities=sorted({e for e in rows["entity"].to_list() if e and e != "NONE"}),
+                scheduled=bool(first["scheduled"]),
+                sources=sources,
+                claim_ids=sorted(set(event_to_claims.get(event_id, []))),
+            )
+        )
+    stories.sort(key=lambda s: (s.date, s.event_id), reverse=True)
+    return stories[:NEWS_MAX]
 
 
 def _event_types() -> list[EventTypeInfo]:
@@ -583,6 +664,7 @@ def build_site_data(
     replications_dir: Path | None = None,
     results_dir: Path | None = None,
     labeling: Labeling | None = None,
+    store: Path | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
     board = Scoreboard.model_validate(
@@ -684,4 +766,5 @@ def build_site_data(
         labeling=labeling
         or Labeling(candidates=[], event_types=_event_types(), gold_rows=0, gold=[], accuracy=None),
         taxonomy=build_taxonomy(data),
+        news=build_news(data, event_to_claims, store),
     )

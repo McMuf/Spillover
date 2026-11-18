@@ -101,3 +101,41 @@ test("the claim form guides a one-off idea and fits a phone screen", async ({ pa
   await expect(page.getByTestId("plain-sentence")).toContainText("When the Federal Reserve announces");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test("news opens a story with its four tabs, and an untested kind of event leads to the claim form", async ({ page }) => {
+  await page.goto("/#/feed"); // the old address still works
+  await expect(page).toHaveURL(/#\/news$/);
+  await expect(page.getByRole("heading", { level: 1, name: "News" })).toBeVisible();
+  await page.getByRole("listitem").getByRole("link").first().click();
+  for (const tab of ["About", "Market implications", "Stakeholders", "Data"]) {
+    await page.getByRole("tab", { name: tab }).click();
+    await expect(page.getByRole("tabpanel")).toBeVisible();
+  }
+  await page.getByRole("tab", { name: "About" }).click();
+  await expect(page.getByText("Spillover links to sources and never copies articles.")).toBeVisible();
+});
+
+test("a story with no claim offers to start one with its event type chosen", async ({ page }) => {
+  await page.route("**/data/site.json", async (route) => {
+    const res = await route.fetch();
+    const site = (await res.json()) as { news: unknown[] };
+    site.news = [
+      {
+        event_id: "cyber_incident_2026-11-17_ab12cd34",
+        event_type: "CYBER_INCIDENT",
+        origin: "filings",
+        date: "2026-11-17",
+        entities: ["ACAIR"],
+        scheduled: false,
+        sources: [{ title: "Acme Air Inc (ACAIR) 8-K Item 1.05: Material Cybersecurity Incidents", url: "https://www.sec.gov/x", source: "sec-8k", published_at: "2026-11-17T21:30:00Z" }],
+        claim_ids: [],
+      },
+    ];
+    await route.fulfill({ response: res, json: site });
+  });
+  await page.goto("/#/events/cyber_incident_2026-11-17_ab12cd34");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Acme Air Inc/);
+  await page.getByRole("tab", { name: "Market implications" }).click();
+  await page.getByRole("link", { name: "Write a claim about events like this" }).click();
+  await expect(page.getByLabel(/Event type/)).toHaveValue("CYBER_INCIDENT");
+});

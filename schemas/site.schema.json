@@ -1022,6 +1022,125 @@
       "title": "Labeling",
       "type": "object"
     },
+    "NewsSource": {
+      "additionalProperties": false,
+      "description": "Where a story was reported. Spillover links to sources; it never copies articles.",
+      "properties": {
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Published At"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Url"
+        }
+      },
+      "required": [
+        "title",
+        "url",
+        "source",
+        "published_at"
+      ],
+      "title": "NewsSource",
+      "type": "object"
+    },
+    "NewsStory": {
+      "additionalProperties": false,
+      "description": "A recent real-world event, whether or not any claim is about it yet.",
+      "properties": {
+        "claim_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Claim Ids",
+          "type": "array"
+        },
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "entities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Entities",
+          "type": "array"
+        },
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "headlines",
+            "calendar",
+            "prices",
+            "filings",
+            "control"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "scheduled": {
+          "title": "Scheduled",
+          "type": "boolean"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/NewsSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_id",
+        "event_type",
+        "origin",
+        "date",
+        "entities",
+        "scheduled",
+        "sources",
+        "claim_ids"
+      ],
+      "title": "NewsStory",
+      "type": "object"
+    },
     "PlaceboInfo": {
       "additionalProperties": false,
       "properties": {
@@ -1777,6 +1896,13 @@
     "meta": {
       "$ref": "#/$defs/SiteMeta"
     },
+    "news": {
+      "items": {
+        "$ref": "#/$defs/NewsStory"
+      },
+      "title": "News",
+      "type": "array"
+    },
     "schema_version": {
       "const": 1,
       "title": "Schema Version",
@@ -1800,7 +1926,8 @@
     "events",
     "scoreboard",
     "labeling",
-    "taxonomy"
+    "taxonomy",
+    "news"
   ],
   "title": "Spillover site data",
   "type": "object"

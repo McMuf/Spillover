@@ -1,3 +1,5 @@
+import type { SiteData } from "../generated/site";
+
 /**
  * Discussion threads (community phase 1): giscus, backed by this repository's GitHub Discussions.
  *
@@ -30,4 +32,33 @@ export function discussionsEnabled(config: GiscusConfig = GISCUS): boolean {
 /** One thread per claim and per event, found by an exact term (never by page title or URL). */
 export function discussionTerm(kind: "claim" | "event", id: string): string {
   return `${kind}:${id}`;
+}
+
+type Community = SiteData["community"];
+export type Question = Community["questions"][number];
+
+const DISCUSSIONS = `https://github.com/${GISCUS.repo}/discussions`;
+
+/** Only this repository's own discussion pages are ever linked (the engine checks this too). */
+export function isOwnDiscussion(url: string): boolean {
+  return new RegExp(`^${DISCUSSIONS.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}/\\d+$`).test(url);
+}
+
+/**
+ * Where "Ask a question" goes: GitHub's new-discussion page in the Q&A category, with the title and
+ * text filled in. Asking needs a GitHub account; nothing is posted until the person presses Start
+ * discussion there. Without a Q&A category, the general new-discussion page.
+ */
+export function askUrl(community: Community, title = "", body = ""): string {
+  const q = new URLSearchParams();
+  if (community.ask_category && /^[a-z0-9-]{1,60}$/.test(community.ask_category)) q.set("category", community.ask_category);
+  if (title.trim()) q.set("title", title.trim().slice(0, 200));
+  if (body.trim()) q.set("body", body.trim().slice(0, 2000));
+  const qs = q.toString();
+  return `${DISCUSSIONS}/new${community.ask_category ? "" : "/choose"}${qs ? `?${qs}` : ""}`;
+}
+
+/** The comment count on a claim's or event's thread, when the build could read it. */
+export function commentsOn(community: Community, term: string): number {
+  return community.threads.find((t) => t.term === term)?.comments ?? 0;
 }

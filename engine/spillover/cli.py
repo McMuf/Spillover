@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -31,6 +32,7 @@ from spillover.gold import (
     write_candidates,
 )
 from spillover.ingest.config import ConfigError, load_config
+from spillover.ingest.discussions import DiscussionsError, fetch_discussions
 from spillover.ingest.filings import ITEMS as FILING_ITEMS
 from spillover.ingest.filings import FilingsError, run_filings
 from spillover.ingest.fomc import FomcParseError
@@ -64,9 +66,11 @@ from spillover.rules_extractor import COMPANIES_FILE, RulesExtractor
 from spillover.scoreboard import build_scoreboard
 from spillover.scoring import ScoreError, grade_all, verify_outcomes
 from spillover.site_export import (
+    Community,
     LiveHeadline,
     build_labeling,
     build_site_data,
+    community_from,
     headline_candidates,
     label_headlines,
     site_json_schema,
@@ -235,8 +239,24 @@ def export_site(
             help="Fetch the latest market headlines from GDELT for the News tab (display only).",
         ),
     ] = False,
+    discussions: Annotated[
+        bool,
+        typer.Option(
+            "--discussions",
+            help="Read questions and comment counts from GitHub Discussions (needs GITHUB_TOKEN).",
+        ),
+    ] = False,
 ) -> None:
     """Write the single typed JSON file the static website reads (generated, never committed)."""
+    community: Community | None = None
+    if discussions:
+        # Display only, like the news: GitHub being unreachable must never stop the site building.
+        try:
+            community = community_from(
+                fetch_discussions(os.environ.get("GITHUB_TOKEN", "")), datetime.now(UTC)
+            )
+        except (FetchError, DiscussionsError) as exc:
+            typer.echo(f"warning: no questions this build: {redact(str(exc))[:120]}", err=True)
     headlines: list[LiveHeadline] = []
     if live_headlines:
         now = datetime.now(UTC)
@@ -274,6 +294,7 @@ def export_site(
             # Real data: news runs to today. Synthetic fixtures end in the past, so use their end.
             today=None if market.synthetic else datetime.now(UTC).date(),
             headlines=headlines,
+            community=community,
         )
     except (ClaimError, DataError, ScoreError, LedgerError) as exc:
         raise _fail(str(exc)) from exc

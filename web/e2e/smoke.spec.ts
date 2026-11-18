@@ -190,3 +190,17 @@ test("a swing-size claim is green when bigger and says so in words", async ({ pa
   const words = (await summary.getByText(/(bigger|smaller) swing than usual/).first().textContent()) ?? "";
   await expect(big).toHaveClass(words.includes("bigger") ? /text-positive/ : /text-negative/);
 });
+
+test("the Questions page drafts a question and hands it to GitHub, posting nothing itself", async ({ page }) => {
+  await page.goto("/#/questions");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Questions");
+  await page.getByRole("button", { name: "Do airline stocks fall after a big outage?" }).click();
+  const go = page.getByRole("link", { name: /Continue on GitHub/ });
+  const href = new URL((await go.getAttribute("href")) ?? "");
+  expect(href.origin + href.pathname).toMatch(/^https:\/\/github\.com\/McMuf\/Spillover\/discussions\/new/);
+  expect(href.searchParams.get("title")).toBe("Do airline stocks fall after a big outage?");
+  await expect(go).toHaveAttribute("rel", /noopener/);
+  // The sidebar menu links here.
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Questions" }).first()).toHaveAttribute("href", "#/questions");
+});

@@ -160,6 +160,61 @@ describe("FeedRow", () => {
     expect(img.getAttribute("loading")).toBe("lazy");
     expect(container.innerHTML).not.toMatch(/gradient/);
   });
+
+  const Q = {
+    number: 7,
+    title: "Do airline stocks fall after a big outage?",
+    url: "https://github.com/McMuf/Spillover/discussions/7",
+    author: "asker",
+    created_at: "2026-11-18T01:00:00Z",
+    updated_at: "2026-11-18T02:00:00Z",
+    excerpt: "Saw <b>this</b> today.",
+    comments: 2,
+    upvotes: 1,
+    answered: false,
+  };
+
+  it("shows a question as plain text, links to its discussion and offers to shape it into a claim", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ul>
+          <FeedRow item={{ kind: "question", id: "question-7", at: Q.created_at, topic: "Questions", question: Q }} site={makeSite()} />
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: Q.title })).toHaveAttribute("href", Q.url);
+    expect(screen.getByRole("link", { name: /2 replies/ })).toHaveAttribute("href", Q.url);
+    expect(screen.getByRole("link", { name: /Shape into a claim/ })).toHaveAttribute("href", `/submit?statement=${encodeURIComponent(Q.title)}`);
+    expect(screen.getByText("Question")).toBeInTheDocument();
+    // People's text is shown as text, never as HTML.
+    expect(screen.getByText("Saw <b>this</b> today.")).toBeInTheDocument();
+    expect(container.querySelector("b")).toBeNull();
+  });
+
+  it("never links a question outside this project's discussions", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ul>
+          <FeedRow item={{ kind: "question", id: "q", at: Q.created_at, topic: "Questions", question: { ...Q, url: "https://evil.example/x" } }} site={makeSite()} />
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(container.querySelector("li")).toBeNull();
+  });
+
+  it("counts a claim's discussion comments when the build read them", () => {
+    const item = makeClaim();
+    const site = makeSite([item]);
+    site.community.threads = [{ term: "claim:clm_demo_v1", url: "https://github.com/McMuf/Spillover/discussions/3", comments: 4 }];
+    render(
+      <MemoryRouter>
+        <ul>
+          <FeedRow item={{ kind: "claim", id: "claim-x", at: "2026-11-16T00:00:00Z", topic: "Markets", claim: item }} site={site} />
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "4 comments" })).toHaveAttribute("href", "/claims/clm_demo_v1");
+  });
 });
 
 describe("histogram", () => {

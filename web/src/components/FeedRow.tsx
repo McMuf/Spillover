@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { SiteData } from "../generated/site";
+import { commentsOn, discussionTerm, isOwnDiscussion } from "../lib/community";
 import type { FeedItem } from "../lib/feed";
 import { claimStat } from "../lib/format";
 import { ORIGIN_TAG, storySentence, storyTitle } from "../lib/news";
@@ -120,6 +121,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
       const c = it.claim;
       const b = it.backtest;
       const stat = claimStat(c.measure, b?.mean);
+      const comments = commentsOn(site.community, discussionTerm("claim", c.id));
       return (
         <Row
           avatar={<Identicon handle={c.registered_by} size={40} />}
@@ -147,6 +149,14 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
                 <Ticker text={stat.value} />
               </span>{" "}
               {stat.note ?? "abnormal move"} across {b.n_effective} past events · {it.forward_log.length} predictions frozen
+              {comments > 0 && (
+                <>
+                  {" · "}
+                  <Link to={`/claims/${c.id}`} className="hover:text-fg hover:underline">
+                    {comments} comment{comments === 1 ? "" : "s"}
+                  </Link>
+                </>
+              )}
             </p>
           )}
           <SeeMore more={<p className="mt-1 text-[15px] leading-relaxed text-muted">{whatWeTest(it)}</p>}>{null}</SeeMore>
@@ -171,6 +181,43 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
             {storyTitle(s)}
           </Link>
           <p className="mt-1 text-sm text-muted">{claims.length ? `Tests ${claims.length} claim${claims.length === 1 ? "" : "s"}.` : storySentence(s)}</p>
+        </Row>
+      );
+    }
+    case "question": {
+      const q = item.question;
+      if (!isOwnDiscussion(q.url)) return null;
+      return (
+        <Row
+          avatar={q.author ? <Identicon handle={q.author} size={40} /> : <Initials text="?" />}
+          name={q.author ?? "Someone"}
+          when={ago(q.created_at)}
+          label={q.answered ? "Answered" : "Question"}
+          chips={
+            <>
+              <a
+                href={q.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+              >
+                <Icon name="message" size={14} />
+                {q.comments ? `${q.comments} repl${q.comments === 1 ? "y" : "ies"}` : "Answer"}
+              </a>
+              <Link
+                to={`/submit?statement=${encodeURIComponent(q.title)}`}
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+              >
+                <Icon name="pen" size={14} />
+                Shape into a claim
+              </Link>
+            </>
+          }
+        >
+          <a href={q.url} target="_blank" rel="noopener noreferrer" className="text-[16px] font-semibold leading-snug hover:underline">
+            {q.title}
+          </a>
+          {q.excerpt && <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-muted">{q.excerpt}</p>}
         </Row>
       );
     }

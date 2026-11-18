@@ -33,9 +33,11 @@ jobs:
   build:
     if: github.repository == 'McMuf/Spillover'
     # configure-pages reads the Pages settings, so it needs pages: write; nothing here may mint tokens.
+    # discussions: read lets the export step list questions and comment counts; it cannot post.
     permissions:
       contents: read
       pages: write
+      discussions: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -70,10 +72,12 @@ jobs:
           key: gdelt-headlines-${{ github.run_id }}
           restore-keys: gdelt-headlines-
 
+      # The workflow's own token, read-only, given to this one step (before any npm package runs).
       - name: Export the site data from the engine
         env:
           SPILLOVER_DATA: ${{ steps.cache.outcome == 'success' && 'data/cache' || 'fixtures/synthetic' }}
-        run: uv run spillover export-site --live-headlines
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run spillover export-site --live-headlines --discussions
 
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:

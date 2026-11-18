@@ -302,7 +302,8 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 ### Also built
 
 - **People** (`#/people`): a profile for everyone with a claim, challenge or replication on the record, with their track record once claims are graded. Author names across the site link to it.
-- **Discussion** on claim and story pages (giscus, GitHub Discussions): loads nothing from giscus.app until someone opens it, and never changes a result.
+- **Discussion** on claim and story pages (giscus, GitHub Discussions): loads nothing from giscus.app until someone opens it, and never changes a result. The button shows how many comments a thread has.
+- **Questions** (`#/questions`): where claims start. Anyone can draft a half-formed question on the site; "Continue on GitHub" opens GitHub's new-discussion page in the repository's **Q&A** category with the text filled in, and nothing is posted until the person presses Start discussion there (a GitHub account is needed). Questions appear on the page and in the feed with their replies, each with a "Shape into a claim" link into the guided form. The site build reads them with the workflow's own read-only token (`discussions: read`), so new questions show after the next rebuild; their text is shown as plain text, never as HTML, and only links to this repository's discussions are kept.
 - **Label page** (`#/label`): people label recent headlines blind (the labeler's own answer is hidden), download the file, and add it to `labels/gold.jsonl`; the page then shows the labeler's measured accuracy.
 - **Method page** (`#/method`): the steps behind every number, what each status means, what the method cannot tell you, a glossary, and a reading list of standard references. A test fails if its constants (estimation window, gap, bootstrap size) drift from the engine's.
 - **Embed widget:** every claim page has an "Embed this claim" box with a one-line `<iframe>` snippet. It shows a read-only card (status, evidence meter, backtest label, the not-advice line) with no site chrome, and links back. Checked in a browser by framing it on a separate page.
@@ -602,7 +603,7 @@ Ranking leans on signals that are hard to fake: a real event just tested the cla
 | Phase | What | Needs |
 |---|---|---|
 | **1** *(built)* | Discussion threads on every claim and story (via [giscus](https://giscus.app/), backed by GitHub Discussions, with reactions as upvotes) and public profile pages built from the record (`#/people`) | No database; a GitHub account to post. Live: threads go in the repository's Announcements category (set in `web/src/lib/community.ts`) |
-| **2** | Questions, backing and doubting, follows, pseudonymous accounts, sign-in without GitHub, submitting claims from the site (a bot opens the pull request) | A hosted database and auth (for example Supabase), a privacy policy, data deletion and moderation |
+| **2** *(started)* | **Questions** *(built, on GitHub Discussions' Q&A category, no database)*; backing and doubting, follows, pseudonymous accounts, sign-in without GitHub, submitting claims from the site (a bot opens the pull request) | Questions: nothing new. The rest: a hosted database and auth (for example Supabase), a privacy policy, data deletion and moderation |
 | **3** | Reputation, topic spaces, moderation tools | Phase 2 in use |
 
 ## Tech stack and rationale
@@ -820,7 +821,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot, guide, the guided claim form, the News tab and the label page are built. 7 claims are registered (5 tests plus 2 placebo versions). Company claims wait for single-stock prices (the Alpha Vantage connection is built; it needs a key from their open-source program).* |
 | **M5: Community, phase 1** *(built)* | People discuss claims and see each other's records | Discussion threads on claims and stories, and profile pages; see [Community](#community-planned) |
-| **M6: Community, phases 2 and 3** *(planned)* | Questions, backing, follows, pseudonyms, reputation | A hosted social layer that never changes a grade |
+| **M6: Community, phases 2 and 3** *(started: Questions are built)* | Questions, backing, follows, pseudonyms, reputation | A hosted social layer that never changes a grade |
 
 ### Seed claims
 

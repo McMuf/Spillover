@@ -183,14 +183,15 @@ function NewHere() {
         New here? Test what you think the news does to markets.
       </h2>
       <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted">
+        <li>Not sure yet? Ask a question first; others help shape it.</li>
         <li>Write a claim about a kind of news, not one story.</li>
         <li>It is frozen and time-stamped before new events happen.</li>
         <li>The market grades it, in public, by rules nobody can bend.</li>
       </ul>
       <div className="mt-4 flex flex-wrap gap-2">
         <ActionLink to="/submit">Write a claim</ActionLink>
-        <ActionLink to="/method" variant="secondary" icon={null}>
-          How it works
+        <ActionLink to="/questions" variant="secondary" icon={null}>
+          Ask a question
         </ActionLink>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import type { SiteClaim, SiteData } from "../generated/site";
+import type { Question } from "./community";
 import { claimStat } from "./format";
 import type { Headline } from "./liveNews";
 import { storyTitle, type Story } from "./news";
@@ -8,7 +9,8 @@ export type FeedItem =
   | { kind: "briefing"; id: string; at: string; lead: string; bullets: string[]; symbols: string[] }
   | { kind: "claim"; id: string; at: string; topic: string; claim: SiteClaim }
   | { kind: "event"; id: string; at: string; topic: string; story: Story }
-  | { kind: "headline"; id: string; at: string; topic: string; headline: Headline };
+  | { kind: "headline"; id: string; at: string; topic: string; headline: Headline }
+  | { kind: "question"; id: string; at: string; topic: string; question: Question };
 
 const SHORT: Record<string, string> = {
   FOMC_DECISION: "the Fed's rate decision",
@@ -66,14 +68,22 @@ export function feedItems(site: SiteData, headlines: Headline[]): FeedItem[] {
     topic: h.event_type === "NONE" ? "Headlines" : categoryOf(h.event_type),
     headline: h,
   }));
-  return [...claims, ...events, ...news];
+  const questions: FeedItem[] = site.community.questions.map((q) => ({
+    kind: "question",
+    id: `question-${q.number}`,
+    at: q.created_at,
+    topic: "Questions",
+    question: q,
+  }));
+  return [...claims, ...events, ...news, ...questions];
 }
 
 const newest = (a: FeedItem, b: FeedItem) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id);
 
 /**
- * Trending weaves the kinds together so the top of the feed always has news with pictures, claims
- * and the record side by side: headline, claim, headline, event, and round again. Within each kind:
+ * Trending weaves the kinds together so the top of the feed always has news with pictures, claims,
+ * people's questions and the record side by side: headline, claim, question, headline, event, and
+ * round again. Within each kind:
  * headlines a claim could test first, then ones with a picture, then newest; claims by activity;
  * events that tested claims first, newest first. Latest is simply newest first.
  */
@@ -92,9 +102,18 @@ export function ordered(items: FeedItem[], mode: "trending" | "latest", site: Si
   const events = items
     .filter((it): it is Extract<FeedItem, { kind: "event" }> => it.kind === "event")
     .sort((a, b) => Number(b.story.claim_ids.length > 0) - Number(a.story.claim_ids.length > 0) || newest(a, b));
-  const queues: FeedItem[][] = [headlines, claims, headlines, events];
+  // Open questions first (people are waiting for answers), then the most discussed, then newest.
+  const questions = items
+    .filter((it): it is Extract<FeedItem, { kind: "question" }> => it.kind === "question")
+    .sort(
+      (a, b) =>
+        Number(a.question.answered) - Number(b.question.answered) ||
+        b.question.upvotes + b.question.comments - (a.question.upvotes + a.question.comments) ||
+        newest(a, b),
+    );
+  const queues: FeedItem[][] = [headlines, claims, questions, headlines, events];
   const out: FeedItem[] = [];
-  const total = headlines.length + claims.length + events.length;
+  const total = headlines.length + claims.length + events.length + questions.length;
   for (let i = 0; out.length < total; i++) {
     const next = queues[i % queues.length]!.shift();
     if (next) out.push(next);

@@ -221,3 +221,13 @@ def test_a_commit_step_never_adds_a_path_that_may_not_exist() -> None:
                 assert (root / target).exists(), (
                     f"{path.name}: `{cmd}` adds {target}, which may not exist"
                 )
+
+
+def test_the_site_reads_discussions_but_can_never_write_them() -> None:
+    wf = load(ROOT / ".github" / "workflows" / "site.yml")
+    build = wf["jobs"]["build"]
+    assert build["permissions"].get("discussions") == "read"
+    export = next(st for st in build["steps"] if "export-site" in st.get("run", ""))
+    assert "--discussions" in export["run"]
+    for name, job in wf["jobs"].items():
+        assert job.get("permissions", {}).get("discussions", "read") == "read", name

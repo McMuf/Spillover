@@ -9,10 +9,13 @@ const Giscus = lazy(() => import("@giscus/react"));
 export function Discussion({
   term,
   label,
+  comments = 0,
   config = GISCUS,
 }: {
   term: string;
   label: string;
+  /** Comments counted when the site was built (0 when unknown). */
+  comments?: number;
   config?: GiscusConfig;
 }) {
   const [open, setOpen] = useState(false);
@@ -53,7 +56,7 @@ export function Discussion({
           onClick={() => setOpen(true)}
           className="mt-4 rounded-full bg-surface-alt px-5 py-2 text-sm font-semibold text-fg hover:bg-line"
         >
-          Show discussion
+          {comments > 0 ? `Show discussion (${comments} comment${comments === 1 ? "" : "s"})` : "Show discussion"}
         </button>
       )}
     </section>

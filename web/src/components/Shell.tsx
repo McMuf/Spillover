@@ -9,6 +9,7 @@ const NAV: { to: string; label: string; end: boolean; icon: IconName }[] = [
   { to: "/", label: "Feed", end: true, icon: "home" },
   { to: "/explore", label: "Explore", end: false, icon: "explore" },
   { to: "/news", label: "News", end: false, icon: "news" },
+  { to: "/questions", label: "Questions", end: false, icon: "message" },
   { to: "/scoreboard", label: "Scoreboard", end: false, icon: "scoreboard" },
   { to: "/people", label: "People", end: false, icon: "people" },
   { to: "/method", label: "How it works", end: false, icon: "method" },
@@ -57,7 +58,7 @@ export function Shell() {
   const site = state.phase === "ready" ? state.site : null;
   const repo = site?.meta.repo ?? "McMuf/Spillover";
   // Listing and claim pages use the full width; reading pages stay at a readable measure.
-  const wide = ["/", "/explore", "/news", "/scoreboard"].includes(pathname) || pathname.startsWith("/claims/");
+  const wide = ["/", "/explore", "/news", "/questions", "/scoreboard"].includes(pathname) || pathname.startsWith("/claims/");
 
   const topics = site ? topicCounts(site) : [];
   const search = (

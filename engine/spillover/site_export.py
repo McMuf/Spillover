@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 import tempfile
+from dataclasses import asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -32,6 +33,7 @@ from spillover.eventstudy import (
 )
 from spillover.extractor import Extraction, ExtractionError
 from spillover.gold import GOLD_FILE, GoldError, GoldRow, evaluate_gold, load_gold
+from spillover.ingest.discussions import Discussions
 from spillover.ingest.filings import SOURCE as FILINGS_SOURCE
 from spillover.ingest.gdelt import MARKET_WORDS, GdeltHeadline
 from spillover.lanes import describe_changes, lane_files, load_challenge, load_replication
@@ -358,6 +360,41 @@ class LiveHeadline(_M):
     confidence: Literal["high", "medium", "low"]
 
 
+class CommunityQuestion(_M):
+    """A question someone asked in the repository's Q&A discussions. Display only."""
+
+    number: int
+    title: str
+    url: str
+    author: str | None
+    created_at: datetime
+    updated_at: datetime
+    excerpt: str
+    comments: int
+    upvotes: int
+    answered: bool
+
+
+class CommunityThread(_M):
+    """The discussion thread on a claim or event page, by its term ("claim:<id>")."""
+
+    term: str
+    url: str
+    comments: int
+
+
+class Community(_M):
+    """Questions and discussion counts from GitHub Discussions, read when the site was built.
+
+    Never part of the record: questions, comments and reactions cannot change a grade.
+    """
+
+    ask_category: str | None  # the Q&A category's slug; None when questions are not set up
+    questions: list[CommunityQuestion]
+    threads: list[CommunityThread]
+    fetched_at: datetime | None  # None when this build could not read GitHub
+
+
 NEWS_DAYS = 120  # stories from this many days before the data's last day
 NEWS_MAX = 150
 NEWS_SOURCES_MAX = 5
@@ -374,6 +411,19 @@ class SiteData(_M):
     news: list[NewsStory]
     upcoming: list[NewsStory]  # the next scheduled events (claims already wait for them)
     headlines: list[LiveHeadline]  # latest general news (GDELT), display only
+    community: Community  # questions and discussion counts (GitHub Discussions), display only
+
+
+EMPTY_COMMUNITY = Community(ask_category=None, questions=[], threads=[], fetched_at=None)
+
+
+def community_from(found: Discussions, fetched_at: datetime) -> Community:
+    return Community(
+        ask_category=found.ask_category,
+        questions=[CommunityQuestion.model_validate(asdict(q)) for q in found.questions],
+        threads=[CommunityThread.model_validate(asdict(t)) for t in found.threads],
+        fetched_at=fetched_at,
+    )
 
 
 def site_json_schema() -> dict[str, Any]:
@@ -757,6 +807,7 @@ def build_site_data(
     store: Path | None = None,
     today: date | None = None,
     headlines: list[LiveHeadline] | None = None,
+    community: Community | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
     board = Scoreboard.model_validate(
@@ -862,4 +913,5 @@ def build_site_data(
         news=news,
         upcoming=upcoming,
         headlines=headlines or [],
+        community=community or EMPTY_COMMUNITY,
     )

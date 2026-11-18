@@ -501,6 +501,151 @@
       "title": "Claim",
       "type": "object"
     },
+    "Community": {
+      "additionalProperties": false,
+      "description": "Questions and discussion counts from GitHub Discussions, read when the site was built.\n\nNever part of the record: questions, comments and reactions cannot change a grade.",
+      "properties": {
+        "ask_category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ask Category"
+        },
+        "fetched_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fetched At"
+        },
+        "questions": {
+          "items": {
+            "$ref": "#/$defs/CommunityQuestion"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "threads": {
+          "items": {
+            "$ref": "#/$defs/CommunityThread"
+          },
+          "title": "Threads",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ask_category",
+        "questions",
+        "threads",
+        "fetched_at"
+      ],
+      "title": "Community",
+      "type": "object"
+    },
+    "CommunityQuestion": {
+      "additionalProperties": false,
+      "description": "A question someone asked in the repository's Q&A discussions. Display only.",
+      "properties": {
+        "answered": {
+          "title": "Answered",
+          "type": "boolean"
+        },
+        "author": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Author"
+        },
+        "comments": {
+          "title": "Comments",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "excerpt": {
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "number": {
+          "title": "Number",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "upvotes": {
+          "title": "Upvotes",
+          "type": "integer"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "title",
+        "url",
+        "author",
+        "created_at",
+        "updated_at",
+        "excerpt",
+        "comments",
+        "upvotes",
+        "answered"
+      ],
+      "title": "CommunityQuestion",
+      "type": "object"
+    },
+    "CommunityThread": {
+      "additionalProperties": false,
+      "description": "The discussion thread on a claim or event page, by its term (\"claim:<id>\").",
+      "properties": {
+        "comments": {
+          "title": "Comments",
+          "type": "integer"
+        },
+        "term": {
+          "title": "Term",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "term",
+        "url",
+        "comments"
+      ],
+      "title": "CommunityThread",
+      "type": "object"
+    },
     "Contributor": {
       "additionalProperties": false,
       "properties": {
@@ -1954,6 +2099,9 @@
       "title": "Claims",
       "type": "array"
     },
+    "community": {
+      "$ref": "#/$defs/Community"
+    },
     "events": {
       "items": {
         "$ref": "#/$defs/SiteEvent"
@@ -2014,7 +2162,8 @@
     "taxonomy",
     "news",
     "upcoming",
-    "headlines"
+    "headlines",
+    "community"
   ],
   "title": "Spillover site data",
   "type": "object"

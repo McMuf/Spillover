@@ -2,7 +2,7 @@ import { Discussion } from "../components/Discussion";
 import { Identicon } from "../components/Identicon";
 import { PersonLink } from "../components/PersonLink";
 import { Ticker } from "../components/Ticker";
-import { discussionTerm } from "../lib/community";
+import { commentsOn, discussionTerm } from "../lib/community";
 import * as Tabs from "@radix-ui/react-tabs";
 import { lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -512,7 +512,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
           <Tabs.Content value="evidence"><Evidence item={item} site={site} /></Tabs.Content>
           <Tabs.Content value="forward"><ForwardLogTable rows={item.forward_log} /></Tabs.Content>
           <div className="mt-8">
-            <Discussion term={discussionTerm("claim", item.claim.id)} label="claim" />
+            <Discussion term={discussionTerm("claim", item.claim.id)} label="claim" comments={commentsOn(site.community, discussionTerm("claim", item.claim.id))} />
           </div>
         </Tabs.Root>
 

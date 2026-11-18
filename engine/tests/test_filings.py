@@ -271,7 +271,7 @@ def test_retracted_events_stay_in_the_store_but_leave_every_analysis(tmp_path: P
             title=f"{ticker} 8-K",
             url="https://www.sec.gov/x",
             source="sec-8k",
-            published_at=datetime(2026, 11, 17, 21, tzinfo=UTC),
+            published_at=datetime(2026, 11, 17, 15, tzinfo=UTC),  # 10 a.m. New York
             event_type="RESTATEMENT",
             entities=[ticker],
             confidence="high",

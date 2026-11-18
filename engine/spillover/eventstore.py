@@ -12,9 +12,10 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Annotated, Any, Literal
+from zoneinfo import ZoneInfo
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -37,6 +38,31 @@ def event_key(event_type: str, entities: list[str], when: date) -> str:
     return f"{event_type}|{','.join(sorted(entities))}|{when.isoformat()}"
 
 
+NEW_YORK = ZoneInfo("America/New_York")
+MARKET_CLOSE = time(16, 0)  # the regular US session closes at 4 p.m. New York time
+
+# How an event's date is set from its publication time. Part of the event definition, so it is
+# recorded on every event: a stored event keeps the rule it was written with, forever.
+#   utc_day     the publication's UTC calendar day (every event stored before 2026-11-18)
+#   ny_session  the first US session that could react: the New York calendar day if published
+#               before the 4 p.m. close, else the next day (a weekend or holiday then moves to
+#               the next trading day, as for any event)
+DateRule = Literal["utc_day", "ny_session"]
+CURRENT_DATE_RULE: DateRule = "ny_session"
+
+
+def session_date(published_at: datetime) -> date:
+    """The first New York trading day a publication can move: after the close counts as tomorrow."""
+    local = published_at.astimezone(NEW_YORK)
+    return local.date() + timedelta(days=1) if local.time() >= MARKET_CLOSE else local.date()
+
+
+def event_date(published_at: datetime, rule: DateRule) -> date:
+    return (
+        session_date(published_at) if rule == "ny_session" else published_at.astimezone(UTC).date()
+    )
+
+
 def event_id_for(key: str, event_type: str, when: date) -> str:
     return f"{event_type.lower()}_{when.isoformat()}_{hashlib.sha256(key.encode()).hexdigest()[:8]}"
 
@@ -57,10 +83,12 @@ class EventRecord(BaseModel):
     extractor_version: str
     event_key: str
     event_id: Annotated[str, Field(pattern=_NAME)]
+    # Absent on events stored before the rule existed, which were dated by their UTC day.
+    date_rule: DateRule = "utc_day"
 
     @property
     def date(self) -> date:
-        return self.published_at.astimezone(UTC).date()
+        return event_date(self.published_at, self.date_rule)
 
 
 def make_record(
@@ -76,7 +104,7 @@ def make_record(
     needs_review: bool,
     extractor_version: str,
 ) -> EventRecord:
-    when = published_at.astimezone(UTC).date()
+    when = event_date(published_at, CURRENT_DATE_RULE)
     key = event_key(event_type, entities, when)
     return EventRecord(
         headline_id=headline_id,
@@ -91,6 +119,7 @@ def make_record(
         extractor_version=extractor_version,
         event_key=key,
         event_id=event_id_for(key, event_type, when),
+        date_rule=CURRENT_DATE_RULE,
     )
 
 

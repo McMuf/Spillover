@@ -208,7 +208,10 @@ def run_filings(
     except FetchError as exc:
         msg = str(exc)
         if "HTTP 403" in msg:
-            msg += " (SEC refuses requests without a contact email: check SEC_CONTACT)"
+            msg += (
+                " (SEC refused the request. It needs SEC_CONTACT set to an email address; if that "
+                "is set, SEC may be blocking this server's address)"
+            )
         raise FilingsError(msg) from None
     records, no_ticker = filing_records(filings, tickers)
     known = {r.headline_id for r in load_records(store)}

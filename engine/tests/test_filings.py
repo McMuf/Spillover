@@ -221,3 +221,19 @@ def test_the_command_skips_cleanly_without_a_contact(
     result = runner.invoke(app, ["ingest-filings", "--config", str(cfg)])
     assert result.exit_code == 0, result.output
     assert "skipped: SEC_CONTACT is not set" in result.output
+
+
+def test_the_sec_fetcher_sends_secs_documented_declaration(monkeypatch: pytest.MonkeyPatch) -> None:
+    import spillover.ingest.http as http
+
+    seen: dict[str, object] = {}
+
+    def fake_get(url: str, **kw: object) -> str:
+        seen.update(kw, url=url)
+        return "{}"
+
+    monkeypatch.setattr(http, "http_get", fake_get)
+    sec_fetcher("someone@example.com")("https://www.sec.gov/files/company_tickers.json")
+    # "Sample Company Name AdminContact@<sample company domain>.com" (sec.gov/os/accessing-edgar-data)
+    assert seen["user_agent"] == "Spillover Research Project someone@example.com"
+    assert seen["headers"] == {"Accept-Encoding": "gzip, deflate"}

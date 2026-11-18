@@ -116,3 +116,34 @@ def test_redirects_stay_on_https_and_on_thesame_site() -> None:
 def test_suspicious_base_refs_are_refused_before_git_runs(ref: str, tmp_path: Path) -> None:
     with pytest.raises(FrozenError, match="suspicious"):
         check_frozen(ref, tmp_path)
+
+
+class HeaderResponse(FakeResponse):
+    def __init__(self, body: bytes, encoding: str) -> None:
+        super().__init__(body)
+        self.headers = {"Content-Encoding": encoding}
+
+
+def test_compressed_replies_are_decoded_and_zip_bombs_refused() -> None:
+    import gzip
+    import zlib
+
+    assert (
+        http_get(
+            "https://example.com/g",
+            opener=FakeOpener(HeaderResponse(gzip.compress("héllo".encode()), "gzip")),
+        )
+        == "héllo"
+    )
+    assert (
+        http_get(
+            "https://example.com/d",
+            opener=FakeOpener(HeaderResponse(zlib.compress(b"ok"), "deflate")),
+        )
+        == "ok"
+    )
+    bomb = gzip.compress(b"0" * (MAX_BYTES + 10))  # tiny on the wire, too large unpacked
+    with pytest.raises(FetchError, match="larger than"):
+        http_get("https://example.com/bomb", opener=FakeOpener(HeaderResponse(bomb, "gzip")))
+    with pytest.raises(FetchError, match="corrupt gzip"):
+        http_get("https://example.com/bad", opener=FakeOpener(HeaderResponse(b"not gzip", "gzip")))

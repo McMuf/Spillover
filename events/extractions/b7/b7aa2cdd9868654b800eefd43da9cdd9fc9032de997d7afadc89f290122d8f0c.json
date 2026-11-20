@@ -1,0 +1,10 @@
+{
+  "answer": {
+    "confidence": "medium",
+    "entities": [],
+    "event_type": "NONE"
+  },
+  "extractor_version": "spillover-rules/1-849816d1/p1-7d05fe",
+  "source": "fed-press",
+  "title": "Federal Reserve Board releases results from survey of senior financial officers at banks about their strategies and practices for managing reserve balances"
+}

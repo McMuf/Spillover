@@ -40,10 +40,9 @@ symbol = "USDJPY"
 provider = "fred"
 id = "DEXJPUS"  # Japanese yen per US dollar, Board of Governors of the Federal Reserve System
 
-[[series]]
-symbol = "WTI"
-provider = "fred"
-id = "DCOILWTICO"  # West Texas Intermediate crude oil spot price, US Energy Information Administration
+# WTI crude (FRED DCOILWTICO) is left out on purpose: its spot price was negative on 2020-04-20, and a
+# return is undefined across a non-positive price. The engine refuses it rather than fake a number.
+# No claim uses oil. Add Brent (DCOILBRENTEU, positive throughout) if an oil claim is ever proposed.
 
 # --- Single stocks (Tiingo, adjusted daily closes) -------------------------------------------------
 # On: the repository secret TIINGO_API_KEY is set. Split- and dividend-adjusted daily closes from

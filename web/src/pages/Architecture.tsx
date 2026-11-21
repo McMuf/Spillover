@@ -6,7 +6,7 @@ const REPO = "https://github.com/McMuf/Spillover";
 /** The pipeline, left to right: where things come from, what the engine does, where it is kept, what you see. */
 const STAGES: { title: string; items: string[] }[] = [
   { title: "Contribute", items: ["A claim as one YAML file", "A pull request, checked by CI and a bot"] },
-  { title: "Inputs", items: ["Fed, CPI and jobs-report calendars", "SEC 8-K filings", "Headlines from GDELT", "Prices from FRED and Tiingo"] },
+  { title: "Inputs", items: ["Fed, CPI and jobs-report calendars", "SEC 8-K filings", "Headlines from outlets' feeds and GDELT", "Prices from FRED and Tiingo"] },
   { title: "Engine (Python)", items: ["Validate the claim", "Label events", "Event study", "Freeze, hash and timestamp", "Grade closed windows"] },
   { title: "Store (Git)", items: ["events/", "predictions/ with .ots proofs", "outcomes/", "Append-only history"] },
   { title: "Website", items: ["One JSON file from the engine", "React, built to static files", "GitHub Pages, rebuilt hourly"] },

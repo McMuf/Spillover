@@ -16,7 +16,7 @@ runner = CliRunner()
 
 
 def article(
-    title: str, url: str, when: str = "20261118T011500Z", domain: str = "example.com"
+    title: str, url: str, when: str = "20261118T011500Z", domain: str = "reuters.com"
 ) -> dict[str, str]:
     return {
         "url": url,
@@ -40,7 +40,7 @@ SAMPLE = json.dumps(
             article(
                 "Nvidia chairman says board does not intend to reinstate Jensen Huang",
                 "https://b.example/2",
-                domain="b.example",
+                domain="cnbc.com",
             ),
             # The same wire story from another outlet: shown once.
             article(
@@ -62,9 +62,7 @@ def test_headlines_are_tidied_deduplicated_and_kept_safe() -> None:
         "Nvidia chairman says board does not intend to reinstate Jensen Huang",
     ]
     assert all(h.url.startswith("https://") for h in got)
-    assert (
-        got[1].domain == "b.example" and got[1].seen_at.isoformat() == "2026-11-18T01:15:00+00:00"
-    )
+    assert got[1].domain == "cnbc.com" and got[1].seen_at.isoformat() == "2026-11-18T01:15:00+00:00"
     assert got[0].headline_id.startswith("gdelt-")
 
 
@@ -104,7 +102,7 @@ def test_headlines_get_the_free_labelers_answer_and_go_to_the_label_page() -> No
     [h] = label_headlines(items)
     assert h.event_type == "REGULATORY_ACTION" and h.entities == ["COIN"]
     [c] = headline_candidates([h])
-    assert c.source == "gdelt-example.com" and c.title == h.title
+    assert c.source == "gdelt-reuters.com" and c.title == h.title
 
 
 def test_site_build_carries_headlines_and_survives_a_gdelt_outage(

@@ -37,7 +37,7 @@ from spillover.ingest.filings import ITEMS as FILING_ITEMS
 from spillover.ingest.filings import FilingsError, run_filings
 from spillover.ingest.fomc import FomcParseError
 from spillover.ingest.gdelt import CACHE_FILE as GDELT_CACHE
-from spillover.ingest.gdelt import GdeltError
+from spillover.ingest.gdelt import GdeltError, GdeltHeadline
 from spillover.ingest.gdelt import fetch_headlines as fetch_gdelt
 from spillover.ingest.gdelt import load_cache as load_gdelt_cache
 from spillover.ingest.gdelt import save_cache as save_gdelt_cache
@@ -47,6 +47,9 @@ from spillover.ingest.headlines import FeedError
 from spillover.ingest.http import FetchError, http_get, http_get_bytes, redact, sec_fetcher
 from spillover.ingest.icons import ICON_DIR
 from spillover.ingest.icons import resolve as resolve_icons
+from spillover.ingest.outlet_feeds import fetch_outlet_headlines
+from spillover.ingest.outlet_feeds import merge as merge_headlines
+from spillover.ingest.outlets import trusted as trusted_outlets
 from spillover.ingest.prices import PriceError
 from spillover.ingest.store import IngestError, build_cache
 from spillover.lanes import (
@@ -297,29 +300,40 @@ def export_site(
     headlines: list[LiveHeadline] = []
     if live_headlines:
         now = datetime.now(UTC)
+        # The outlets' own public feeds first (Bloomberg, WSJ, NYT, FT, The Economist, BBC, ...).
+        feeds, failed = fetch_outlet_headlines(http_get, now)
+        for note in failed:
+            typer.echo(f"warning: news feed skipped ({redact(note)})", err=True)
+        # Then GDELT, kept to the same listed outlets, to top up: its raw 15-minute files first (no
+        # rate limit), its search API second (GitHub's shared runner addresses are often limited).
+        gdelt: list[GdeltHeadline] = []
         try:
-            # GDELT's raw 15-minute files first: no rate limit, the whole last hour. Its search
-            # API second: GitHub's shared runner addresses are usually over its limit.
             try:
-                fetched = fetch_gkg(http_get, http_get_bytes)
+                gdelt = fetch_gkg(http_get, http_get_bytes)
             except (FetchError, GdeltError) as exc:
                 typer.echo(f"warning: GDELT files unavailable ({redact(str(exc))[:80]})", err=True)
-                fetched = fetch_gdelt(http_get)
+                gdelt = fetch_gdelt(http_get)
+        except (FetchError, GdeltError) as exc:
+            typer.echo(
+                f"warning: no GDELT headlines this build ({redact(str(exc))[:80]})", err=True
+            )
+        fetched = merge_headlines(feeds, gdelt)
+        if fetched:
             save_gdelt_cache(fetched, GDELT_CACHE, now)
             headlines = label_headlines(fetched)
-        except (FetchError, GdeltError) as exc:
-            # News is a nicety: a GDELT outage must never stop the site from building. Reuse the
+        else:
+            # News is a nicety: an outage must never stop the site from building. Reuse the
             # previous build's headlines (kept by the workflow's cache) if they are recent.
-            cached = load_gdelt_cache(GDELT_CACHE, now)
+            cached = trusted_outlets(load_gdelt_cache(GDELT_CACHE, now) or [])
             if cached:
                 headlines = label_headlines(cached)
                 typer.echo(
-                    f"warning: GDELT refused this build ({redact(str(exc))[:80]}); "
-                    f"showing {len(cached)} headline(s) from the previous build",
+                    f"warning: no news sources answered; showing {len(cached)} headline(s) "
+                    "from the previous build",
                     err=True,
                 )
             else:
-                typer.echo(f"warning: no live headlines this build: {redact(str(exc))}", err=True)
+                typer.echo("warning: no live headlines this build", err=True)
     try:
         claims = [(load_claim(p), p.read_text(encoding="utf-8")) for p in claim_files(claims_dir)]
         market = load_market_data(data)

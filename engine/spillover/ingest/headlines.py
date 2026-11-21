@@ -33,6 +33,9 @@ class FeedError(RuntimeError):
 class ParsedFeed:
     headlines: list[Headline]
     skipped: list[str] = field(default_factory=lambda: list[str]())
+    # An item's preview image (media:content, media:thumbnail or an image enclosure), by headline
+    # id, when the feed gives one over https. Shown on the News tab, never stored.
+    images: dict[str, str] = field(default_factory=lambda: dict[str, str]())
 
 
 def _local(tag: str) -> str:
@@ -69,6 +72,17 @@ def _parse_time(raw: str) -> datetime | None:
     return parsed.astimezone(UTC)
 
 
+def _image(item: Element) -> str:
+    for child in item:
+        tag = _local(child.tag)
+        url = (child.get("url") or "").strip()
+        is_image = tag in ("content", "thumbnail") and child.get("medium", "image") == "image"
+        is_enclosure = tag == "enclosure" and (child.get("type") or "").startswith("image/")
+        if (is_image or is_enclosure) and url.startswith("https://") and len(url) <= MAX_URL_CHARS:
+            return url
+    return ""
+
+
 def _items(root: Element) -> list[Element]:
     if _local(root.tag) == "feed":
         return [e for e in root if _local(e.tag) == "entry"]
@@ -84,6 +98,7 @@ def parse_feed(text: str, source: str) -> ParsedFeed:
 
     headlines: list[Headline] = []
     skipped: list[str] = []
+    images: dict[str, str] = {}
     seen: set[str] = set()
     for item in _items(root):
         title = clean_title(_child_text(item, "title"))
@@ -105,9 +120,11 @@ def parse_feed(text: str, source: str) -> ParsedFeed:
             continue
         seen.add(hid)
         headlines.append(Headline(hid, title, url, source, when))
+        if image := _image(item):
+            images[hid] = image
     if not headlines and not skipped:
         raise FeedError(f"{source}: the feed has no items")
-    return ParsedFeed(headlines, skipped)
+    return ParsedFeed(headlines, skipped, images)
 
 
 def fetch_feed(url: str, source: str, fetch: Fetcher) -> ParsedFeed:

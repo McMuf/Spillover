@@ -46,7 +46,9 @@ ends up on a public scoreboard with its sample size, its uncertainty and its mis
   Misses stay on the record.
 - **Check-ins** at 1 week, 1 month, 6 months, 1 year and 5 years show longer-term trends. They are never
   part of the grade.
-- **News tab** with the latest market headlines (via GDELT). Any headline can start a pre-filled claim.
+- **News tab** with the latest headlines from established outlets (Bloomberg, WSJ, NYT, FT, The Economist,
+  BBC, CNBC and others), from their own public feeds, topped up from GDELT. Any headline can start a
+  pre-filled claim.
 - **Counter-claims, challenges and replications**, grouped on each claim's page.
 - **Fair ordering.** Lists are sorted by facts anyone can check, never by votes.
 - **Citable.** Every claim page gives a reference or BibTeX entry for the exact version, and releases are
@@ -138,7 +140,8 @@ sign-off (`git commit -s`). Only derived statistics are stored or shown, never r
 | [Tiingo](https://www.tiingo.com/) | Daily adjusted closes for 11 large US stocks | Free plan with the maintainer's key |
 | Fed and BLS calendars | Fed, CPI and jobs-report dates | Public |
 | SEC EDGAR | Company events from 8-K item numbers | Public domain |
-| [GDELT](https://www.gdeltproject.org/) | Headlines for the News tab (shown only) | Free with citation |
+| Outlets' public RSS feeds | Headlines for the News tab (titles and links only, shown only) | Each outlet's feed terms |
+| [GDELT](https://www.gdeltproject.org/) | More headlines from the same outlets (shown only) | Free with citation |
 | Wikidata | Company names for the labeler | CC0 |
 
 Anyone reusing this commercially needs permission from S&P Dow Jones Indices and Nasdaq, or other sources.

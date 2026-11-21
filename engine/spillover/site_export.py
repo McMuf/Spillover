@@ -531,9 +531,16 @@ def label_headlines(
             if rules
             else Extraction(event_type=NONE, entities=[], confidence="low")
         )
-        # Off-topic stories (a house listing, a fashion piece) match the query through words deep
-        # in the article. Keep a headline only if it is itself about companies or markets.
-        if ex.event_type == NONE and not ex.entities and not MARKET_WORDS.search(h.title):
+        # Off-topic stories (a house listing, a fashion piece) match GDELT's query through words
+        # deep in the article. Keep such a headline only if it is itself about companies or
+        # markets. Headlines from an outlet's own business feed ("feed-") are on topic already.
+        from_feed = h.headline_id.startswith("feed-")
+        if (
+            not from_feed
+            and ex.event_type == NONE
+            and not ex.entities
+            and not MARKET_WORDS.search(h.title)
+        ):
             continue
         out.append(
             LiveHeadline(

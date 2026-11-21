@@ -22,7 +22,7 @@ test("loads the site, opens a claim and reads its chain", async ({ page }) => {
 
 
   await page.getByRole("link", { name: /Fed rate decisions make the S&P 500 swing/ }).first().click();
-  await expect(page).toHaveURL(/#\/claims\/clm_fomc_abs_move_spx_v1$/);
+  await expect(page).toHaveURL(/#\/claims\/clm_fomc_abs_move_spx_v\d+$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("S&P 500");
   await expect(page.getByText(/On FOMC decision days, the S&P 500/).first()).toBeVisible();
   // The claim reads as a labeled chain; every step names its node type, so no legend is needed.

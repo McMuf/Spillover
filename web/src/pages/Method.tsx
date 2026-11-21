@@ -325,8 +325,15 @@ export default function Method() {
     <div className="space-y-12">
       <header className="hex-bg lift relative overflow-hidden bg-surface">
         <div className="relative px-6 py-10 md:w-[70%] md:px-10 md:py-14">
-          <h1 className="text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">How the numbers are made</h1>
-          <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-muted">
+          <h1 className="text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">How it works</h1>
+          <p className="mt-4 max-w-xl text-[17px] leading-relaxed">
+            Spillover is a public notebook for testing what news does to markets, for hobbyists, students and anyone curious.
+            You write down a claim like &ldquo;Fed decision days move the S&amp;P 500 more than usual&rdquo;. It is
+            timestamped before new events happen, and real market data later decides whether you were right. Nothing here is
+            traded, and no claim can be edited after the fact.
+          </p>
+          <h2 className="mt-8 text-[22px] font-extrabold tracking-tight">How the numbers are made</h2>
+          <p className="mt-2 max-w-lg text-[16px] leading-relaxed text-muted">
             Every claim goes through the same public steps, the standard event-study method. If this page and the code ever
             disagree, the code is wrong:{" "}
             <a className="text-accent underline underline-offset-2" href="https://github.com/McMuf/Spillover/issues/new?template=bug.yml">
@@ -407,10 +414,10 @@ export default function Method() {
             ))}
           </ul>
           <div className="mt-8 flex flex-wrap gap-2">
-            <Link to="/" className="inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
+            <Link to="/" className="btn inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
               See the claims
             </Link>
-            <Link to="/scoreboard" className="inline-flex items-center gap-2 border border-line px-4 py-2 text-sm font-semibold hover:bg-surface">
+            <Link to="/scoreboard" className="btn inline-flex items-center gap-2 border border-line px-4 py-2 text-sm font-semibold hover:bg-surface">
               Scoreboard
             </Link>
           </div>

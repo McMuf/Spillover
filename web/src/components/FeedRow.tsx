@@ -197,14 +197,14 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
                 href={q.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+                className="btn inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
               >
                 <Icon name="message" size={14} />
                 {q.comments ? `${q.comments} repl${q.comments === 1 ? "y" : "ies"}` : "Answer"}
               </a>
               <Link
                 to={`/submit?statement=${encodeURIComponent(q.title)}`}
-                className="inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+                className="btn inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
               >
                 <Icon name="pen" size={14} />
                 Shape into a claim
@@ -237,7 +237,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
                 {h.event_type !== "NONE" && (
                   <Link
                     to={`/submit?eventType=${encodeURIComponent(h.event_type)}`}
-                    className="inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+                    className="btn inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
                   >
                     <Icon name="pen" size={14} />
                     Claim: {eventLabel(h.event_type)}

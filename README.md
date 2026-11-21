@@ -22,10 +22,10 @@
   <a href="docs/methodology.md"><b>Methodology</b></a>
 </p>
 
-Spillover is a market research tool for hobbyists, students and curious people. You write down what you
-think a kind of headline does to a market, the system locks that claim in with a timestamp, and later
-real market data decides whether you were right. It places no trades and gives no signals. Every claim
-ends up on a public scoreboard with its sample size, its uncertainty and its misses.
+Spillover is a market research tool for hobbyists, students and curious people. You make your assumptions regarding a particular headline or news event's influence on the
+market, and your claim gets locked into the system with a time stamp. After that, real market information determines if you got it right. Spillover does not place any trades and send any signals. Each claim ends up on a scoreboard which will also contain its sample size,
+uncertainty and errors. Users can challenge a claim, comment on it and share their opinions
+regarding a particular claim or outcome.
 
 > [!NOTE]
 > **Alpha, live since November 16, 2026.** The engine, ledger, news feed and site run on real data.
@@ -85,7 +85,7 @@ falsifier: >
 Applied the same way to every claim. A rule change needs a 7-day comment window and applies only to
 claims registered afterwards.
 
-- **Baseline, not zero.** Each event is compared with what a normal day predicts, estimated over 120
+- **Baseline** Each event is compared with what a normal day predicts, estimated over 120
   trading days that end 10 days before it, leaving out other scheduled news days.
 - **Independent events.** Overlapping windows count once, and events next to other scheduled news are
   dropped.

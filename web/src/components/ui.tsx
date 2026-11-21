@@ -102,7 +102,7 @@ export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string
       {to && <span className="sr-only"> (open claim)</span>}
     </>
   );
-  const cls = "inline-flex shrink-0 items-center gap-1.5 bg-surface-alt py-1 pl-1 pr-3 text-[13px]";
+  const cls = "btn inline-flex shrink-0 items-center gap-1.5 bg-surface-alt py-1 pl-1 pr-3 text-[13px]";
   return to ? (
     <Link to={to} className={`${cls} relative z-10 hover:bg-line`}>
       {body}
@@ -188,7 +188,7 @@ export function IconButton({ icon, label, onClick, disabled }: { icon: IconName;
 
 export function BackButton({ to, label = "Back" }: { to: string; label?: string }) {
   return (
-    <Link to={to} aria-label={label} className="grid h-9 w-9 shrink-0 place-items-center bg-surface-alt text-fg hover:bg-line">
+    <Link to={to} aria-label={label} className="btn grid h-9 w-9 shrink-0 place-items-center bg-surface-alt text-fg hover:bg-line">
       <Icon name="back" size={18} />
     </Link>
   );
@@ -214,7 +214,7 @@ export function ActionLink({
       ? "bg-fg text-bg hover:opacity-90"
       : "border border-line text-fg hover:bg-surface";
   return (
-    <Link to={to} className={`inline-flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold ${cls}`}>
+    <Link to={to} className={`btn inline-flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold ${cls}`}>
       {children}
       {icon && <Icon name={icon} size={16} />}
     </Link>

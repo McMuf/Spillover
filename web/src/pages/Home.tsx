@@ -220,10 +220,10 @@ function HomeBody({ site }: { site: SiteData }) {
             events happen, and the market grades it in public.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link to="/submit" className="lift-press inline-flex items-center gap-2 bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop">
+            <Link to="/submit" className="btn inline-flex items-center gap-2 bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop hover:brightness-95">
               Write a claim
             </Link>
-            <Link to="/method" className="lift-press inline-flex items-center gap-2 bg-bg px-5 py-2.5 text-[15px] font-semibold">
+            <Link to="/method" className="btn inline-flex items-center gap-2 border border-fg/25 bg-bg px-5 py-2.5 text-[15px] font-semibold hover:bg-surface">
               How it works
             </Link>
           </div>

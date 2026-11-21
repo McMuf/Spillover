@@ -101,12 +101,12 @@ export function Shell() {
           </Link>
           <div className="hidden max-w-xl flex-1 md:block">{search}</div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <Link to="/submit" className="lift-press inline-flex items-center gap-1.5 whitespace-nowrap bg-pop px-4 py-2 text-sm font-semibold text-on-pop">
+            <Link to="/submit" className="btn inline-flex items-center gap-1.5 whitespace-nowrap bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95">
               <Icon name="submit" size={16} />
               <span className="sm:hidden">Submit</span>
               <span className="hidden sm:inline">Submit a claim</span>
             </Link>
-            <a href={`https://github.com/${repo}`} aria-label="Source on GitHub" className="grid h-9 w-9 place-items-center border border-line text-muted hover:text-fg">
+            <a href={`https://github.com/${repo}`} aria-label="Source on GitHub" className="btn grid h-9 w-9 place-items-center border border-line text-muted hover:text-fg">
               <Icon name="source" size={16} />
             </a>
           </div>
@@ -143,8 +143,8 @@ export function Shell() {
 
       <div className="mx-auto mt-3 flex w-full max-w-[1440px] flex-1 gap-3 px-2 md:px-4">
         {/* Wide screens: a sidebar with the sections, ways to contribute and topics. */}
-        <aside aria-label="Sections" className="hidden w-[240px] shrink-0 xl:block">
-          <div className="sheet no-scrollbar sticky top-[88px] max-h-[calc(100vh-100px)] overflow-y-auto px-4 py-6">
+        <aside aria-label="Sections" className="sheet hidden w-[240px] shrink-0 xl:block">
+          <div className="no-scrollbar sticky top-[76px] max-h-[calc(100vh-76px)] overflow-y-auto px-4 py-6">
             <nav aria-label="Main">
               <ul className="space-y-1">
                 {NAV.map((n) => (

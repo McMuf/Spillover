@@ -62,7 +62,7 @@ function Ask({ site }: { site: SiteData }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
+          className="btn inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
         >
           Continue on GitHub
           <Icon name="external" size={16} />

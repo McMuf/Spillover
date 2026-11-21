@@ -342,7 +342,7 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
       <section aria-labelledby="start-h" className="space-y-3">
         <h2 id="start-h" className={H3}>Contribute</h2>
         <div className="flex flex-wrap gap-2">
-          <Link className="inline-flex bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95" to={`/submit?counter=${encodeURIComponent(id)}`}>
+          <Link className="btn inline-flex bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95" to={`/submit?counter=${encodeURIComponent(id)}`}>
             Write a counter-claim
           </Link>
           <Link className={link} to={`/submit?refine=${encodeURIComponent(id)}`}>

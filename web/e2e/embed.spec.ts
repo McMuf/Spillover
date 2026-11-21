@@ -46,7 +46,8 @@ test("the snippet on the claim page really works when framed", async ({ page }) 
 
 test("the method page explains the numbers", async ({ page }) => {
   await page.goto("/#/method");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("How the numbers are made");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("How it works");
+  await expect(page.getByRole("heading", { level: 2, name: "How the numbers are made" })).toBeVisible();
   for (const heading of ["One claim, step by step", "What the statuses mean", "What this cannot tell you", "Glossary", "Reading list"]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }

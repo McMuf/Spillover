@@ -56,7 +56,7 @@ function Person({ p }: { p: Profile }) {
             {isHandle(p.handle) && (
               <a
                 href={`https://github.com/${p.handle}`}
-                className="inline-flex items-center gap-1.5 border border-line px-4 py-1.5 text-sm font-semibold hover:bg-surface-alt"
+                className="btn inline-flex items-center gap-1.5 border border-line px-4 py-1.5 text-sm font-semibold hover:bg-surface-alt"
                 rel="noopener noreferrer"
               >
                 GitHub profile

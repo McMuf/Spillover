@@ -673,7 +673,6 @@ A **read-only MCP server** that lets AI assistants query claims and outcomes is 
 | `NASDAQCOM` | Nasdaq Composite | Nasdaq, Inc. | **Copyrighted: pre-approval required.** Same terms and same use as `SP500` |
 | `DTWEXBGS` | Broad US dollar index | Board of Governors of the Federal Reserve System | Public domain, citation requested |
 | `DEXJPUS` | Yen per US dollar | Board of Governors of the Federal Reserve System | Public domain, citation requested |
-| `DCOILWTICO` | WTI crude oil spot price | US Energy Information Administration | Public domain, citation requested |
 | Release calendars 10 and 50 | CPI and jobs report dates | Bureau of Labor Statistics schedules | Dates only |
 | FOMC calendar | Fed decision dates | federalreserve.gov | Public domain (US government work) |
 | `labels/companies.json` | Company names and tickers for the free headline labeler | Wikidata | CC0 (public domain) |

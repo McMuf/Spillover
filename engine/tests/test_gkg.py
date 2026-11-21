@@ -118,7 +118,15 @@ def test_unzip_refuses_odd_archives() -> None:
 
 def test_fetch_recent_skips_a_missing_older_file_but_not_the_newest() -> None:
     index = f"2 b http://data.gdeltproject.org/gdeltv2/{STAMP}.gkg.csv.zip\n"
-    newest = zipped(row("https://a.example/1", "Stocks climb as inflation cools"))
+    newest = zipped(
+        "\n".join(
+            [
+                row("https://a.example/1", "Stocks climb as inflation cools", domain="reuters.com"),
+                # An outlet that is not on the list (outlets.py) is left out.
+                row("https://b.example/1", "Stocks slip as yields rise", domain="spam.example"),
+            ]
+        )
+    )
 
     def text(url: str) -> str:
         assert url == INDEX

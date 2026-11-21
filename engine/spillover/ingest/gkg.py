@@ -32,6 +32,7 @@ from spillover.ingest.gdelt import (
     tidy,
 )
 from spillover.ingest.http import FetchError
+from spillover.ingest.outlets import tier
 
 INDEX = "https://data.gdeltproject.org/gdeltv2/lastupdate.txt"
 FILE = "https://data.gdeltproject.org/gdeltv2/{stamp}.gkg.csv.zip"
@@ -39,7 +40,8 @@ FILES = 4  # the last hour
 MAX_ZIP = 32 * 2**20  # a 15-minute file is about 7 MB zipped
 MAX_CSV = 96 * 2**20  # and about 21 MB unzipped
 KEEP = 60
-PER_OUTLET = 3  # so one busy wire site cannot fill the page
+PER_OUTLET = 4  # so one busy wire site cannot fill the page
+TIER_ONE_BONUS = 4  # first-tier outlets (outlets.py) rank ahead of the rest
 
 # Column positions in GKG 2.1 (tab-separated, no quoting).
 DATE, DOMAIN, URL, THEMES, IMAGE, EXTRAS = 1, 3, 4, 7, 18, 26
@@ -168,6 +170,10 @@ def fetch_recent(
         except (FetchError, GdeltError):
             if i == 0:
                 raise
+    # Only the listed outlets, with the first tier ranked ahead.
+    scored = [
+        (s + (TIER_ONE_BONUS if tier(h.domain) == 2 else 0), h) for s, h in scored if tier(h.domain)
+    ]
     if not scored:
-        raise GdeltError("GDELT's latest files had no market headlines")
+        raise GdeltError("GDELT's latest files had no market headlines from the listed outlets")
     return pick(scored)

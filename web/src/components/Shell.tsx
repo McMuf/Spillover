@@ -231,11 +231,11 @@ export function Shell() {
           <p>
             Market data via FRED, Federal Reserve Bank of St. Louis: dollar and yen series from the
             Board of Governors of the Federal Reserve System (public domain). Single-stock prices from Tiingo. S&amp;P 500 © S&amp;P Dow Jones Indices LLC; Nasdaq Composite © Nasdaq,
-            Inc.; used for non-commercial educational research. Only statistics derived from them are shown. Headlines come from the{" "}
+            Inc.; used for non-commercial educational research. Only statistics derived from them are shown. Headlines come from the outlets&apos; own public feeds and the{" "}
             <a className="underline hover:text-on-backdrop" href="https://www.gdeltproject.org/" rel="noopener noreferrer">
               GDELT Project
             </a>
-            , and charts are drawn with{" "}
+            , with each article linked, never copied, and charts are drawn with{" "}
             <a className="underline hover:text-on-backdrop" href="https://www.tradingview.com/" rel="noopener noreferrer">
               TradingView Lightweight Charts
             </a>

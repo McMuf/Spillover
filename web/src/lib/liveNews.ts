@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SiteData } from "../generated/site";
 import { outletKey } from "./icons";
+import { outletTier, TIER_ONE } from "./outlets";
 
 export type Headline = SiteData["headlines"][number];
 
@@ -14,7 +15,9 @@ export type Headline = SiteData["headlines"][number];
 export const GDELT_QUERY =
   '(stocks OR "stock market" OR earnings OR merger OR acquisition OR bankruptcy OR layoffs OR ' +
   'cyberattack OR outage OR recall OR tariff OR "interest rate" OR inflation OR CEO OR SEC OR ' +
-  '"Federal Reserve") sourcelang:english';
+  '"Federal Reserve") (' +
+  TIER_ONE.map((d) => `domain:${d}`).join(" OR ") +
+  ") sourcelang:english";
 
 export function gdeltUrl(): string {
   const q = new URLSearchParams({ query: GDELT_QUERY, mode: "artlist", format: "json", maxrecords: "75", timespan: "1d", sort: "datedesc" });
@@ -125,7 +128,8 @@ function fetchShared(known: Headline[], everyMs: number): Promise<Headline[] | n
     try {
       const res = await fetch(gdeltUrl(), { referrerPolicy: "no-referrer" });
       if (!res.ok) return null;
-      return parseGdelt(await res.json(), known);
+      // Only the listed outlets (outlets.ts), like the build.
+      return parseGdelt(await res.json(), known).filter((h) => outletTier(h.domain) > 0);
     } catch {
       return null; // unreachable, rate-limited or blocked: keep what we have
     }

@@ -97,7 +97,7 @@ function Headlines({ live }: { live: LiveNews }) {
           </span>
           {live.source === "live" ? "Live" : newest ? `Updated ${ago(newest, Date.now())}` : "From the last build"}
         </span>
-        The last hour of market news from outlets worldwide, picked by topic, refreshed every hour
+        The latest business and market news from established outlets such as Bloomberg, the WSJ, the FT and the BBC, refreshed every hour
         {live.source === "live" ? " and every few minutes while this page is open" : ""}. Pictures load from
         each publisher. A headline marked <span className="font-semibold text-fg">testable</span> matches a kind of event that claims can be tested on (
         {testable} of {list.length} right now). Tags come from a free automatic labeler and can be wrong;{" "}
@@ -164,11 +164,12 @@ function Headlines({ live }: { live: LiveNews }) {
         )}
       </div>
       <p className="mt-6 text-xs text-muted">
-        Headlines via the{" "}
+        Headlines come from the public news feeds of established outlets (Bloomberg, The Wall Street Journal, The New
+        York Times, the Financial Times, The Economist, the BBC, CNBC and others), topped up from the{" "}
         <a href="https://www.gdeltproject.org/" className="underline" rel="noopener noreferrer">
           GDELT Project
-        </a>
-        . Spillover links to articles and never copies them; pictures are each article's own preview image, shown from the
+        </a>{" "}
+        for the same outlets. Spillover links to articles and never copies them; pictures are each article's own preview image, shown from the
         publisher's site. These headlines are shown only; they do not enter the record until the labeler's measured
         accuracy on general news holds up.
       </p>

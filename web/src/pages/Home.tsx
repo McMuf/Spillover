@@ -117,11 +117,11 @@ function Feed({ site }: { site: SiteData }) {
         {shown.length === 0 && <li className="py-8 text-muted">Nothing here yet.</li>}
       </ul>
       <p className="py-4 text-xs text-muted">
-        {live.source === "live" ? "Headlines are live from" : "Headlines are from the last build, via"} the{" "}
+        Headlines come from established outlets&apos; own feeds and the{" "}
         <a href="https://www.gdeltproject.org/" className="underline" rel="noopener noreferrer">
           GDELT Project
         </a>
-        ; claims, events and predictions come from the public record.
+        {live.source === "live" ? ", updated live" : ", as of the last build"}; claims, events and predictions come from the public record.
       </p>
     </section>
   );

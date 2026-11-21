@@ -27,7 +27,7 @@ export const ROWS = 24;
 export const NODES: Record<string, Node> = {
   calendars: { x: 1, y: 1, w: 15, label: "Calendars", sub: "Fed, CPI, jobs", color: C.input },
   sec: { x: 1, y: 6, w: 15, label: "SEC 8-K", sub: "company filings", color: C.input },
-  headlines: { x: 1, y: 11, w: 15, label: "Headlines", sub: "GDELT, labeled", color: C.input },
+  headlines: { x: 1, y: 11, w: 15, label: "Headlines", sub: "outlet feeds", color: C.input },
   prices: { x: 1, y: 16, w: 15, label: "Prices", sub: "FRED, Tiingo", color: C.input },
   claims: { x: 24, y: 1, w: 16, label: "Claims", sub: "YAML via PR", color: C.claim },
   events: { x: 24, y: 6, w: 16, label: "Event store", sub: "events/", color: C.event },

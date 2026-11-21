@@ -25,13 +25,15 @@ from pathlib import Path
 
 from spillover.extractor import clean_title
 from spillover.ingest.http import Fetcher, FetchError
+from spillover.ingest.outlets import TIER_ONE, trusted
 
 DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
-# Market-moving topics, in English. GDELT's query language needs parentheses around OR lists.
+# Market-moving topics, in English, from the first-tier outlets (see outlets.py). GDELT's query
+# language needs parentheses around OR lists.
 QUERY = (
     '(stocks OR "stock market" OR earnings OR merger OR acquisition OR bankruptcy OR layoffs OR '
     'cyberattack OR outage OR recall OR tariff OR "interest rate" OR inflation OR CEO OR SEC OR '
-    '"Federal Reserve") sourcelang:english'
+    '"Federal Reserve") (' + " OR ".join(f"domain:{d}" for d in TIER_ONE) + ") sourcelang:english"
 )
 MAX_RECORDS = 75
 KEEP = 50
@@ -164,7 +166,7 @@ def fetch_headlines(
     url = doc_url(timespan=timespan)
     for attempt in range(RETRIES):
         try:
-            return parse_doc(fetch(url))
+            return trusted(parse_doc(fetch(url)))
         except FetchError as exc:
             if "HTTP 429" not in str(exc) or attempt == RETRIES - 1:
                 raise

@@ -33,7 +33,7 @@ function ago(iso: string, now: number): string {
 
 // --- Latest headlines ---------------------------------------------------------------------------
 
-/** "Testable · a CEO or CFO leaves · NVDA" plus a way to start a claim, when the labeler matched a type. */
+/** "Testable", "a CEO or CFO leaves", "NVDA" plus a way to start a claim, when the labeler matched a type. */
 function Testable({ h }: { h: Headline }) {
   if (h.event_type === "NONE") return null;
   return (
@@ -64,7 +64,7 @@ function Meta({ h, now }: { h: Headline; now: number }) {
     <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
       <SourceIcon domain={h.domain} size={16} />
       <span className="min-w-0 truncate">
-        {h.domain.replace(/^www\./, "")} · <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
+        {h.domain.replace(/^www\./, "")}, <time dateTime={h.seen_at}>{ago(h.seen_at, now)}</time>
       </span>
     </p>
   );

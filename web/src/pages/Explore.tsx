@@ -14,7 +14,7 @@ import { claimStat, scoreboardRow } from "../lib/format";
 import { categoryOf, highlightTerms, liveClaims, shortHeadline } from "../lib/plain";
 
 
-const TH = "px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted";
+const TH = "px-3 py-3 text-[13px] font-medium text-muted";
 const TONE = { up: "up", down: "down", flat: "accent" } as const;
 
 function ExploreBody({ site }: { site: SiteData }) {

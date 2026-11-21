@@ -146,10 +146,10 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
               <span className={`font-bold ${stat.cls}`}>
                 <Ticker text={stat.value} />
               </span>{" "}
-              {stat.note ? `${stat.note},` : "abnormal move"} across {b.n_effective} past events · {it.forward_log.length} predictions frozen
+              {stat.note ? `${stat.note},` : "abnormal move"} across {b.n_effective} past events. {it.forward_log.length} predictions frozen
               {comments > 0 && (
                 <>
-                  {" · "}
+                  {", "}
                   <Link to={`/claims/${c.id}`} className="hover:text-fg hover:underline">
                     {comments} comment{comments === 1 ? "" : "s"}
                   </Link>

@@ -25,14 +25,11 @@ test("loads the site, opens a claim and reads its chain", async ({ page }) => {
   await expect(page).toHaveURL(/#\/claims\/clm_fomc_abs_move_spx_v\d+$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("S&P 500");
   await expect(page.getByText(/On FOMC decision days, the S&P 500/).first()).toBeVisible();
-  // The claim reads as a labeled chain; every step names its node type, so no legend is needed.
+  // The claim reads as a labeled chain: every step names its role in plain words, so no legend is needed.
   const path = page.getByTestId("spillover-path");
   await expect(path).toBeVisible();
   for (const role of ["Who", "What happens", "Which market", "Measured against", "Rules applied", "Frozen predictions"]) {
     await expect(path.getByText(role, { exact: false }).first()).toBeVisible();
-  }
-  for (const tag of ["ENT", "EVT", "INS", "FAC", "CON", "PRD"]) {
-    await expect(path.getByText(`· ${tag}`)).toBeVisible();
   }
   await expect(path.getByText("S&P 500").first()).toBeVisible();
 

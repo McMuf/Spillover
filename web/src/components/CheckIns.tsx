@@ -26,14 +26,14 @@ export function CheckIns({ item }: { item: SiteClaim }) {
           const stat = claimStat(m, h.mean);
           return (
             <li key={h.label} className="rounded-xl border border-line bg-bg p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">{h.label}</p>
+              <p className="text-[13px] font-medium text-muted">{h.label}</p>
               {h.note ? (
                 <p className="mt-1 text-xs leading-snug text-muted">{h.note}</p>
               ) : (
                 <>
                   <p className={`mt-1 text-lg font-bold tabular-nums ${stat.cls}`}>{stat.value}</p>
                   <p className="text-[11px] leading-snug text-muted">
-                    {intervalText(h.ci_lo, h.ci_hi, m)} · {h.n_events} event{h.n_events === 1 ? "" : "s"}
+                    {h.n_events} event{h.n_events === 1 ? "" : "s"}, range {intervalText(h.ci_lo, h.ci_hi, m)}
                   </p>
                 </>
               )}

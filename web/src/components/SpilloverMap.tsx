@@ -23,8 +23,8 @@ export function SpilloverMap({ claims }: { claims: SiteClaim[] }) {
           <caption className="sr-only">Claims by kind of news (rows) and market (columns). Each filled cell is a claim with its backtest estimate.</caption>
           <thead>
             <tr className="border-b border-line">
-              <th scope="col" className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                News ↓ · Market →
+              <th scope="col" className="px-4 py-3 text-[13px] font-medium text-muted">
+                News by market
               </th>
               {m.cols.map((c) => (
                 <th key={c.symbol} scope="col" className="px-4 py-3">
@@ -67,7 +67,7 @@ export function SpilloverMap({ claims }: { claims: SiteClaim[] }) {
                               </span>
                               <span className="block text-xs text-muted">
                                 {MARK[h.status]}
-                                {h.backtest ? ` · n=${h.backtest.n_effective}` : ""}
+                                {h.backtest ? `, ${h.backtest.n_effective} events` : ""}
                               </span>
                             </Link>
                           ))}

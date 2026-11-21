@@ -95,7 +95,7 @@ function LabelBody({ site }: { site: SiteData }) {
         )}
         <p className="mt-3 text-xs text-muted">
           {lab.gold_rows} headline{lab.gold_rows === 1 ? "" : "s"} labeled by people so far
-          {lab.accuracy && ` · labeler ${lab.accuracy.extractor_version}`}
+          {lab.accuracy && `, checked against labeler ${lab.accuracy.extractor_version}`}
         </p>
       </section>
 
@@ -180,7 +180,7 @@ function LabelBody({ site }: { site: SiteData }) {
           Add your labels to the project
         </h2>
         <p className="mt-1 text-sm text-muted" role="status">
-          {added} new label{added === 1 ? "" : "s"} this session · {rows.length} in the file in total
+          {added} new label{added === 1 ? "" : "s"} this session, {rows.length} in the file in total
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button

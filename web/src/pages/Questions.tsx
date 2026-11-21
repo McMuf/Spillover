@@ -100,7 +100,7 @@ function QuestionsBody({ site }: { site: SiteData }) {
         <header>
           <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Questions</h1>
           <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
-            Where claims start. Ask what you wonder about the news and markets, answer others, and turn the good ones into
+            Most claims start as a question. Ask what you wonder about the news and markets, answer others, and turn the good ones into
             claims. Questions and answers never change a result: only the market grades claims.
           </p>
           <button

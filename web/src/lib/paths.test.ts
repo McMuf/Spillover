@@ -16,7 +16,7 @@ describe("claim path", () => {
     const label = edgeLabel(makeClaim());
     expect(label).toContain("−1.23%");
     expect(label).toContain("[−2.00%, −0.40%]");
-    expect(label).toContain("n=36");
+    expect(label).toContain("36 events");
     expect(label).toContain("day 0 to +1");
     expect(label).toContain("as of 2025-12-26");
   });

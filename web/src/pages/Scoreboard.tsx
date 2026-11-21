@@ -10,7 +10,7 @@ import type { SiteData } from "../generated/site";
 import { claimStat, dirText, intervalText, pct, plainPct } from "../lib/format";
 import { shortHeadline } from "../lib/plain";
 
-/** Market logo, symbol in violet and the claim in words, with its id underneath. */
+/** Market logo, symbol in the accent color and the claim in words, with its id underneath. */
 function ClaimCell({ site, id, placebo }: { site: SiteData; id: string; placebo: boolean }) {
   const item = site.claims.find((c) => c.claim.id === id);
   if (!item) {
@@ -31,7 +31,7 @@ function ClaimCell({ site, id, placebo }: { site: SiteData; id: string; placebo:
         </span>
         <span className="block font-mono text-[11px] text-muted">
           {id}
-          {placebo && " · placebo"}
+          {placebo && ", placebo"}
         </span>
       </span>
     </Link>
@@ -47,7 +47,7 @@ function Board({ site }: { site: SiteData }) {
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight">Scoreboard</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Generated from the outcome records, never hand-edited. Every number shows its sample size and interval. Small
+          Built automatically from the outcome records. Every number shows its sample size and interval. Small
           samples are flagged.
         </p>
         <div className="mt-4">

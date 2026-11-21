@@ -76,8 +76,8 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
         <blockquote className="border-l-2 border-line pl-4 text-[15px] leading-relaxed">{clean(c.statement)}</blockquote>
         <p className="mt-2 text-xs text-muted">
           <span className="font-mono">{c.id}</span>
-          {" · "}by <PersonLink handle={c.registered_by} />
-          {c.registered_at !== "set_by_ci_on_merge" ? ` · frozen ${c.registered_at.slice(0, 10)}` : " · not registered yet"}
+          {", by "}<PersonLink handle={c.registered_by} />
+          {c.registered_at !== "set_by_ci_on_merge" ? `, frozen ${c.registered_at.slice(0, 10)}` : ", not registered yet"}
         </p>
 
         <h2 className={`${H3} mt-7`}>Market context</h2>
@@ -226,7 +226,7 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
               <div className="text-right">
                 <p className={`text-[17px] font-bold tabular-nums ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).value}</p>
                 {claimStat(c.measure, b.mean).note && <p className="text-xs text-muted">{claimStat(c.measure, b.mean).note}</p>}
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest · n={b.n_effective}</p>
+                <p className="text-[13px] font-medium text-muted">Backtest, {b.n_effective} events</p>
               </div>
             )}
           </div>
@@ -377,7 +377,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
   const isPlacebo = item.claim.event_type === "RANDOM_DATE";
   if (!b) return <p className="text-muted">No backtest could be run: {item.backtest_error}</p>;
   const tableWrap = "overflow-auto rounded-2xl bg-surface";
-  const th = "px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted";
+  const th = "px-4 py-3 text-[13px] font-medium text-muted";
 
   return (
     <div className="space-y-8">
@@ -533,14 +533,14 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
           <p className="text-sm">
             <PersonLink handle={c.registered_by} className="font-semibold hover:underline" />
             <span className="block text-xs text-muted">
-              {c.registered_at !== "set_by_ci_on_merge" ? `Registered and frozen ${c.registered_at.slice(0, 10)}` : "Draft · not registered yet"}
+              {c.registered_at !== "set_by_ci_on_merge" ? `Registered and frozen ${c.registered_at.slice(0, 10)}` : "Draft, not registered yet"}
             </span>
           </p>
         </div>
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <Tag>{categoryOf(c.event_type)}</Tag>
           <Stamp>
-            {b ? `${b.n_effective} past events tested · as of ${b.as_of}` : "Not tested yet"}
+            {b ? `${b.n_effective} past events tested, as of ${b.as_of}` : "Not tested yet"}
           </Stamp>
         </div>
         <h1 className="text-3xl font-extrabold leading-tight tracking-tight md:text-[40px]">
@@ -583,7 +583,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             </div>
             {b ? (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Backtest estimate</p>
+                <p className="text-[13px] font-medium text-muted">Backtest estimate</p>
                 <p data-testid="claim-number" className={`mt-1 text-[40px] font-extrabold leading-none tabular-nums ${claimStat(c.measure, b.mean).cls}`}>
                   <Ticker text={claimStat(c.measure, b.mean).value} />
                 </p>
@@ -593,7 +593,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
                     {claimStat(c.measure, b.mean).dir === "down" ? "▼ " : claimStat(c.measure, b.mean).dir === "up" ? "▲ " : ""}
                   </span>
                   {claimStat(c.measure, b.mean).short ? `${claimStat(c.measure, b.mean).short} than usual` : "abnormal move"}{" "}
-                  <span className="font-normal text-muted">· past events</span>
+                  <span className="font-normal text-muted">in past events</span>
                 </p>
                 {claimStat(c.measure, b.mean).note && (
                   <p className="mt-1 text-xs text-muted">
@@ -601,8 +601,8 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
                   </p>
                 )}
                 <p className="mt-1 text-xs text-muted">
-                  n={b.n_effective} · {intervalText(b.ci_lo, b.ci_hi, c.measure)}
-                  {b.data_synthetic && " · synthetic data"}
+                  {b.n_effective} events, range {intervalText(b.ci_lo, b.ci_hi, c.measure)}
+                  {b.data_synthetic && ", synthetic data"}
                 </p>
               </div>
             ) : (

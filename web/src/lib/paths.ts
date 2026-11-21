@@ -34,7 +34,7 @@ export function factorNames(c: SiteClaim["claim"]): string[] {
 export function edgeLabel(c: SiteClaim): string | undefined {
   const b = c.backtest;
   if (!b) return undefined;
-  return [`${pct(b.mean)} ${intervalText(b.ci_lo, b.ci_hi)}`, `n=${b.n_effective}`, windowLabel(b.window_days), `as of ${b.as_of}`, "backtest"].join(" · ");
+  return [`${pct(b.mean)} ${intervalText(b.ci_lo, b.ci_hi)}`, `${b.n_effective} events`, windowLabel(b.window_days), `backtest as of ${b.as_of}`].join(", ");
 }
 
 export function claimPath(item: SiteClaim, site: SiteData): ClaimPath {

@@ -32,9 +32,9 @@ export default function EmbedClaim() {
               <EvidenceMeter value={row?.effective_events ?? 0} max={c.success.min_forward_events} label="Forward events" />
               {b && (
                 <p className="mt-3 text-xs text-muted">
-                  <span className="font-semibold uppercase tracking-wide">Backtest</span> · n={b.n_effective} ·{" "}
-                  <span className={`font-semibold ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).text}</span> {intervalText(b.ci_lo, b.ci_hi, c.measure)} · as of {b.as_of}
-                  {b.data_synthetic && " · SYNTHETIC data"}
+                  <span className="font-semibold">Backtest</span> over {b.n_effective} events:{" "}
+                  <span className={`font-semibold ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).text}</span> {intervalText(b.ci_lo, b.ci_hi, c.measure)}, as of {b.as_of}
+                  {b.data_synthetic && ", on synthetic data"}
                 </p>
               )}
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

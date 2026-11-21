@@ -70,7 +70,7 @@ export function HeadlineActions({ h, children, className = "" }: { h: Headline; 
             Read the article on {h.domain.replace(/^www\./, "")}
             <Icon name="external" size={15} />
           </a>
-          <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Turn it into a claim</p>
+          <p className="px-3 pb-1 pt-2 text-[13px] font-medium text-muted">Turn it into a claim</p>
           <ul>
             {ideas.map((i) => (
               <li key={i.href}>
@@ -86,7 +86,6 @@ export function HeadlineActions({ h, children, className = "" }: { h: Headline; 
                 className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-accent-soft"
               >
                 Start from this headline
-                <Icon name="arrowRight" size={15} />
               </Link>
             </li>
           </ul>

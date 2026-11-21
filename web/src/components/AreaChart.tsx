@@ -19,7 +19,7 @@ export type ChartTone = "up" | "down" | "neutral" | "accent";
 const STROKE: Record<ChartTone, string> = {
   up: "var(--c-positive)",
   down: "var(--c-negative)",
-  neutral: "var(--c-accent)", // the brand violet when direction does not apply
+  neutral: "var(--c-accent)", // the lime accent when direction does not apply
   accent: "var(--c-accent)",
 };
 
@@ -33,7 +33,7 @@ export function AreaChart({
   values: number[];
   markIndex?: number;
   height?: number;
-  /** Green when the effect is up, red when it is down; violet when direction does not apply. */
+  /** Green when the effect is up, red when it is down; lime when direction does not apply. */
   tone?: ChartTone;
   /** Show the dot on the latest point. */
   live?: boolean;

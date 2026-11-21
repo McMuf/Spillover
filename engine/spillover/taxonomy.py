@@ -104,7 +104,7 @@ TAXONOMY: tuple[EventType, ...] = (
         "of its previous 60 trading days. Derived from prices, never from headlines.",
         origin="prices",
     ),
-    # From a reviewed list (events/curated/mega_tech_ipos.csv), one row per listing with a source.
+    # From a reviewed list (labels/mega_tech_ipos.csv), one row per listing with a source.
     EventType(
         "MEGA_TECH_IPO",
         "A technology company valued at about $10 billion or more starts trading on a US exchange, "

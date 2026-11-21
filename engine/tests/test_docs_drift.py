@@ -31,3 +31,12 @@ def test_the_citation_file_names_the_current_version() -> None:
 
     version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
     assert f'version: "{version}"' in (ROOT / "CITATION.cff").read_text()
+
+
+def test_the_doi_is_the_same_in_the_citation_file_and_the_readme() -> None:
+    import re
+
+    cff = (ROOT / "CITATION.cff").read_text()
+    doi = re.search(r'^doi: "(10\.5281/zenodo\.\d+)"', cff, re.MULTILINE)
+    assert doi, "CITATION.cff names a DOI"
+    assert f"https://doi.org/{doi.group(1)}" in (ROOT / "README.md").read_text()

@@ -404,7 +404,7 @@ def test_the_reviewed_list_of_big_tech_listings_is_well_formed() -> None:
     from spillover.taxonomy import ALL_NAMES
 
     root = Path(__file__).resolve().parents[2]
-    events = read_events_csv(root / "events" / "curated" / "mega_tech_ipos.csv")
+    events = read_events_csv(root / "labels" / "mega_tech_ipos.csv")
     assert "MEGA_TECH_IPO" in ALL_NAMES
     assert events.height >= 15
     assert set(events["entity"].to_list()) == {"NEW_LISTING"}

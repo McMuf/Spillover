@@ -57,10 +57,10 @@ export function SectionHead({ id, title, right }: { id: string; title: string; r
   );
 }
 
-/** "⚡ 36 EVENTS TESTED · FED & MACRO": small caps metadata above a headline. */
+/** "36 events tested, as of 2026-11-20": short metadata above a headline. */
 export function Stamp({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted">
+    <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-muted">
       <Icon name="bolt" size={12} />
       {children}
     </span>
@@ -70,7 +70,7 @@ export function Stamp({ children }: { children: ReactNode }) {
 /** A small grey label chip, like "AI & TECH". */
 export function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md bg-surface-alt px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+    <span className="inline-flex shrink-0 items-center rounded-md bg-surface-alt px-2 py-0.5 text-xs font-semibold text-muted">
       {children}
     </span>
   );
@@ -79,7 +79,7 @@ export function Tag({ children }: { children: ReactNode }) {
 /** A hairline-outlined label next to a symbol, like "PERP". */
 export function OutlineTag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md border border-line px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+    <span className="inline-flex shrink-0 items-center rounded-md border border-line px-1.5 py-0.5 text-[13px] font-medium text-muted">
       {children}
     </span>
   );
@@ -197,12 +197,12 @@ export function BackButton({ to, label = "Back" }: { to: string; label?: string 
 export const TAB_CLASS =
   "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-[17px] font-semibold text-muted hover:text-fg data-[state=active]:border-fg data-[state=active]:text-fg";
 
-/** A call to action. Primary is a solid ink pill with an arrow; secondary is an outlined pill. */
+/** A call to action. Primary is a solid ink pill; secondary is an outlined pill. An icon is opt-in. */
 export function ActionLink({
   to,
   children,
   variant = "primary",
-  icon = "arrowRight",
+  icon = null,
 }: {
   to: string;
   children: ReactNode;

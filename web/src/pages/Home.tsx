@@ -21,7 +21,7 @@ import { byTrending, liveClaims } from "../lib/plain";
 const CHIP = "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold";
 const chip = (on: boolean) => `${CHIP} ${on ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`;
 
-/** Feed · News · Markets, the three ways in, as on a markets app's home. */
+/** Feed, News and Markets: the three ways in, as on a markets app's home. */
 function TopTabs() {
   const tabs = [
     { to: "/", label: "Feed", end: true },
@@ -68,7 +68,6 @@ function Composer() {
       </label>
       <button type="submit" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-fg px-4 text-sm font-semibold text-bg hover:opacity-90">
         Start
-        <Icon name="arrowRight" size={16} />
       </button>
     </form>
   );
@@ -192,7 +191,7 @@ function NewHere() {
         <li>Not sure yet? Ask a question first; others help shape it.</li>
         <li>Write a claim about a kind of news, not one story.</li>
         <li>It is frozen and time-stamped before new events happen.</li>
-        <li>The market grades it, in public, by rules nobody can bend.</li>
+        <li>Once enough new events happen, market data grades it in public, by published rules.</li>
       </ul>
       <div className="mt-4 flex flex-wrap gap-2">
         <ActionLink to="/submit">Write a claim</ActionLink>
@@ -224,7 +223,6 @@ function HomeBody({ site }: { site: SiteData }) {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link to="/submit" className="inline-flex items-center gap-2 rounded-full bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop hover:brightness-95">
               Write a claim
-              <Icon name="arrowRight" size={16} />
             </Link>
             <Link to="/method" className="inline-flex items-center gap-2 rounded-full border border-fg/20 bg-bg/60 px-5 py-2.5 text-[15px] font-semibold hover:bg-bg">
               How it works
@@ -245,9 +243,6 @@ function HomeBody({ site }: { site: SiteData }) {
         {/* The market as a basin: news lands, ripples spill into each other. Moving the pointer stirs it. */}
         <div className="relative min-h-[190px] overflow-hidden rounded-3xl border border-line bg-bg md:min-h-[300px]">
           <AsciiField className="absolute inset-0" />
-          <p aria-hidden="true" className="pointer-events-none absolute bottom-3 left-4 font-mono text-[11px] text-muted">
-            news lands · ripples spill over
-          </p>
         </div>
       </header>
 

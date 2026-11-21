@@ -25,7 +25,7 @@ export function UpcomingStrip({ site }: { site: SiteData }) {
   if (site.upcoming.length === 0) return null;
   return (
     <section aria-labelledby="upcoming-strip-h" className="mb-8">
-      <h2 id="upcoming-strip-h" className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+      <h2 id="upcoming-strip-h" className="mb-2 text-[13px] font-medium text-muted">
         Coming up
       </h2>
       <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
@@ -40,7 +40,7 @@ export function UpcomingStrip({ site }: { site: SiteData }) {
                   <time dateTime={s.date} className="text-fg">
                     {s.date}
                   </time>
-                  {soon && <span className="text-muted"> · {soon}</span>}
+                  {soon && <span className="text-muted">, {soon}</span>}
                 </span>
                 <span className="mt-0.5 block text-xs text-muted">
                   {s.claim_ids.length} claim{s.claim_ids.length === 1 ? "" : "s"} waiting

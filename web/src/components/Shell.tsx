@@ -170,7 +170,7 @@ export function Shell() {
                 ))}
               </ul>
             </nav>
-            <h2 className="mb-2 mt-6 border-t border-line px-3 pt-5 text-xs font-semibold uppercase tracking-wider text-muted">Contribute</h2>
+            <h2 className="mb-2 mt-6 border-t border-line px-3 pt-5 text-[13px] font-medium text-muted">Contribute</h2>
             <ul className="space-y-1">
               {CONTRIBUTE.map((n) => (
                 <li key={n.to}>
@@ -183,7 +183,7 @@ export function Shell() {
             </ul>
             {topics.length > 0 && (
               <>
-                <h2 className="mb-2 mt-6 border-t border-line px-3 pt-5 text-xs font-semibold uppercase tracking-wider text-muted">Topics</h2>
+                <h2 className="mb-2 mt-6 border-t border-line px-3 pt-5 text-[13px] font-medium text-muted">Topics</h2>
                 <ul className="space-y-1">
                   {topics.map(([topic, n]) => (
                     <li key={topic}>
@@ -225,21 +225,22 @@ export function Shell() {
             <a className="underline hover:text-fg" href={`https://github.com/${repo}`}>
               Source on GitHub
             </a>
-            {" · "}Market data via FRED, Federal Reserve Bank of St. Louis: dollar and yen series from the
-            Board of Governors of the Federal Reserve System and oil prices from the US Energy Information
-            Administration (public domain). S&amp;P 500 © S&amp;P Dow Jones Indices LLC; Nasdaq Composite © Nasdaq,
-            Inc.; used for non-commercial educational research. Only statistics derived from them are shown.
-            {" · "}Headlines via the{" "}
+            .
+          </p>
+          <p>
+            Market data via FRED, Federal Reserve Bank of St. Louis: dollar and yen series from the
+            Board of Governors of the Federal Reserve System (public domain). Single-stock prices from Tiingo. S&amp;P 500 © S&amp;P Dow Jones Indices LLC; Nasdaq Composite © Nasdaq,
+            Inc.; used for non-commercial educational research. Only statistics derived from them are shown. Headlines come from the{" "}
             <a className="underline hover:text-fg" href="https://www.gdeltproject.org/" rel="noopener noreferrer">
               GDELT Project
             </a>
-            {" · "}build {__COMMIT__}
-            {" · "}Charts powered by{" "}
+            , and charts are drawn with{" "}
             <a className="underline hover:text-fg" href="https://www.tradingview.com/" rel="noopener noreferrer">
               TradingView Lightweight Charts
             </a>
             .
           </p>
+          <p>Build {__COMMIT__}</p>
         </div>
       </footer>
     </div>

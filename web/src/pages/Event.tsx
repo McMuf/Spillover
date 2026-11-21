@@ -46,7 +46,7 @@ function About({ story }: { story: Story }) {
               )}
               <span className="block text-xs text-muted">
                 {s.source}
-                {s.published_at && <> · {new Date(s.published_at).toUTCString().replace(":00 GMT", " UTC")}</>}
+                {s.published_at && <>, {new Date(s.published_at).toUTCString().replace(":00 GMT", " UTC")}</>}
               </span>
             </li>
           ))}
@@ -123,7 +123,7 @@ function Stakeholders({ story, site }: { story: Story; site: SiteData }) {
                   <p className="font-semibold">{NAME_BY_SYMBOL[e] ?? e}</p>
                   <p className="text-xs text-muted">
                     <span className="font-mono">{e}</span>
-                    {priced.has(e) ? " · priced daily" : ""}
+                    {priced.has(e) ? ", priced daily" : ""}
                   </p>
                 </div>
               </li>
@@ -185,7 +185,7 @@ function Data({ story, site }: { story: Story; site: SiteData }) {
                   {forward ? (
                     <>
                       Frozen {forward.created_at.slice(0, 10)}, {STATUS_WORDS[forward.status]}
-                      {forward.proof === "present" ? " · timestamp proof attached" : ""}
+                      {forward.proof === "present" ? ", with its timestamp proof" : ""}
                     </>
                   ) : (
                     <span className="text-muted">None: the event came before the claim was registered</span>
@@ -195,7 +195,7 @@ function Data({ story, site }: { story: Story; site: SiteData }) {
             </dl>
             {past.length > 0 && (
               <div className="mt-5">
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Earlier events like this</h3>
+                <h3 className="mb-2 text-[13px] font-medium text-muted">Earlier events like this</h3>
                 <table className="w-full text-sm">
                   <caption className="sr-only">Measured value for earlier events of the same type</caption>
                   <thead>

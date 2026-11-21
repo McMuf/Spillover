@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { NODE_BY_KEY, type NodeTypeKey } from "../design/nodes";
+import { type NodeTypeKey } from "../design/nodes";
 import type { SiteClaim, SiteData } from "../generated/site";
 import { claimStat } from "../lib/format";
 import { claimPath } from "../lib/paths";
@@ -13,10 +13,9 @@ import { NodeShape } from "./NodeShape";
 function Step({ type, role, children }: { type: NodeTypeKey; role: string; children: ReactNode }) {
   return (
     <li className="min-w-0 rounded-2xl bg-surface p-4">
-      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+      <p className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-muted">
         <NodeShape type={type} size={14} />
         {role}
-        <span className="font-mono font-normal normal-case tracking-normal">· {NODE_BY_KEY[type].tag}</span>
       </p>
       {children}
     </li>
@@ -75,7 +74,7 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
             <div className="min-w-0">
               <p className="text-lg font-bold leading-tight">{p.market.name}</p>
               <p className="text-xs text-muted">
-                {p.market.symbol} · {p.market.venue}
+                {p.market.symbol}, {p.market.venue}
               </p>
             </div>
           </div>
@@ -101,7 +100,7 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
                 <p className="text-sm font-semibold">{claimStat(item.claim.measure, item.backtest?.mean).note}</p>
               )}
               <p className="text-xs text-muted">
-                {p.effect.interval} · n={p.effect.n} counted · {p.effect.window} · <span className="whitespace-nowrap">as of {p.effect.asOf}</span> · backtest
+                Backtest over {p.effect.n} events, {p.effect.window}. Range {p.effect.interval}, <span className="whitespace-nowrap">as of {p.effect.asOf}</span>.
               </p>
             </div>
           ) : (
@@ -112,8 +111,8 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
 
       <dl className="mt-3 divide-y divide-line rounded-2xl bg-surface px-4">
         <div className="grid gap-1 py-3 sm:grid-cols-[13rem_1fr]">
-          <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-            <NodeShape type="factor" size={14} /> Measured against <span className="font-mono font-normal normal-case tracking-normal">· FAC</span>
+          <dt className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+            <NodeShape type="factor" size={14} /> Measured against
           </dt>
           <dd className="text-sm">
             {p.controls.length > 0 ? (
@@ -133,8 +132,8 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
           </dd>
         </div>
         <div className="grid gap-1 py-3 sm:grid-cols-[13rem_1fr]">
-          <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-            <NodeShape type="condition" size={14} /> Rules applied <span className="font-mono font-normal normal-case tracking-normal">· CON</span>
+          <dt className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+            <NodeShape type="condition" size={14} /> Rules applied
           </dt>
           <dd>
             <ul className="list-disc space-y-1 pl-4 text-sm marker:text-muted">
@@ -145,8 +144,8 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
           </dd>
         </div>
         <div className="grid gap-1 py-3 sm:grid-cols-[13rem_1fr]">
-          <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-            <NodeShape type="prediction" size={14} /> Frozen predictions <span className="font-mono font-normal normal-case tracking-normal">· PRD</span>
+          <dt className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+            <NodeShape type="prediction" size={14} /> Frozen predictions
           </dt>
           <dd className="text-sm">
             {p.predictions.total === 0 ? (

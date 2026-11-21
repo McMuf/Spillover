@@ -65,7 +65,7 @@ function Person({ p }: { p: Profile }) {
             )}
           </div>
           <h1 className="mt-3 truncate text-[26px] font-extrabold leading-tight">{p.handle}</h1>
-          <p className="text-sm text-muted">@{p.handle} · contributor</p>
+          <p className="text-sm text-muted">@{p.handle}, contributor</p>
           <div className="mt-4">
             <StatRow
               label={`${p.handle} on the record`}

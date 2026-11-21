@@ -145,8 +145,7 @@ prices.
 ## What this cannot tell you
 
 Whether a pattern will persist; why it happens (an event study measures behavior around dates, not
-mechanism); anything finer than a day; or much from a thin sample (wide intervals are shown, not
-hidden). Long-horizon check-ins (months to years) are descriptive: over long windows the market
+mechanism); anything finer than a day; or much from a thin sample (the site shows the wide intervals). Long-horizon check-ins (months to years) are descriptive: over long windows the market
 model's errors pile up and many other things happen, so they are never graded. Nothing here is
 investment advice.
 

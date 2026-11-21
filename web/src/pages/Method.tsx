@@ -43,7 +43,7 @@ function Life() {
             <Icon name={s.icon} size={20} />
           </span>
           <div className="md:mt-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Step {i + 1}</p>
+            <p className="text-[13px] font-medium text-muted">Step {i + 1}</p>
             <h3 className="text-lg font-bold">{s.title}</h3>
             <p className="mt-1 text-[15px] leading-relaxed text-muted">{s.body}</p>
           </div>
@@ -185,10 +185,10 @@ function StatusRow({ picture, meaning, children }: { picture: ReactNode; meaning
 function Statuses() {
   return (
     <>
-      <div className="mb-2 hidden grid-cols-[160px_220px_minmax(0,1fr)] gap-6 text-xs font-semibold uppercase tracking-wider text-muted md:grid" aria-hidden="true">
+      <div className="mb-2 hidden grid-cols-[160px_220px_minmax(0,1fr)] gap-6 text-[13px] font-medium text-muted md:grid" aria-hidden="true">
         <span>Status</span>
         <span>
-          Picture <span className="normal-case tracking-normal">(dot: average, band: 95% range, line: zero)</span>
+          Picture <span>(dot: average, band: 95% range, line: zero)</span>
         </span>
         <span>Means</span>
       </div>
@@ -242,7 +242,7 @@ const LIMITS: { title: string; body: string }[] = [
   { title: "Whether it lasts", body: "Markets change; a few years may not repeat." },
   { title: "Why", body: "It shows behavior around a date, not the mechanism." },
   { title: "Anything finer than a day", body: "Intraday, after-hours and weekend timing are not resolved." },
-  { title: "Small samples, well", body: "Thin claims get wide ranges, shown rather than hidden." },
+  { title: "Small samples, well", body: "Claims with few events get wide ranges, and the page shows them in full." },
   { title: "Index-weight effects", body: "Not built yet; claims that need it are refused, not mis-scored." },
   { title: "Headline labels, fully", body: "The labeler's accuracy is measured on a growing hand-labeled set." },
 ];
@@ -414,7 +414,6 @@ export default function Method() {
           <div className="mt-8 flex flex-wrap gap-2">
             <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
               See the claims
-              <Icon name="arrowRight" size={16} />
             </Link>
             <Link to="/scoreboard" className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-surface">
               Scoreboard

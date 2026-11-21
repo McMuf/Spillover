@@ -40,7 +40,6 @@ export function HowItWorks() {
         </p>
         <Link to="/method" className="inline-flex items-center gap-1.5 font-semibold text-accent hover:underline">
           How the numbers are made
-          <Icon name="arrowRight" size={15} />
         </Link>
       </div>
     </section>

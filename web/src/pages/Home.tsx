@@ -5,6 +5,8 @@ import { FeedRow } from "../components/FeedRow";
 import { HowItWorks } from "../components/HowItWorks";
 import { Icon } from "../components/Icon";
 import { AsciiField } from "../components/AsciiField";
+import { FrozenEntry } from "../components/FrozenEntry";
+import { LedgerList } from "../components/LedgerList";
 import { Logo } from "../components/Logo";
 import { Ready } from "../components/Ready";
 import { Ticker } from "../components/Ticker";
@@ -213,13 +215,13 @@ function HomeBody({ site }: { site: SiteData }) {
         {/* Barely visible hexagons behind the hero, fading out: depth, not decoration. */}
         <div aria-hidden="true" className="hex-bg hex-fade pointer-events-none absolute -inset-x-4 -top-6 bottom-0 -z-10 md:-inset-x-6" />
         <div className="py-2 md:py-8">
-          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-bg px-3 py-1 text-xs font-semibold text-muted">
-            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-pop ring-2 ring-pop/30" />
-            An open ledger for news and markets
-          </p>
-          <h1 className="mt-4 max-w-3xl text-[36px] font-semibold leading-[1.02] tracking-[-0.035em] md:text-[54px]">
-            Does news really move markets? Spillover tests it in public.
+          <h1 className="max-w-3xl text-[36px] font-semibold leading-[1.02] tracking-[-0.035em] md:text-[52px]">
+            Say what the news will do to a market. We freeze it, then the market grades it.
           </h1>
+          <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-muted">
+            Spillover is an open ledger. Every claim is timestamped before new events happen and graded in
+            public on what prices actually did.
+          </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link to="/submit" className="inline-flex items-center gap-2 rounded-full bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop hover:brightness-95">
               Write a claim
@@ -240,11 +242,10 @@ function HomeBody({ site }: { site: SiteData }) {
             />
           </div>
         </div>
-        {/* The market as a basin: news lands, ripples spill into each other. Moving the pointer stirs it. */}
-        <div className="relative min-h-[190px] overflow-hidden rounded-3xl border border-line bg-bg md:min-h-[300px]">
-          <AsciiField className="absolute inset-0" />
-        </div>
+        <FrozenEntry site={site} />
       </header>
+
+      <LedgerList site={site} />
 
       <UpcomingStrip site={site} />
 
@@ -260,6 +261,10 @@ function HomeBody({ site }: { site: SiteData }) {
           </div>
         </div>
         <aside aria-label="Markets" className="min-w-0 space-y-8 lg:sticky lg:top-24 lg:self-start">
+          {/* The market as a basin: news lands, ripples spill into each other. Moving the pointer stirs it. */}
+          <div className="relative h-[150px] overflow-hidden rounded-2xl border border-line bg-bg">
+            <AsciiField className="absolute inset-0" />
+          </div>
           <Markets site={site} />
           <NewHere />
         </aside>

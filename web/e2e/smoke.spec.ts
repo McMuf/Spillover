@@ -17,8 +17,16 @@ test("loads the site, opens a claim and reads its chain", async ({ page }) => {
   });
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Spillover tests it in public");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("We freeze it, then the market grades it");
   await expect(page.getByTestId("synthetic-banner")).toBeVisible();
+  // The hero is the latest real freeze: an entry number, the stamp and its receipt.
+  const entry = page.getByRole("article").filter({ has: page.locator("#frozen-h") });
+  await expect(entry.getByText(/^Entry no\. \d+$/)).toBeVisible();
+  await expect(entry.getByText("Frozen", { exact: true })).toBeVisible();
+  await expect(entry.getByText("SHA-256")).toBeVisible();
+  // The ledger numbers live claims in the order they were frozen.
+  const ledger = page.getByRole("region", { name: "The ledger" });
+  await expect(ledger.getByRole("listitem").first()).toBeVisible();
 
 
   await page.getByRole("link", { name: /Fed rate decisions make the S&P 500 swing/ }).first().click();

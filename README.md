@@ -224,11 +224,11 @@ Claims are drawn with six node types. Each has its own shape, a three-letter tag
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
 - **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
-- **Light, one theme.** A warm off-white page and near-black text, set in Geist with tabular figures for numbers. Geist Mono is kept for ids, hashes, code and the ASCII art. Labels are sentence case, without tracked capitals or `A · B` meta strings. No dark mode and no switcher.
+- **Light, one theme.** A warm off-white page and near-black text, set in Geist with tabular figures for numbers. Claim statements, and only those, are set in the Newsreader serif, because a claim's words are what gets frozen. Geist Mono is kept for ids, hashes, code and the ASCII art. Labels are sentence case, without tracked capitals or `A · B` meta strings. No dark mode and no switcher.
 - **One brand color, lime.** Bright lime is only ever a fill behind dark text (the main button, the live marker, highlights), because lime text on white is hard to read; a deep olive-lime marks links, the focus ring, the "Proposed" status and chart lines whose direction does not apply. Backgrounds are flat, with barely visible hexagon geometry behind heroes and some panels for depth. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
 - **Pictures before paragraphs.** Explanations lead with a diagram (the event window to scale, a status as the interval that produces it) and keep text to a sentence or two.
 - **The mark.** A hexagonal basin with water inside and a stream spilling over its edge, in ink on lime (`web/src/components/BrandMark.tsx`); the browser-tab icon `web/public/favicon.svg` is generated from the same drawing, and a test keeps them identical.
-- **The basin.** The home page's moving ASCII art (`web/src/components/AsciiField.tsx`) is a small wave simulation: news lands as a drop, ripples spread and spill into each other, and the ticker flashes where it landed. It pauses off screen and is a still frame for people who ask for reduced motion.
+- **The basin.** The moving ASCII art in the home page's side column (`web/src/components/AsciiField.tsx`) is a small wave simulation: news lands as a drop, ripples spread and spill into each other, and the ticker flashes where it landed. It pauses off screen and is a still frame for people who ask for reduced motion.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
 - **Index membership is its own edge type** (`weight`), drawn differently from `spillover`, so mechanical effects and real effects never share a line.
 - **The graph is capped at about 40 nodes** per view. Past that, the view collapses into a table.
@@ -255,6 +255,8 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 
 ### Screen 1: Home (the feed)
 
+- **The latest freeze** leads the page: the newest frozen prediction as a ledger entry, with its number, its statement, a stamp with the freeze time, the prediction's SHA-256 hash and whether its timestamp proof is attached. On first view the hash settles from noise into its value and the stamp lands, once (skipped for reduced motion).
+- **The ledger** lists every live claim as a numbered entry, in the order claims were frozen. Replaced versions keep their numbers, because the ledger is append-only.
 - **The feed** mixes news, claims, questions and the record, with the claims that have the most evidence first. Each claim card leads with a plain-language headline, the market it is about (with the company or index logo), a status badge and the evidence meter.
 - **Recent events** below, and a short "how it works" explanation at the bottom for first-time visitors.
 - **Explore** (`#/explore`) lists every claim with filters, and its **Map** tab is the news-by-market table: rows are kinds of news, columns are markets, and an empty cell is a pair nobody has tested.

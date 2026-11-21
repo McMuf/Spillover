@@ -139,7 +139,7 @@ def test_headlines_without_an_outlet_icon_are_left_out(market: MarketData, tmp_p
 
     from .test_site_export import claims_with_text
 
-    site = build_site_data(claims_with_text(), market, tmp_path / "p", tmp_path / "o", n_boot=200)
+    site = build_site_data(claims_with_text(), market, tmp_path / "p", tmp_path / "o")
     when = datetime(2026, 11, 18, tzinfo=UTC)
     heads = [
         LiveHeadline(

@@ -10,10 +10,10 @@ describe("the brand mark", () => {
     expect(readFileSync(resolve(process.cwd(), "index.html"), "utf8")).toContain('href="./favicon.svg"');
   });
 
-  it("is decorative and draws two peaks and a river", () => {
+  it("is decorative and draws a basin, its water and the spill", () => {
     const { container } = render(<BrandMark />);
     const svg = container.querySelector("svg")!;
     expect(svg.getAttribute("aria-hidden")).toBe("true");
-    expect(svg.querySelectorAll("path")).toHaveLength(5);
+    expect(svg.querySelectorAll("path")).toHaveLength(4); // clip outline, water, basin, spill
   });
 });

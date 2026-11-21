@@ -1,0 +1,35 @@
+# clm_placebo_random_dates_v3: clm_placebo_random_dates_v2 registered again under rules 0.2.
+# Role: negative control (placebo). Random dates must show nothing; a result means a bug.
+# Why this version: rules 0.2 (November 2026) fixed three problems an outside review found before
+# any claim was graded: the percentile bootstrap was too liberal with few events (11-18% false
+# positives at a nominal 5%), estimation windows included other scheduled news days, and the
+# verdict could be re-checked after every event. The README promises rule changes apply only to
+# claims registered afterwards, so this claim is registered again under rules 0.2; the earlier
+# version stays on record, frozen as registered, and is superseded. See docs/methodology.md.
+id: clm_placebo_random_dates_v3
+
+statement: >
+  On randomly chosen dates, the Nasdaq Composite earns an abnormal return above what the S&P 500
+  explains over the day and the next trading day.
+
+event_type: RANDOM_DATE
+trigger_entities: [NONE]
+
+# The Nasdaq Composite is not the S&P 500, so the factor (the S&P 500) leaves something to measure.
+instrument: {venue: us_index, symbol: NASDAQ}
+
+window: {start: first_report, end: +1_trading_day}
+expected_sign: positive
+
+baseline: factor_only
+factor: MKT
+
+success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
+
+falsifier: >
+  The interval for the mean abnormal return includes zero, which is the expected outcome for a
+  placebo. A significant result means the pipeline has a bug.
+
+registered_by: McMuf
+# CI stamps this when the file merges to main. Leave it as shown.
+registered_at: set_by_ci_on_merge

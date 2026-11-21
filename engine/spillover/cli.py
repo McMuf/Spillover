@@ -16,8 +16,6 @@ from spillover.company_names import fetch_companies, write_companies
 from spillover.data import DataError, load_market_data
 from spillover.eventstore import EVENTS_DIR, StoreError
 from spillover.eventstudy import (
-    DEFAULT_BOOT,
-    DEFAULT_SEED,
     fdr_adjust,
     run_backtest,
 )
@@ -27,6 +25,7 @@ from spillover.frozen import FrozenError, check_frozen
 from spillover.gold import (
     CANDIDATES_FILE,
     GOLD_FILE,
+    MIN_POSITIVES,
     GoldError,
     evaluate_gold,
     load_gold,
@@ -263,7 +262,6 @@ def export_site(
     predictions: PredictionsOpt = DEFAULT_PREDICTIONS,
     outcomes: OutcomesOpt = DEFAULT_OUTCOMES,
     out: Annotated[Path, typer.Option(help="Output directory for site.json.")] = DEFAULT_SITE_OUT,
-    n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
     live_headlines: Annotated[
         bool,
         typer.Option(
@@ -330,7 +328,6 @@ def export_site(
             market,
             predictions,
             outcomes,
-            n_boot=n_boot,
             challenges_dir=Path("challenges"),
             replications_dir=Path("replications"),
             results_dir=RESULTS_DIR,
@@ -366,14 +363,12 @@ def gen_fixtures(
 def test_claim(
     claim_path: Annotated[Path, typer.Argument(help="Path to a claim YAML file.")],
     data: DataOpt = DEFAULT_DATA,
-    boot: Annotated[int, typer.Option(help="Bootstrap resamples.")] = DEFAULT_BOOT,
-    seed: Annotated[int, typer.Option(help="Bootstrap seed.")] = DEFAULT_SEED,
     json_out: Annotated[bool, typer.Option("--json", help="Print the report as JSON.")] = False,
 ) -> None:
     """Feasibility and event-study report for one claim."""
     try:
         claim = load_claim(claim_path)
-        report = run_backtest(claim, load_market_data(data), n_boot=boot, seed=seed)
+        report = run_backtest(claim, load_market_data(data))
     except (ClaimError, DataError) as exc:
         raise _fail(str(exc)) from exc
     typer.echo(json.dumps(report.to_dict(), indent=2) if json_out else format_report(report))
@@ -383,16 +378,11 @@ def test_claim(
 def test_all(
     claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
     data: DataOpt = DEFAULT_DATA,
-    boot: Annotated[int, typer.Option(help="Bootstrap resamples.")] = DEFAULT_BOOT,
-    seed: Annotated[int, typer.Option(help="Bootstrap seed.")] = DEFAULT_SEED,
 ) -> None:
     """Run every claim and adjust p-values across the set (Benjamini-Hochberg FDR)."""
     try:
         market = load_market_data(data)
-        reports = [
-            run_backtest(load_claim(p), market, n_boot=boot, seed=seed)
-            for p in claim_files(claims_dir)
-        ]
+        reports = [run_backtest(load_claim(p), market) for p in claim_files(claims_dir)]
     except (ClaimError, DataError) as exc:
         raise _fail(str(exc)) from exc
     if not reports:
@@ -476,7 +466,6 @@ def replicate(
     claims_dir: Annotated[Path, typer.Option(help="Directory of claim files.")] = DEFAULT_CLAIMS,
     results_dir: Annotated[Path, typer.Option(help="Where results are written.")] = RESULTS_DIR,
     data: DataOpt = DEFAULT_DATA,
-    n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
     allow_synthetic: Annotated[
         bool, typer.Option("--allow-synthetic", help="Run on SYNTHETIC fixtures (tests only).")
     ] = False,
@@ -489,7 +478,7 @@ def replicate(
                 f"{data} holds SYNTHETIC data; a result written from it would look real. "
                 "Pass --allow-synthetic only for tests."
             )
-        written, problems = run_pending(replications_dir, claims_dir, results_dir, market, n_boot)
+        written, problems = run_pending(replications_dir, claims_dir, results_dir, market)
     except (ClaimError, DataError) as exc:
         raise _fail(str(exc)) from exc
     for path in written:
@@ -670,10 +659,18 @@ def _llm_from_env(model: str, engine: str = "claude", companies: Path | None = N
     (else None, cache-only mode)."""
     import os
 
-    if engine == "rules":
+    if engine in ("rules", "embedding"):
         path = companies or COMPANIES_FILE
         if not path.exists():
             raise _fail(f"{path} is missing; build it with `spillover company-names`")
+        if engine == "embedding":
+            # The free local model (needs `uv sync --extra ml`; downloads the pinned model once).
+            from spillover.embed_labeler import EmbeddingLabeler
+
+            try:
+                return EmbeddingLabeler.load(path)
+            except RuntimeError as exc:
+                raise _fail(str(exc)) from exc
         return RulesExtractor.load(path)
 
     if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
@@ -830,13 +827,17 @@ def eval_extractor(
     cache: Annotated[Path, typer.Option(help="Extraction cache.")] = Path("events/extractions"),
     model: Annotated[str, typer.Option(help="Model id.")] = "claude-haiku-5-5",
     engine: Annotated[
-        str, typer.Option(help="'rules' (free) or 'claude' (needs a key and credit).")
+        str,
+        typer.Option(
+            help="'rules' (free), 'embedding' (free local model, needs --extra ml) "
+            "or 'claude' (needs a key and credit)."
+        ),
     ] = "rules",
     out: Annotated[Path | None, typer.Option(help="Write the accuracy report here.")] = None,
 ) -> None:
     """Score a labeler against the hand-labeled gold set and report its accuracy."""
-    if engine not in ("rules", "claude"):
-        raise _fail("engine must be 'rules' or 'claude'")
+    if engine not in ("rules", "embedding", "claude"):
+        raise _fail("engine must be 'rules', 'embedding' or 'claude'")
     try:
         rows, sha = load_gold(gold)
         llm = _llm_from_env(model, engine)
@@ -848,6 +849,13 @@ def eval_extractor(
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(text + "\n", encoding="utf-8")
     typer.echo(text)
+    if not report.measurable:
+        typer.echo(
+            f"accuracy is not meaningful yet: {report.n_positive} of {report.n_scored} gold row(s) "
+            f"are real events; always answering the most common label would score "
+            f"{(report.majority_baseline or 0):.0%}. Label at least {MIN_POSITIVES} real events.",
+            err=True,
+        )
     if report.n_unscored:
         typer.echo(
             f"{report.n_unscored} row(s) not scored: no cached answer and no API key", err=True
@@ -914,12 +922,11 @@ def scoreboard(
     out: Annotated[
         Path, typer.Option(help="Where to write the scoreboard JSON.")
     ] = DEFAULT_SCOREBOARD,
-    n_boot: Annotated[int, typer.Option("--boot", help="Bootstrap resamples.")] = DEFAULT_BOOT,
 ) -> None:
     """Build the scoreboard data from claims and outcome records (generated, never hand-edited)."""
     try:
         claims = [load_claim(p) for p in claim_files(claims_dir)]
-        board = build_scoreboard(claims, outcomes, n_boot=n_boot)
+        board = build_scoreboard(claims, outcomes)
     except (ClaimError, ScoreError) as exc:
         raise _fail(str(exc)) from exc
     out.parent.mkdir(parents=True, exist_ok=True)

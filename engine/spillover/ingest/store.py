@@ -31,6 +31,7 @@ from spillover.ingest.prices import (
     fred_levels,
     fred_release_dates,
     read_csv_levels,
+    tiingo_levels,
 )
 from spillover.placebo_events import (
     BACKTEST_ONLY_PREFIX,
@@ -43,9 +44,10 @@ from spillover.price_events import price_move_events
 MIN_DAYS = 200  # an estimation window is 130 days; fewer than this cannot test anything
 FRED_KEY_ENV = "FRED_API_KEY"
 ALPHAVANTAGE_KEY_ENV = "ALPHAVANTAGE_API_KEY"
+TIINGO_KEY_ENV = "TIINGO_API_KEY"
 # Stock prices are optional: one missing ticker must never stop index, calendar and placebo
 # predictions. A skipped stock's claims say "no price data" until it loads.
-OPTIONAL_PROVIDERS = frozenset({"alphavantage"})
+OPTIONAL_PROVIDERS = frozenset({"alphavantage", "tiingo"})
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _TYPE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
@@ -96,6 +98,12 @@ def _levels_for(spec: SeriesSpec, config: Config, env: Mapping[str, str], fetch:
             raise IngestError(f"{spec.symbol}: {ALPHAVANTAGE_KEY_ENV} is not set")
         assert spec.id is not None
         return alphavantage_levels(spec.id, key, config.data.start, fetch)
+    if spec.provider == "tiingo":
+        key = env.get(TIINGO_KEY_ENV, "").strip()
+        if not key:
+            raise IngestError(f"{spec.symbol}: {TIINGO_KEY_ENV} is not set")
+        assert spec.id is not None
+        return tiingo_levels(spec.id, key, config.data.start, fetch)
     assert spec.path is not None
     return read_csv_levels(spec.path)
 

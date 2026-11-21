@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/McMuf/Spillover/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.1--alpha-2f9e5a?style=flat-square"></a>
+  <a href="https://doi.org/10.5281/zenodo.24409543"><img alt="DOI 10.5281/zenodo.24409543" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.24409543-2f9e5a?style=flat-square"></a>
   <a href="https://github.com/McMuf/Spillover/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/McMuf/Spillover?style=flat-square&color=2f9e5a"></a>
   <a href="LICENSE"><img alt="Code license" src="https://img.shields.io/badge/code-Apache--2.0-2f9e5a?style=flat-square"></a>
   <a href="#data-licensing-and-sources"><img alt="Data license" src="https://img.shields.io/badge/claims%20%26%20data-CC--BY--4.0-2f9e5a?style=flat-square"></a>
@@ -17,7 +18,7 @@
 </p>
 
 <p align="center">
-  <b>An open, community-run ledger that tests how news spills over into markets.</b><br>
+  <b>An open ledger, built to be run by a community, that tests how news spills over into markets.</b><br>
   Anyone can write a claim like "when X happens, Y moves." The claim is frozen before the outcome, then graded against what the market actually did.
 </p>
 
@@ -41,7 +42,7 @@
 Spillover is a **market research tool for hobbyists, students and curious people**. It is not a trading bot, a signal service or a price predictor. It is a public notebook with a referee: you write down what you think a headline will do to a market, the system locks that statement in with a timestamp, and later the market decides whether you were right. Every claim ends up on a public scoreboard with its sample size, its uncertainty and its failures shown.
 
 > [!NOTE]
-> **Status: alpha, live since November 16, 2026.** The engine, ledger, news feed and site run on real data; the first forward predictions are graded after their events in December 2026. Anything marked *planned* is not shipped yet. Spillover is **research, not investment advice**, and nothing here is a recommendation to buy or sell anything.
+> **Status: alpha, live since November 16, 2026.** The engine, ledger, news feed and site run on real data. **Nothing has been graded yet**: every claim is Proposed, and the first forward predictions are graded after their events in December 2026. So far the claims are seed claims registered by the maintainer (two of them controls); community features are partly built and marked *planned* where they are not. Rules 0.2 (November 20) fixed statistical problems found by an outside review before any grading ([what changed](docs/methodology.md#rules-changes)). Spillover is **research, not investment advice**, and nothing here is a recommendation to buy or sell anything.
 
 <details>
 <summary><b>Table of contents</b></summary>
@@ -74,15 +75,18 @@ Spillover is a **market research tool for hobbyists, students and curious people
 
 ## What it can do
 
-- **Register a claim with a guided form.** A claim names a trigger (a kind of event), an instrument (a stock, ETF, index or perpetual future), a time window, an expected direction and a success rule. The form walks you from a news story to a testable claim, warns when an idea is a one-off rather than a kind of event, and writes the YAML file; opening a pull request is how you submit it. *Live prices today cover US indexes, the dollar, the yen and oil; single stocks are built and wait for a data key, and perpetual futures are planned.*
+- **Register a claim with a guided form.** A claim names a trigger (a kind of event), an instrument (a stock, ETF, index or perpetual future), a time window, an expected direction and a success rule. Seven short steps, written for people with no finance background, take you from a news story to a testable claim; the technical fields are filled in for you. **Guardrails** turn a vague idea into a testable one: a question ("Will the war in Iran lower oil prices?"), a missing direction ("affects"), hedging ("might"), a one-off story or a price target each get a plain hint. They are fixed rules anyone can read, never an AI, and they decide only whether a claim *can* be tested, never whether it is right. The form writes the YAML file; opening a pull request is how you submit it. *Live prices cover US indexes, the dollar, the yen, oil and ten large US stocks (Nvidia, Micron, Alphabet, Amazon, Microsoft, TSMC, AMD, Apple, Meta, Delta) from Tiingo; more stocks are a line each in `data/sources.ci.toml`, and perpetual futures are planned.*
+- **Check-ins over time.** A claim is graded only on the window it chose up front (the next day, a week or a month). On top of that, every claim shows how the same effect looks after 1 week, 1 month, 6 months, 1 year and 5 years, from past events, and each frozen prediction gets the same check-ins as its dates pass. Check-ins describe longer-term trends; they are never grades, because over months many other things move a market.
 - **Backtest it before you commit.** The engine runs an *event study* over 3 to 5 years of history: it finds past events of that type, measures what the instrument did beyond what the broader market explains, and reports the result with an honest interval.
 - **Freeze live predictions.** When a new qualifying event appears (a scheduled release, an SEC filing or a labeled headline), the engine writes a prediction, hashes it, and commits it to an append-only ledger *before* the window closes. Bitcoin-anchored timestamps (OpenTimestamps) make the commit time hard to fake.
 - **Grade against reality.** After the window closes, the engine scores the call against the realized abnormal return and a naive baseline. Wins and misses are both published.
 - **Show the reasoning as a chain.** Each claim reads left to right as who triggers it, what happens and which market should move, using a fixed visual language of six node types; a news-by-market map shows every claim at once and which pairs nobody has tested.
-- **Follow the news.** A News tab with the latest market headlines from outlets worldwide (display only) and the events on record. Each story opens to what happened, what past events like it did to markets, who is involved and the measured data, and offers to start a claim when nobody has tested that kind of event.
-- **Measure its own labeler.** People label a sample of headlines by hand on the site; the labeler's accuracy against them is published, tied to the exact labeler version and labels.
+- **Follow the news.** A News tab with the latest market headlines from outlets worldwide (display only) and the events on record. Hover a headline (or press its **Claim ideas** button) to choose between reading the article and turning it into a claim: ideas come from fixed rules (the company, its suppliers and peers, the listed backers of an unlisted company such as Anthropic's), each opening the form partly filled in. Each story opens to what happened, what past events like it did to markets, who is involved and the measured data.
+- **Measure its own labelers.** Two free labelers turn headlines into events: phrase rules (the default) and a small open AI model that runs locally (MiniLM sentence embeddings, Apache-2.0, pinned to one commit; no API, key or cost). People label a sample of headlines by hand on the site; those labels are the test set for both, and accuracy is only published once the set holds enough real events to mean something, next to the score of always giving the most common answer.
 - **Correct mistakes in the open.** The event record is append-only. A wrong event is withdrawn by a reviewed line in `labels/retracted.txt` with its reason; the original stays visible.
-- **Challenge and replicate.** Anyone can open a challenge against a claim or replicate it with different data. Challenges and replications are first-class, reviewed contributions.
+- **Challenge, counter and replicate.** Anyone can open a challenge against a claim, write a **counter-claim** (expects the opposite and is graded on its own, by the same rules, on the same events) or a refinement, or replicate it with different data. All are grouped on the claim's page as reviewed contributions.
+- **Find claims fairly.** The default list is a plain catalogue by kind of event. Other orders use facts anyone can check (next scheduled event, most past events, newest, most discussed), and each states its rule on the page. No votes or popularity.
+- **Cite a claim in a paper.** Every claim page copies a plain reference or a BibTeX entry naming the exact claim version, when it was frozen, the scoring rules, the engine version and the commit; `CITATION.cff` makes the project citable, and each release is archived on Zenodo with a DOI (v0.1.0a0: [10.5281/zenodo.24409543](https://doi.org/10.5281/zenodo.24409543)).
 - **Publish a calibration scoreboard.** Per claim and per contributor: hit rate, effect size, sample size, intervals, and a calibration plot. The scoreboard is generated, never hand-edited.
 - **Run entirely on free infrastructure.** A static site on GitHub Pages, a scheduled GitHub Action for the engine, and Git as the database. The planned [community layer](#community-planned) keeps this for everything that is graded; only its social features would need a hosted database.
 
@@ -90,13 +94,13 @@ Spillover is a **market research tool for hobbyists, students and curious people
 
 - **[Claim files](claims/):** One YAML file per claim, validated by a JSON Schema generated from the Python models. The template lives at `claims/_template.yaml`.
 - **[Event extractor](#4-event-extractor):** Turns a raw headline into a typed event (what happened, to whom, when). A free rule-based labeler is the default and Claude is optional; both write the same validated answers, and a hand-labeled gold set measures them. SEC filings need no labeler: the filing's item number fixes the event type.
-- **[Event-study engine](#5-event-study-engine):** Market model, abnormal returns, cumulative abnormal returns, bootstrap intervals and false-discovery-rate correction.
+- **[Event-study engine](#5-event-study-engine):** Market model, abnormal returns, cumulative abnormal returns, Student t-intervals checked by simulation, a fixed stopping rule and false-discovery-rate correction ([methodology](docs/methodology.md)).
 - **[Prediction ledger](#6-prediction-ledger-and-timestamps):** Append-only, hashed, timestamped records of every forward call.
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
 - **[Claim chains and the news map](#8-claim-chains-and-the-news-map):** each claim drawn as a readable chain (who → what happens → which market), and a news-by-market map of every claim.
-- **[Web app](#9-web-app):** A calm, finance-app-style interface with one dark plum theme, built in TypeScript.
+- **[Web app](#9-web-app):** A calm, finance-app-style interface with one light theme and a lime accent, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
-- **Docs:** Methodology, governance, contributor guidance and data-source terms, kept by the maintainers.
+- **Docs:** [Methodology](docs/methodology.md), [governance](GOVERNANCE.md), [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md) and [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Works with
 
@@ -220,10 +224,11 @@ The graph is the product's face, so it follows one rule: **if a shape could mean
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
 - **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
-- **Dark plum, one theme.** The lavender brand at dusk: a plum-black page, light text and lilac accents. There is no light mode and no switcher.
-- **One brand color.** The brand violet marks links, the focus ring, active items, the "Proposed" status and chart lines whose direction does not apply (a swing size). Backgrounds are flat, with no gradients. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
+- **Light, one theme.** A warm off-white page, near-black text, set in Geist (Geist Mono for numbers and the ASCII art). No dark mode and no switcher.
+- **One brand color, lime.** Bright lime is only ever a fill behind dark text (the main button, the live marker, highlights), because lime text on white is hard to read; a deep olive-lime marks links, the focus ring, the "Proposed" status and chart lines whose direction does not apply. Backgrounds are flat, with barely visible hexagon geometry behind heroes and some panels for depth. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
 - **Pictures before paragraphs.** Explanations lead with a diagram (the event window to scale, a status as the interval that produces it) and keep text to a sentence or two.
-- **The mark.** Two peaks with a river spilling out of the valley between them, under the dawn wash (`web/src/components/BrandMark.tsx`); the browser-tab icon `web/public/favicon.svg` is generated from the same drawing, and a test keeps them identical.
+- **The mark.** A hexagonal basin with water inside and a stream spilling over its edge, in ink on lime (`web/src/components/BrandMark.tsx`); the browser-tab icon `web/public/favicon.svg` is generated from the same drawing, and a test keeps them identical.
+- **The basin.** The home page's moving ASCII art (`web/src/components/AsciiField.tsx`) is a small wave simulation: news lands as a drop, ripples spread and spill into each other, and the ticker flashes where it landed. It pauses off screen and is a still frame for people who ask for reduced motion.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
 - **Index membership is its own edge type** (`weight`), drawn differently from `spillover`, so mechanical effects and real effects never share a line.
 - **The graph is capped at about 40 nodes** per view. Past that, the view collapses into a table. A graph nobody can read is decoration.
@@ -236,7 +241,7 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 ## Screens and user experience
 
 > [!NOTE]
-> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a plum-black page, a violet brand color, flat lists, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
+> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a warm off-white page, a lime accent, flat lists, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
 
 ### Design principles
 
@@ -310,7 +315,7 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 - **Discussion** on claim and story pages (giscus, GitHub Discussions): loads nothing from giscus.app until someone opens it, and never changes a result. The button shows how many comments a thread has.
 - **Questions** (`#/questions`): where claims start. Anyone can draft a half-formed question on the site; "Continue on GitHub" opens GitHub's new-discussion page in the repository's **Q&A** category with the text filled in, and nothing is posted until the person presses Start discussion there (a GitHub account is needed). Questions appear on the page and in the feed with their replies, each with a "Shape into a claim" link into the guided form. The site build reads them with the workflow's own read-only token (`discussions: read`), so new questions show after the next rebuild; their text is shown as plain text, never as HTML, and only links to this repository's discussions are kept.
 - **Label page** (`#/label`): people label recent headlines blind (the labeler's own answer is hidden), download the file, and add it to `labels/gold.jsonl`; the page then shows the labeler's measured accuracy.
-- **Method page** (`#/method`): the steps behind every number, what each status means, what the method cannot tell you, a glossary, and a reading list of standard references. A test fails if its constants (estimation window, gap, bootstrap size) drift from the engine's.
+- **Method page** (`#/method`): the steps behind every number, what each status means, what the method cannot tell you, a glossary, and a reading list of standard references. A test fails if its constants (estimation window, gap, minimum clean days, the interval method) drift from the engine's.
 - **Embed widget:** every claim page has an "Embed this claim" box with a one-line `<iframe>` snippet. It shows a read-only card (status, evidence meter, backtest label, the not-advice line) with no site chrome, and links back. Checked in a browser by framing it on a separate page.
 
 ### Later screens (planned)
@@ -331,7 +336,7 @@ The form ends with *Open pull request*, which pre-fills a branch name and a PR b
 | `EvidenceMeter` | Events collected versus required |
 | `InstrumentChip` | Symbol plus venue, never one without the other |
 
-Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one dark theme, checked for WCAG AA contrast by a test. Contributors improve the system by changing tokens and components, not by adding one-off styles.
+Design tokens (colors, spacing, type scale) live in `web/src/design/tokens.ts` and are the single source for the site's one light theme, checked for WCAG AA contrast by a test. Contributors improve the system by changing tokens and components, not by adding one-off styles.
 
 ## Scoring rules
 
@@ -340,11 +345,12 @@ The rules below are applied identically to every claim. Changes need a **7-day p
 1. **Pre-registration.** Only events that occur after `registered_at` count as forward evidence. Backtests are labeled as backtests everywhere in the UI.
 2. **Frozen predictions.** A prediction is written, hashed and committed before its window closes, and records the claim version, extractor version and engine version.
 3. **Fixed definitions.** Trigger, instrument, window, sign and success rule cannot change within a version. Changing any of them creates a new version and resets the counter.
-4. **Naive baseline.** Every claim is scored against a factor-only baseline. Beating zero is not enough; the claim must beat what the market and sector already explain.
+4. **Naive baseline.** Every claim is scored against what a normal day predicts, never against zero. When a separate market factor exists, that is a factor model (`factor_only`: what the market and sector already explain). When the instrument *is* the market (the S&P 500 has no separate market to subtract), it is the instrument's own average day (`constant_mean`). Each claim states which, and the claim page shows it.
 5. **Independent events.** Overlapping windows are collapsed. Scheduled-event windows (such as central-bank decisions) that overlap an event are excluded or flagged. The **effective** sample size is what counts.
-6. **Multiple-comparison control.** Because many claims are tested, results are adjusted with a false-discovery-rate procedure across the set of claims. A single lucky claim does not get a free pass.
-7. **Permanent placebo.** A random-dates claim runs forever. If it shows significance more often than chance allows, the engine is treated as broken until fixed. Its dates are drawn **in advance** (`spillover placebo-events`, deterministic from a public seed, one file per future month, never rewritten), so a placebo date is committed before it happens exactly like a real forward event. The placebo claim (`clm_placebo_random_dates_v2`) trades the Nasdaq Composite against the S&P 500, both from FRED, so the scoring job can price it. Version 1 traded a sector ETF the job had no price source for; it stays on record as registered and is superseded. A claim is superseded as soon as a newer registered version of it exists (`_v2` replaces `_v1`), and from then on it collects no new predictions. The twelve placebo dates frozen for `_v1` on the first live run, before that rule existed, stay in the ledger as they are: append-only means nothing is removed, and with no price source they simply stay open. A claim whose prices are missing is left open and reported as "no data" instead of failing the run, and a test fails if a live claim cannot be priced from the CI config.
-8. **Append-only history.** Verdicts, predictions and outcomes are never edited or deleted. Corrections are new records that link to the old ones.
+6. **Multiple-comparison control.** Because many claims are tested, results are adjusted with a false-discovery-rate procedure (Benjamini-Hochberg). Each claim is adjusted with the claims that finished before it, so a later claim never moves an earlier verdict. A single lucky claim does not get a free pass.
+7. **Fixed stopping.** A verdict uses exactly the first N effective forward events the claim asked for (at least 8). It is not re-checked after every event until it happens to look significant; later events are shown, never counted.
+8. **Permanent placebo.** A random-dates claim runs forever. If it shows significance more often than chance allows, the engine is treated as broken until fixed. Its dates are drawn **in advance** (`spillover placebo-events`, deterministic from a public seed, one file per future month, never rewritten), so a placebo date is committed before it happens exactly like a real forward event. The placebo claim (`clm_placebo_random_dates_v3`, re-registered under rules 0.2) trades the Nasdaq Composite against the S&P 500, both from FRED, so the scoring job can price it. Version 1 traded a sector ETF the job had no price source for; it stays on record as registered and is superseded. A claim is superseded as soon as a newer registered version of it exists (`_v2` replaces `_v1`), and from then on it collects no new predictions. The twelve placebo dates frozen for `_v1` on the first live run, before that rule existed, stay in the ledger as they are: append-only means nothing is removed, and with no price source they simply stay open. A claim whose prices are missing is left open and reported as "no data" instead of failing the run, and a test fails if a live claim cannot be priced from the CI config.
+9. **Append-only history.** Verdicts, predictions and outcomes are never edited or deleted. Corrections are new records that link to the old ones.
 
 ### Status thresholds
 
@@ -355,7 +361,7 @@ The rules below are applied identically to every claim. Changes need a **7-day p
 | **Not supported** | Forward events reached the minimum and the interval excludes zero in the **opposite** direction |
 | **Inconclusive** | Forward events reached the minimum but the interval includes zero, or the result did not survive the multiple-comparison adjustment |
 
-The statistics: the market model (alpha plus beta times a factor return, estimated over roughly 120 trading days that end 10 days before the event), cumulative abnormal returns, bootstrap intervals, and why each choice was made.
+The statistics: the market model (alpha plus beta times a factor return, estimated over 120 trading days that end 10 days before the event, leaving out other known news days), cumulative abnormal returns, Student t-intervals, and why each choice was made: see [docs/methodology.md](docs/methodology.md).
 
 ## Architecture
 
@@ -376,7 +382,7 @@ flowchart LR
     subgraph Engine["Engine (Python)"]
         E1["Schema validation<br/>Pydantic v2"]
         E2["Event extractor<br/>LLM + cache + gold set"]
-        E3["Event-study engine<br/>market model, CAR,<br/>bootstrap, FDR"]
+        E3["Event-study engine<br/>market model, CAR,<br/>t-interval, FDR"]
         E4["Prediction ledger<br/>hash + OpenTimestamps"]
         E5["Scoring<br/>public rules"]
     end
@@ -460,7 +466,7 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 - **Rules (free, the live default).** Phrase rules decide *what* happened, one per event type; a committed snapshot of NYSE and Nasdaq company names and tickers from [Wikidata](https://www.wikidata.org/) (CC0, `labels/companies.json`, refreshed on purpose with `spillover company-names`) decides *who*. Everyday words that are also company names ("Target", "Block") count only next to a corporate suffix or an exchange ticker, and for a regulatory action only the company the action is *against* counts, not one merely mentioned. When the event is clear but the company is not a listed one, the label is low confidence and goes to human review instead of guessing. Deterministic, so the same headline always gets the same label.
 - **Claude (paid, optional).** More capable, especially at naming companies; needs `ANTHROPIC_API_KEY` and account credit. Set `engine = "claude"` in the `[extractor]` settings.
 
-The first hand-labeled gold set (45 regulator press releases, labeled November 17, 2026) gives the rules labeler **82% type accuracy**; every miss was it seeing a regulatory action where the person saw none. Those headlines were mostly routine notices, so the set checks that the labeler does not invent events more than that it finds them; general news from the News tab is now offered for labeling to measure that. The current number is on the label page. Each label records which labeler and version produced it.
+**The labeler's accuracy is not measured yet, and the site says so.** The first hand-labeled gold set (45 regulator press releases, November 17, 2026) contains no real events: every label is "none of the above". On such a set a labeler that always answers "none" scores 100%, so the rules labeler's 82% there says nothing about whether it finds events; it only shows it sometimes invents one. The site and `spillover eval-extractor` therefore report accuracy only once at least 20 labeled headlines are real events, next to the score of always giving the most common answer (the bar to beat), with per-class recall and precision. The label page now offers likely events as often as the rest so that set can grow. Each label records which labeler and version produced it.
 
 **How.**
 - `spillover ingest-headlines` reads the official feeds in `data/sources.toml` (titles, links, ids and publication times only), skips anything already stored, and sends each new headline to the configured labeler: the free rules by default, or Claude (`claude-haiku-5-5`, low effort) with a strict structured-output schema whose event type is an enum of the taxonomy in `engine/spillover/taxonomy.py`. The answer is validated again by Pydantic and rejected if it does not parse. A per-run cost cap (`max_new_per_run`) bounds spend.
@@ -483,17 +489,17 @@ The first hand-labeled gold set (45 regulator press releases, labeled November 1
 
 **How.**
 1. Pick the event time and the claim's window.
-2. Fit a **market model** over an estimation window of about 120 trading days ending 10 days before the event: `return = alpha + beta × factor_return`, or with up to three factors, `alpha + beta₁ × f₁ + beta₂ × f₂ + beta₃ × f₃`. A basket's return is the equal-weighted mean of its members.
+2. Fit a **market model** over an estimation window of 120 trading days ending 10 days before the event, leaving out days of other scheduled news and of the claim's own event type (at least 60 clean days are required): `return = alpha + beta × factor_return`, or with up to three factors, `alpha + beta₁ × f₁ + beta₂ × f₂ + beta₃ × f₃`. A basket's return is the equal-weighted mean of its members.
 3. Predict the normal return inside the event window and subtract it from the actual return to get the **abnormal return**; sum over the window for the **cumulative abnormal return (CAR)**.
 4. Aggregate across events, counting only **effective independent** events.
-5. Produce a **bootstrap interval** for the mean abnormal return.
+5. Produce a **Student t-interval** for the mean (on the CAR for direction claims, on the move's size rank for bigger-move claims), using exactly the first N events the claim asked for.
 6. Apply **false-discovery-rate correction** across claims.
-7. Compare to the **naive baseline** (factor-only) and the **placebo** claim.
+7. Compare to the **naive baseline** (what a normal day predicts) and the **placebo** claim.
 
 **Why this design.**
 - *Event study over a raw average move:* a raw move conflates the news with the whole market's day. The market model strips that out. This is the standard, well-understood method, which makes it defensible and easy to review.
 - *Estimation window that ends 10 days early:* prevents the event itself from contaminating the "normal" estimate.
-- *Bootstrap over textbook t-tests:* returns are fat-tailed and events are few; resampling makes fewer assumptions and handles odd distributions honestly.
+- *Student t-interval, chosen by simulation:* rules 0.1 used a percentile bootstrap; an outside review showed, and the project reproduced, that with 8 events it calls 11–18% of no-effect claims significant at a nominal 5%. The t-interval stays near 5%, and ranking the size of a move fixes the lopsided size measure. Changed before any claim was graded; the numbers are in [docs/methodology.md](docs/methodology.md).
 - *Effective sample size:* ten headlines in one week about the same story are not ten independent tests.
 - *FDR correction:* when many people test many claims, some will look significant by luck. Correcting across the set keeps the scoreboard honest.
 - *Placebo:* a permanent control that should always show nothing. If it doesn't, the pipeline is wrong.
@@ -542,7 +548,7 @@ The first hand-labeled gold set (45 regulator press releases, labeled November 1
 **Why this design.**
 - *React plus TypeScript:* the most widely known combination among front-end contributors and the stack many fintech teams use, which lowers the barrier to contribute and makes the work legible to reviewers.
 - *Vite over a full framework:* the site is static, so server rendering, routing conventions and a Node server would be complexity without benefit.
-- *Tailwind with tokens:* fast to iterate and consistent; one dark theme, defined once in `design/tokens.ts`.
+- *Tailwind with tokens:* fast to iterate and consistent; one light theme, defined once in `design/tokens.ts`.
 - *Radix primitives:* accessibility (focus management, keyboard behavior, ARIA) is easy to get wrong and expensive to retrofit.
 - *Lightweight Charts:* small, fast, finance-native and Apache-2.0 licensed. Its license requires a **visible attribution link**, which the footer includes.
 - *No client-side secrets and no backend:* nothing to leak, nothing to scale. The planned [community layer](#community-planned) changes this only for social features, never for the record.
@@ -701,7 +707,7 @@ The repo ships with cached **fixtures**, so everything runs offline.
 
 ### First run
 
-1. Run a seed claim: `make test-claim CLAIM=claims/clm_fomc_abs_move_spx_v1.yaml`
+1. Run a seed claim: `make test-claim CLAIM=claims/clm_fomc_abs_move_spx_v2.yaml`
 2. Copy the template: `cp claims/_template.yaml claims/my_first_claim.yaml`
 3. Edit it, then check feasibility: `make test-claim CLAIM=claims/my_first_claim.yaml`
 4. Read the printed report: matching events, effective sample, effect size and interval.
@@ -712,7 +718,7 @@ The repo ships with cached **fixtures**, so everything runs offline.
 cp data/sources.example.toml data/sources.toml   # edit it: which series and events to ingest
 export FRED_API_KEY=...                           # your own free key; never stored or committed
 make ingest                                       # writes the cache to data/cache
-uv run spillover test-claim claims/clm_fomc_abs_move_spx_v1.yaml --data data/cache
+uv run spillover test-claim claims/clm_fomc_abs_move_spx_v2.yaml --data data/cache
 ```
 
 The cache holds **derived daily returns only** and lives under `data/`, which is git-ignored. Read each
@@ -824,7 +830,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | **M1: Engine on fixtures** *(done; also runs on real data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** *(live: forward predictions frozen since November 16, 2026; timestamp proofs are requested as they are frozen)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
 | **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
-| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot, guide, the guided claim form, the News tab and the label page are built. 7 claims are registered (5 tests plus 2 placebo versions). Company claims wait for single-stock prices (the Alpha Vantage connection is built; it needs a key from their open-source program).* |
+| **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot, guide, the guided claim form, the News tab and the label page are built. 6 live claims (4 tests and 2 controls) under rules 0.2. Single-stock prices are on for ten large US stocks from Tiingo (Alpha Vantage is also built, off). Big tech listings (19 since 2012, from a reviewed list in `labels/`) are an event type, so "a big tech IPO moves its backers" can be backtested.* |
 | **M5: Community, phase 1** *(built)* | People discuss claims and see each other's records | Discussion threads on claims and stories, and profile pages; see [Community](#community-planned) |
 | **M6: Community, phases 2 and 3** *(started: Questions are built)* | Questions, backing, follows, pseudonyms, reputation | A hosted social layer that never changes a grade |
 
@@ -835,18 +841,22 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 | 1 | Hyperscaler capex raise leads a supplier basket higher over day 0 to +5 | Core | Rough event count, to be verified. The engine supports the basket; events come from headlines, so this waits on live ingestion |
 | 2 | Large Korean memory-chip moves lead US-listed memory-linked names in the next US session | Core | Cross-timezone lead-lag. The engine supports it: events come from price moves (`LARGE_MOVE_UP` / `LARGE_MOVE_DOWN`, beyond 3 standard deviations of the previous 60 days, fixed in the taxonomy) and each market keeps its own holidays. Needs a price source for SK Hynix (Korea Exchange) and the US names (Alpha Vantage, pending its key) |
 | 3 | Mag-7 negative free-cash-flow headline hits MAGS beyond the company's weight | Thin | Few events; tests the weight decomposition |
-| 4 | FOMC days show larger absolute S&P moves than trailing volatility predicts | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v1` |
+| 4 | FOMC days show larger absolute S&P moves than ordinary days | Control | Many events; **build first**. In `claims/` as `clm_fomc_abs_move_spx_v2` |
 | 5 | Large token unlocks produce negative abnormal returns versus a BTC and ETH factor | Core | Event count unverified. The engine supports the two-factor baseline; needs crypto prices and an unlock calendar |
-| 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v2` (Nasdaq vs the S&P 500); `_v1` is superseded |
+| 6 | Random dates show no effect | Placebo | Permanent; **build first**. In `claims/` as `clm_placebo_random_dates_v3` (Nasdaq vs the S&P 500); `_v1` and `_v2` are superseded |
 
-**Registered starter claims** (November 16, 2026), all on free public data:
+**Registered starter claims**, all on free public data. First registered November 15–16, 2026 under rules 0.1, and registered again as new versions under rules 0.2 on November 20 (the 0.1 versions stay on record as superseded; nothing had been graded):
 
-| Claim | Says | Backtest on real data |
+| Claim | Role | Says |
 |---|---|---|
-| `clm_fomc_abs_move_usd_v1` | Fed decision days move the broad dollar index more than usual | Clear in history; waits for 8 forward meetings |
-| `clm_fomc_nasdaq_beyond_spx_v1` | On Fed days the Nasdaq swings more than the S&P 500 explains | Leans yes; interval includes zero |
-| `clm_cpi_nasdaq_beyond_spx_v1` | On CPI days the Nasdaq swings more than the S&P 500 explains | Leans yes; interval includes zero |
-| `clm_jobs_abs_move_spx_v1` | Jobs-report days move the S&P 500 more than usual | Cannot tell from noise yet |
+| `clm_fomc_abs_move_spx_v2` | Positive control | Fed decision days move the S&P 500 more than ordinary days (well documented; the engine should find it) |
+| `clm_placebo_random_dates_v3` | Negative control | Random dates show nothing (a result means a bug) |
+| `clm_fomc_abs_move_usd_v2` | Test | Fed decision days move the broad dollar index more than usual |
+| `clm_fomc_nasdaq_beyond_spx_v2` | Test | On Fed days the Nasdaq swings more than the S&P 500 explains |
+| `clm_cpi_nasdaq_beyond_spx_v2` | Test | On CPI days the Nasdaq swings more than the S&P 500 explains |
+| `clm_jobs_abs_move_spx_v2` | Test | Jobs-report days move the S&P 500 more than usual |
+
+These are weak tests of the spillover idea itself: they are about scheduled macro releases, three share the same Fed dates, and bigger moves on Fed days are already well established. They exist to prove the machinery on events with free data. Claims about companies and real spillovers (news about one company moving its suppliers) wait for single-stock prices.
 
 Current numbers are on the [live site](https://mcmuf.github.io/Spillover/); the table above is a snapshot and the site is the record.
 

@@ -52,8 +52,6 @@ def test_cli_test_claim_prints_a_labeled_report() -> None:
             str(CLAIMS / "clm_fomc_abs_move_spx_v1.yaml"),
             "--data",
             str(FIXTURES),
-            "--boot",
-            "500",
         ],
     )
     assert result.exit_code == 0, result.output
@@ -73,8 +71,6 @@ def test_cli_test_claim_json() -> None:
             str(CLAIMS / "clm_placebo_random_dates_v1.yaml"),
             "--data",
             str(FIXTURES),
-            "--boot",
-            "300",
             "--json",
         ],
     )
@@ -93,9 +89,7 @@ def test_cli_test_claim_reports_missing_data_cleanly(tmp_path: Path) -> None:
 
 
 def test_cli_test_all_adjusts_across_claims() -> None:
-    result = runner.invoke(
-        app, ["test-all", "--claims-dir", str(CLAIMS), "--data", str(FIXTURES), "--boot", "500"]
-    )
+    result = runner.invoke(app, ["test-all", "--claims-dir", str(CLAIMS), "--data", str(FIXTURES)])
     assert result.exit_code == 0, result.output
     assert "p (FDR)" in result.output
     assert "clm_fomc_abs_move_spx_v1" in result.output

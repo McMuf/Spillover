@@ -37,9 +37,9 @@ describe("claim path", () => {
   it("marks graded predictions hit or miss, and only those", () => {
     const c = makeClaim("clm_x_v1", {
       forward_log: [
-        { event_id: "a", event_date: "2026-02-01", created_at: "2026-02-01T12:00:00Z", sha256: "a".repeat(64), status: "graded", hit: true, value: -0.01, proof: "none" },
-        { event_id: "b", event_date: "2026-02-02", created_at: "2026-02-02T12:00:00Z", sha256: "b".repeat(64), status: "graded", hit: false, value: 0.01, proof: "none" },
-        { event_id: "c", event_date: "2026-02-03", created_at: "2026-02-03T12:00:00Z", sha256: "c".repeat(64), status: "open", hit: null, value: null, proof: "none" },
+        { event_id: "a", event_date: "2026-02-01", created_at: "2026-02-01T12:00:00Z", sha256: "a".repeat(64), status: "graded", hit: true, value: -0.01, proof: "none", checkins: [] },
+        { event_id: "b", event_date: "2026-02-02", created_at: "2026-02-02T12:00:00Z", sha256: "b".repeat(64), status: "graded", hit: false, value: 0.01, proof: "none", checkins: [] },
+        { event_id: "c", event_date: "2026-02-03", created_at: "2026-02-03T12:00:00Z", sha256: "c".repeat(64), status: "open", hit: null, value: null, proof: "none", checkins: [] },
       ],
     });
     expect(claimPath(c, makeSite([c])).predictions.recent.map((r) => r.outcome)).toEqual(["hit", "miss", "open"]);

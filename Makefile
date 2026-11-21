@@ -18,7 +18,7 @@ help:
 
 setup:
 	@command -v $(UV) >/dev/null 2>&1 || python3 -m pip install --user uv
-	$(UV) sync
+	$(UV) sync --extra ml
 	@if [ -f web/package.json ]; then \
 	  if command -v pnpm >/dev/null 2>&1; then pnpm --dir web install; \
 	  else echo "pnpm not found: install it (https://pnpm.io/installation) to work on web/"; fi; \

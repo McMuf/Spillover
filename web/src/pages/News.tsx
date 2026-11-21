@@ -8,6 +8,7 @@ import { UpcomingStrip } from "../components/UpcomingStrip";
 import { ActionLink, Segmented, Tag, TickerChip } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { claimsFor, ORIGIN_TAG, storySentence, storyTitle, type Origin, type Story } from "../lib/news";
+import { HeadlineActions } from "../components/HeadlineActions";
 import { SourceIcon } from "../components/SourceIcon";
 import { useLiveNews, type LiveNews } from "../lib/liveNews";
 import { eventLabel } from "../lib/plain";
@@ -49,11 +50,12 @@ function Testable({ h }: { h: Headline }) {
   );
 }
 
+/** The headline links to the article; hovering it, or its "Claim ideas" button, offers to make a claim. */
 function HeadlineLink({ h, className = "" }: { h: Headline; className?: string }) {
   return (
-    <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" className={`hover:underline ${className}`}>
+    <HeadlineActions h={h} className={className}>
       {h.title}
-    </a>
+    </HeadlineActions>
   );
 }
 

@@ -77,6 +77,11 @@ def load_gold(path: Path) -> tuple[list[GoldRow], str]:
     return rows, hashlib.sha256(raw).hexdigest()
 
 
+# Accuracy is only meaningful once the gold set holds real events, not just "none of the above":
+# on a set that is all NONE, a labeler that always answers NONE scores 100% and learns nothing.
+MIN_POSITIVES = 20
+
+
 @dataclass(frozen=True)
 class GoldReport:
     extractor_version: str
@@ -89,6 +94,15 @@ class GoldReport:
     entity_precision: float | None
     entity_recall: float | None
     low_confidence_rate: float | None
+    # How many gold rows are real events (not NONE), and what always answering the most common
+    # label would score: the bar any labeler has to beat for its accuracy to mean anything.
+    n_positive: int = 0
+    majority_baseline: float | None = None
+    # Of the real events in the gold set, the share typed right (recall); of the labeler's non-NONE
+    # answers, the share that were right (precision). Both None without enough examples.
+    event_recall: float | None = None
+    event_precision: float | None = None
+    measurable: bool = False
     mismatches: list[dict[str, Any]] = field(default_factory=lambda: list[dict[str, Any]]())
 
     def to_dict(self) -> dict[str, Any]:
@@ -109,6 +123,8 @@ def evaluate_gold(
     version = extractor_version(llm.model_id if llm is not None else model_id)
     correct = scored = high = high_ok = low = 0
     tp = fp = fn = 0
+    pos = pos_ok = said_event = said_event_ok = 0
+    labels: dict[str, int] = {}
     unscored = 0
     misses: list[dict[str, Any]] = []
     for r in rows:
@@ -133,6 +149,13 @@ def evaluate_gold(
             tp += len(want & have)
             fp += len(have - want)
             fn += len(want - have)
+        labels[r.expected_type] = labels.get(r.expected_type, 0) + 1
+        if r.expected_type != NONE:
+            pos += 1
+            pos_ok += ok
+        if ex.event_type != NONE:
+            said_event += 1
+            said_event_ok += ok
         if not ok:
             misses.append({"title": title[:120], "expected": r.expected_type, "got": ex.event_type})
     return GoldReport(
@@ -146,7 +169,12 @@ def evaluate_gold(
         _ratio(tp, tp + fp),
         _ratio(tp, tp + fn),
         _ratio(low, scored),
-        misses[:25],
+        n_positive=pos,
+        majority_baseline=_ratio(max(labels.values(), default=0), scored),
+        event_recall=_ratio(pos_ok, pos),
+        event_precision=_ratio(said_event_ok, said_event),
+        measurable=pos >= MIN_POSITIVES,
+        mismatches=misses[:25],
     )
 
 

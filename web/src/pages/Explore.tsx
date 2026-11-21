@@ -1,3 +1,4 @@
+import { sortClaims, SORTS, type SortKey } from "../lib/ranking";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Highlight } from "../components/Highlight";
@@ -10,7 +11,7 @@ import { PillButton, Segmented, StatRow } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { claimStat, scoreboardRow } from "../lib/format";
-import { categoryOf, highlightTerms, shortHeadline } from "../lib/plain";
+import { categoryOf, highlightTerms, liveClaims, shortHeadline } from "../lib/plain";
 
 
 const TH = "px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted";
@@ -28,17 +29,25 @@ function ExploreBody({ site }: { site: SiteData }) {
     setParams(next);
   };
   const [view, setView] = useState<"table" | "map">("table");
-  const topics = useMemo(() => ["All", ...new Set(site.claims.map((c) => categoryOf(c.claim.event_type)))], [site]);
+  const sort = (SORTS.find((s) => s.key === params.get("sort"))?.key ?? "kind") as SortKey;
+  const setSort = (k: SortKey) => {
+    const next = new URLSearchParams(params);
+    if (k === "kind") next.delete("sort");
+    else next.set("sort", k);
+    setParams(next);
+  };
+  const topics = useMemo(() => ["All", ...new Set(liveClaims(site).map((c) => categoryOf(c.claim.event_type)))], [site]);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return site.claims.filter(
+    const matching = liveClaims(site).filter(
       (c) =>
         (topic === "All" || categoryOf(c.claim.event_type) === topic) &&
         (q === "" || `${c.claim.id} ${c.claim.statement} ${c.claim.instrument.symbol} ${shortHeadline(c)}`.toLowerCase().includes(q)),
     );
-  }, [site, query, topic]);
-  const eventsTested = site.claims.reduce((n, c) => n + (c.backtest?.n_effective ?? 0), 0);
+    return sortClaims(matching, sort, site);
+  }, [site, query, topic, sort]);
+  const eventsTested = liveClaims(site).reduce((n, c) => n + (c.backtest?.n_effective ?? 0), 0);
 
   return (
     <>
@@ -48,7 +57,7 @@ function ExploreBody({ site }: { site: SiteData }) {
           <StatRow
             label="Explore totals"
             items={[
-              { value: String(site.claims.length), label: site.claims.length === 1 ? "claim" : "claims" },
+              { value: String(liveClaims(site).length), label: liveClaims(site).length === 1 ? "claim" : "claims" },
               { value: String(eventsTested), label: "past events tested" },
             ]}
           />
@@ -77,8 +86,29 @@ function ExploreBody({ site }: { site: SiteData }) {
         )}
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          Sort
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="rounded-full border border-line bg-bg px-3 py-1.5 text-sm"
+            aria-describedby="sort-rule"
+          >
+            {SORTS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p id="sort-rule" className="text-xs text-muted">
+          {SORTS.find((s) => s.key === sort)?.rule} No votes or popularity are used.
+        </p>
+      </div>
+
       <p className="sr-only" role="status">
-        {shown.length} of {site.claims.length} claims
+        {shown.length} of {liveClaims(site).length} claims
       </p>
 
       {view === "table" ? (

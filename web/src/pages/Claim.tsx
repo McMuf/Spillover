@@ -1,3 +1,5 @@
+import { CheckIns } from "../components/CheckIns";
+import { citeBibtex, citeText } from "../lib/cite";
 import { Discussion } from "../components/Discussion";
 import { Identicon } from "../components/Identicon";
 import { PersonLink } from "../components/PersonLink";
@@ -22,7 +24,7 @@ import type { SiteClaim, SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { findClaim } from "../lib/data";
 import { embedSnippet } from "../lib/embed";
-import { citation, claimStat, claimVersion, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel, type Direction } from "../lib/format";
+import { claimStat, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel, type Direction } from "../lib/format";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
 import { factorNames } from "../lib/paths";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
@@ -118,7 +120,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
           {b ? (
             <>
               <Row label="Backtest estimate">
-                <span className={claimStat(c.measure, b.mean).cls}>{claimStat(c.measure, b.mean).text}</span> <span className="text-muted">{intervalText(b.ci_lo, b.ci_hi)}</span>
+                <span className={claimStat(c.measure, b.mean).cls}>{claimStat(c.measure, b.mean).text}</span> <span className="text-muted">{intervalText(b.ci_lo, b.ci_hi, c.measure)}</span>
               </Row>
               <Row label="Backtest sample">
                 n={b.n_effective} effective of {b.n_matched} matched
@@ -295,6 +297,37 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
         </p>
       )}
 
+      <section aria-labelledby="resp-h">
+        <h2 id="resp-h" className={H3}>Counter-claims and refinements ({item.responses.length})</h2>
+        {item.claim.responds_to && (
+          <p className="mb-3 rounded-2xl bg-surface p-4 text-sm">
+            This claim is a {item.claim.responds_to.stance === "counter" ? "counter-claim to" : "refinement of"}{" "}
+            <Link className="font-semibold text-accent underline" to={`/claims/${item.claim.responds_to.claim}`}>
+              {item.claim.responds_to.claim}
+            </Link>
+            .
+          </p>
+        )}
+        {item.responses.length > 0 ? (
+          <ul className="space-y-2">
+            {item.responses.map((r) => (
+              <li key={r.claim_id} className="rounded-2xl border border-line bg-bg p-4">
+                <span className={`mr-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${r.stance === "counter" ? "bg-pop text-on-pop" : "bg-surface-alt"}`}>
+                  {r.stance === "counter" ? "Counter-claim" : "Refinement"}
+                </span>
+                <Link className="text-[15px] font-semibold hover:underline" to={`/claims/${r.claim_id}`}>
+                  {r.statement}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-2xl bg-surface p-4 text-sm text-muted">
+            None yet. A counter-claim expects the opposite and is graded on its own, by the same rules, on the same events.
+          </p>
+        )}
+      </section>
+
       <section aria-labelledby="chl-h">
         <h2 id="chl-h" className={H3}>Challenges ({item.challenges.length})</h2>
         {item.challenges.length > 0 ? <ChallengeList items={item.challenges} /> : <p className="rounded-2xl bg-surface p-4 text-sm text-muted">None yet.</p>}
@@ -308,6 +341,12 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
       <section aria-labelledby="start-h" className="space-y-3">
         <h2 id="start-h" className={H3}>Contribute</h2>
         <div className="flex flex-wrap gap-2">
+          <Link className="inline-flex rounded-full bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95" to={`/submit?counter=${encodeURIComponent(id)}`}>
+            Write a counter-claim
+          </Link>
+          <Link className={link} to={`/submit?refine=${encodeURIComponent(id)}`}>
+            Refine this claim
+          </Link>
           <a className={link} href={newFileUrl(repo, "challenges", "chl_REPLACE_ME_v1.yaml", challengeTemplate(id))}>
             Write a challenge (pull request)
           </a>
@@ -334,7 +373,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
   const [mode, setMode] = useState<"chart" | "table">("chart");
   const b = item.backtest;
   const chart = item.chart;
-  const placebo = site.claims.find((p) => p.claim.event_type === "RANDOM_DATE" && p.backtest && p.claim.id !== item.claim.id);
+  const placebo = site.claims.find((p) => p.claim.event_type === "RANDOM_DATE" && !p.superseded_by && p.backtest && p.claim.id !== item.claim.id);
   const isPlacebo = item.claim.event_type === "RANDOM_DATE";
   if (!b) return <p className="text-muted">No backtest could be run: {item.backtest_error}</p>;
   const tableWrap = "overflow-auto rounded-2xl bg-surface";
@@ -346,6 +385,8 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
         These are <strong className="text-fg">backtest</strong> results on past events, not forward evidence. Only events after
         registration count as forward evidence.{b.data_synthetic && " The data here is simulated."}
       </p>
+
+      <CheckIns item={item} />
 
       {chart && (
         <section aria-labelledby="chart-h">
@@ -454,15 +495,26 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
   const c = item.claim;
   const b = item.backtest;
   const [tab, setTab] = useState("overview");
-  const [copied, setCopied] = useState(false);
-  const text = citation(c.id, claimVersion(c.id), __COMMIT__, site.meta.repo);
+  const [copied, setCopied] = useState<"text" | "bibtex" | null>(null);
+  const cite = {
+    id: c.id,
+    title: shortHeadline(item),
+    author: c.registered_by,
+    registeredAt: /^\d{4}-/.test(c.registered_at) ? c.registered_at : null,
+    url: `${window.location.origin}${window.location.pathname}#/claims/${c.id}`,
+    repo: site.meta.repo,
+    commit: __COMMIT__,
+    rulesVersion: site.meta.rules_version,
+    engineVersion: site.meta.engine_version,
+  };
   const forward = scoreboardRow(site.scoreboard.claims, c.id)?.effective_events ?? 0;
 
-  const copy = async () => {
+  const copy = async (kind: "text" | "bibtex") => {
+    const text = kind === "text" ? citeText(cite) : citeBibtex(cite);
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 2000);
     } catch {
       window.prompt("Copy this citation:", text);
     }
@@ -510,7 +562,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
           <Tabs.Content value="markets"><Markets item={item} setTab={setTab} /></Tabs.Content>
           <Tabs.Content value="sides"><Sides item={item} site={site} /></Tabs.Content>
           <Tabs.Content value="evidence"><Evidence item={item} site={site} /></Tabs.Content>
-          <Tabs.Content value="forward"><ForwardLogTable rows={item.forward_log} /></Tabs.Content>
+          <Tabs.Content value="forward"><ForwardLogTable rows={item.forward_log} measure={item.claim.measure} /></Tabs.Content>
           <div className="mt-8">
             <Discussion term={discussionTerm("claim", item.claim.id)} label="claim" comments={commentsOn(site.community, discussionTerm("claim", item.claim.id))} />
           </div>
@@ -540,10 +592,16 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
                   <span aria-hidden="true">
                     {claimStat(c.measure, b.mean).dir === "down" ? "▼ " : claimStat(c.measure, b.mean).dir === "up" ? "▲ " : ""}
                   </span>
-                  {claimStat(c.measure, b.mean).note ?? "abnormal move"} <span className="font-normal text-muted">· past events</span>
+                  {claimStat(c.measure, b.mean).short ? `${claimStat(c.measure, b.mean).short} than usual` : "abnormal move"}{" "}
+                  <span className="font-normal text-muted">· past events</span>
                 </p>
+                {claimStat(c.measure, b.mean).note && (
+                  <p className="mt-1 text-xs text-muted">
+                    {claimStat(c.measure, b.mean).value} {claimStat(c.measure, b.mean).note}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-muted">
-                  n={b.n_effective} · {intervalText(b.ci_lo, b.ci_hi)}
+                  n={b.n_effective} · {intervalText(b.ci_lo, b.ci_hi, c.measure)}
                   {b.data_synthetic && " · synthetic data"}
                 </p>
               </div>
@@ -558,10 +616,20 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
               </div>
             </div>
             <div className="grid gap-2">
-              <button type="button" onClick={copy} className="flex items-center justify-center gap-2 rounded-full bg-fg py-2.5 font-bold text-bg hover:opacity-90">
-                <Icon name="copy" size={16} />
-                {copied ? "Copied" : "Copy citation"}
-              </button>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <button type="button" onClick={() => void copy("text")} className="flex items-center justify-center gap-2 rounded-full bg-fg py-2.5 font-bold text-bg hover:opacity-90">
+                  <Icon name="copy" size={16} />
+                  {copied === "text" ? "Copied" : "Copy citation"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void copy("bibtex")}
+                  aria-label="Copy as BibTeX, for LaTeX papers"
+                  className="rounded-full border border-line px-4 py-2.5 text-sm font-bold hover:bg-surface"
+                >
+                  {copied === "bibtex" ? "Copied" : "BibTeX"}
+                </button>
+              </div>
               <button type="button" onClick={() => setTab("sides")} className="flex items-center justify-center gap-2 rounded-full bg-surface-alt py-2.5 font-bold hover:bg-line">
                 <Icon name="flag" size={16} />
                 Challenge this claim

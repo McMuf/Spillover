@@ -345,14 +345,14 @@ def test_ingest_builds_a_cache_the_engine_can_use(tmp_path: Path) -> None:
 
     # A real backtest runs on it, and the 2040 meeting is upcoming, not history.
     claim = load_claim(CLAIMS / "clm_fomc_abs_move_spx_v1.yaml")
-    report = run_backtest(claim, data, n_boot=200)
+    report = run_backtest(claim, data)
     assert report.data_synthetic is False
     assert report.n_matched == 5, "the upcoming 2040 meeting is excluded from the backtest"
 
     # The website export works on a real cache too, and stops claiming the data is synthetic.
     from spillover.site_export import build_site_data
 
-    site = build_site_data([(claim, "id: x\n")], data, tmp_path / "p", tmp_path / "o", n_boot=100)
+    site = build_site_data([(claim, "id: x\n")], data, tmp_path / "p", tmp_path / "o")
     assert site.meta.data_synthetic is False
     assert site.claims[0].backtest is not None and site.claims[0].backtest.data_synthetic is False
 
@@ -387,7 +387,7 @@ def test_cli_ingest_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     # And the cache is usable straight from the command line, via the environment variable.
     out = runner.invoke(
         app,
-        ["test-claim", str(CLAIMS / "clm_fomc_abs_move_spx_v1.yaml"), "--boot", "200"],
+        ["test-claim", str(CLAIMS / "clm_fomc_abs_move_spx_v1.yaml")],
         env={"SPILLOVER_DATA": str(tmp_path / "cache")},
     )
     assert out.exit_code == 0, out.output
@@ -397,3 +397,19 @@ def test_cli_ingest_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 def test_cli_ingest_without_a_config_explains_what_to_do(tmp_path: Path) -> None:
     result = runner.invoke(app, ["ingest", "--config", str(tmp_path / "missing.toml")])
     assert result.exit_code == 1 and "sources.example.toml" in result.output
+
+
+def test_the_reviewed_list_of_big_tech_listings_is_well_formed() -> None:
+    from spillover.ingest.store import read_events_csv
+    from spillover.taxonomy import ALL_NAMES
+
+    root = Path(__file__).resolve().parents[2]
+    events = read_events_csv(root / "labels" / "mega_tech_ipos.csv")
+    assert "MEGA_TECH_IPO" in ALL_NAMES
+    assert events.height >= 15
+    assert set(events["entity"].to_list()) == {"NEW_LISTING"}
+    assert events["event_id"].n_unique() == events.height
+    assert all(s.startswith("https://") for s in events["source"].to_list())
+    assert not any(events["scheduled"].to_list()), "listings must not contaminate macro claims"
+    dates = events["date"].to_list()
+    assert dates == sorted(dates)

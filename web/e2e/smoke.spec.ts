@@ -67,13 +67,16 @@ test("submit form validates live and the scoreboard states what is missing", asy
   await page.goto("/#/submit");
   await expect(page.getByRole("status").filter({ hasText: /placeholder|must|REPLACE_ME/i })).toBeVisible();
 
+  await page.getByLabel(/Your idea/).fill("After a headline, the stock falls by more than the market explains.");
+  await page.getByLabel(/Pick the kind of event/).selectOption("FOMC_DECISION");
+  await page.getByLabel(/Companies or institutions/).fill("ABC");
+  await page.getByLabel(/The stock, index or currency/).fill("ABC");
+  await page.getByRole("button", { name: "Write it for me" }).click();
+  await expect(page.getByLabel(/Written before any new event/)).toHaveValue(/After 8 new events/);
+  await page.getByLabel(/Your GitHub username/).fill("someone");
+  await page.getByText("Advanced (filled in for you)").click();
+  await expect(page.getByLabel("Claim id")).toHaveValue("clm_fomc_decision_abc_down_v1");
   await page.getByLabel("Claim id").fill("clm_demo_v1");
-  await page.getByLabel(/Statement/).fill("After a headline, the stock falls by more than the market explains.");
-  await page.getByLabel(/Event type/).selectOption("FOMC_DECISION");
-  await page.getByLabel(/Trigger entities/).fill("ABC");
-  await page.getByLabel("Instrument symbol").fill("ABC");
-  await page.getByLabel(/What would prove me wrong/).fill("The interval includes zero after eight forward events.");
-  await page.getByLabel("Your GitHub handle").fill("someone");
   await expect(page.getByText("Valid against the claim schema.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Open pull request on GitHub" })).toHaveAttribute(
     "href",
@@ -100,11 +103,11 @@ test("the claim form guides a one-off idea and fits a phone screen", async ({ pa
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/submit");
   await expect(page.getByRole("heading", { name: "From a news story to a claim" })).toBeVisible();
-  await page.getByLabel(/Statement/).fill("All flights were grounded today, so airline stocks will fall.");
+  await page.getByLabel(/Your idea/).fill("All flights were grounded today, so airline stocks will fall.");
   await expect(page.getByText(/sounds like one specific event/)).toBeVisible();
-  await page.getByLabel(/Event type/).selectOption("FOMC_DECISION");
+  await page.getByLabel(/Pick the kind of event/).selectOption("FOMC_DECISION");
   await expect(page.getByText(/past events in the data/)).toBeVisible();
-  await page.getByLabel("Instrument symbol").fill("NOT_PRICED");
+  await page.getByLabel(/The stock, index or currency/).fill("NOT_PRICED");
   await expect(page.getByText(/NOT_PRICED is not priced yet/)).toBeVisible();
   await expect(page.getByTestId("plain-sentence")).toContainText("When the Federal Reserve announces");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -146,7 +149,7 @@ test("a story with no claim offers to start one with its event type chosen", asy
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Acme Air Inc/);
   await page.getByRole("tab", { name: "Market implications" }).click();
   await page.getByRole("link", { name: "Write a claim about events like this" }).click();
-  await expect(page.getByLabel(/Event type/)).toHaveValue("CYBER_INCIDENT");
+  await expect(page.getByLabel(/Pick the kind of event/)).toHaveValue("CYBER_INCIDENT");
 });
 
 test("latest headlines link out safely, tag testable ones, and switch to the record", async ({ page }) => {
@@ -203,4 +206,22 @@ test("the Questions page drafts a question and hands it to GitHub, posting nothi
   // The sidebar menu links here.
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Questions" }).first()).toHaveAttribute("href", "#/questions");
+});
+
+
+test("a counter-claim starts from the claim it answers, with the opposite direction", async ({ page }) => {
+  await page.goto("/#/claims/clm_fomc_nasdaq_beyond_spx_v2");
+  await page.getByRole("tab", { name: /Opposite sides/ }).click();
+  await page.getByRole("link", { name: "Write a counter-claim" }).click();
+  await expect(page).toHaveURL(/#\/submit\?counter=clm_fomc_nasdaq_beyond_spx_v2/);
+  await expect(page.getByRole("note").filter({ hasText: "counter-claim" })).toBeVisible();
+  await page.getByText("See the claim file").click();
+  await expect(page.getByTestId("yaml-preview")).toContainText("responds_to: {claim: clm_fomc_nasdaq_beyond_spx_v2, stance: counter}");
+});
+
+test("a vague question gets guardrails, not a verdict", async ({ page }) => {
+  await page.goto("/#/submit");
+  await page.getByLabel(/Your idea/).fill("Will the war in Iran lower oil prices?");
+  await expect(page.getByText(/reads as a question/)).toBeVisible();
+  await expect(page.getByText(/not by an AI/)).toBeVisible();
 });

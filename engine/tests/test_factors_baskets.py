@@ -116,8 +116,8 @@ def test_two_factor_baseline_recovers_both_betas(market: MarketData) -> None:
 
 
 def test_two_factors_isolate_the_shock_better_than_one(market: MarketData) -> None:
-    both = run_backtest(claim(factors=["BTC", "ETH"]), market, n_boot=2000)
-    one = run_backtest(claim(factor="BTC"), market, n_boot=2000)
+    both = run_backtest(claim(factors=["BTC", "ETH"]), market)
+    one = run_backtest(claim(factor="BTC"), market)
     assert both.mean == pytest.approx(SHOCK, abs=0.004)
     assert both.ci_hi < 0  # the drop is detected
     # Leaving ETH out leaves its moves in the residual: a noisier, wider interval.
@@ -142,7 +142,7 @@ def test_basket_claim_finds_two_thirds_of_the_boost(market: MarketData) -> None:
         },
         expected_sign="positive",
     )
-    report = run_backtest(c, market, n_boot=2000)
+    report = run_backtest(c, market)
     assert report.mean == pytest.approx(2 * BOOST / 3, abs=0.004)
     assert report.ci_lo > 0
 
@@ -212,7 +212,7 @@ def test_basket_and_factors_are_frozen_into_the_prediction(tmp_path: Path) -> No
 
 def test_grading_a_two_factor_prediction_matches_the_backtest(market: MarketData) -> None:
     c = claim(factors=["BTC", "ETH"])
-    stat = run_backtest(c, market, n_boot=200).events[5]
+    stat = run_backtest(c, market).events[5]
     pred = build_prediction(
         c,
         stat.event_id,

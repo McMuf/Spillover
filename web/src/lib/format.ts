@@ -28,8 +28,15 @@ export type Status = SiteClaim["status"];
 export const STATUSES: readonly Status[] = ["Draft", "Proposed", "Supported", "Not supported", "Inconclusive"];
 
 /** What an interval means in words, so numbers never stand alone. */
-export function intervalText(lo: number | null, hi: number | null): string {
-  return lo === null || hi === null ? "no interval (too few events)" : `[${pct(lo)}, ${pct(hi)}]`;
+/** A size rank (rules 0.2 store rank minus one half) as a share of normal days: 0.22 -> "72%". */
+export function rankPct(v: number): string {
+  return `${Math.round(Math.min(1, Math.max(0, v + 0.5)) * 100)}%`;
+}
+
+/** The 95% range in the claim's own units: percent moves, or the share of normal days for swings. */
+export function intervalText(lo: number | null, hi: number | null, measure?: string): string {
+  if (lo === null || hi === null) return "no interval (too few events)";
+  return measure === "abs_excess_return" ? `[${rankPct(lo)}, ${rankPct(hi)}]` : `[${pct(lo)}, ${pct(hi)}]`;
 }
 
 export function scoreboardRow(rows: ScoreboardClaim[], id: string): ScoreboardClaim | undefined {
@@ -60,10 +67,12 @@ export function dirText(x: number | null | undefined): string {
 }
 
 export interface Stat {
-  /** The number as shown: "−0.66%" for a move, "0.66%" for a swing size. */
+  /** The number as shown: "−0.66%" for a move; for a swing, the share of normal days that moved less. */
   value: string;
-  /** For swing sizes, what the number means ("smaller swing than usual"); null for moves. */
+  /** For swings, what the number means ("of normal days moved less"); null for moves. */
   note: string | null;
+  /** A two-word label for tight spaces: "bigger swing" or "smaller swing"; null for moves. */
+  short: string | null;
   /** Number and note in one phrase, for chips and table cells. */
   text: string;
   cls: string;
@@ -72,15 +81,16 @@ export interface Stat {
 
 /**
  * A claim's statistic as text and colour. Above zero is green, below zero is red, everywhere. A claim
- * that measures swing size ("moves more than usual", measure abs_excess_return) is also worded, so a
- * red number reads "smaller swing than usual" and never as a price that fell.
+ * that measures swing size ("moves more than usual", measure abs_excess_return) is a rank (rules 0.2):
+ * "72% of normal days moved less", green above the typical 50% and red below, never read as a fall.
  */
 export function claimStat(measure: string, v: number | null | undefined): Stat {
-  if (v === null || v === undefined || Number.isNaN(v)) return { value: "n/a", note: null, text: "n/a", cls: "text-muted", dir: "flat" };
+  if (v === null || v === undefined || Number.isNaN(v)) return { value: "n/a", note: null, short: null, text: "n/a", cls: "text-muted", dir: "flat" };
   if (measure === "abs_excess_return") {
-    const value = pct(Math.abs(v)).replace(/^[+−]/, "");
-    const note = `${v >= 0 ? "bigger" : "smaller"} swing than usual`;
-    return { value, note, text: `${value} ${note}`, cls: dirText(v), dir: direction(v) };
+    const value = rankPct(v);
+    const note = "of normal days moved less";
+    const short = `${v >= 0 ? "bigger" : "smaller"} swing`;
+    return { value, note, short, text: `${value} ${note}`, cls: dirText(v), dir: direction(v) };
   }
-  return { value: pct(v), note: null, text: pct(v), cls: dirText(v), dir: direction(v) };
+  return { value: pct(v), note: null, short: null, text: pct(v), cls: dirText(v), dir: direction(v) };
 }

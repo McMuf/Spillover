@@ -68,7 +68,7 @@ export function claimPath(item: SiteClaim, site: SiteData): ClaimPath {
     effect: b
       ? {
           estimate: claimStat(c.measure, b.mean).text,
-          interval: intervalText(b.ci_lo, b.ci_hi),
+          interval: intervalText(b.ci_lo, b.ci_hi, c.measure),
           n: b.n_effective,
           window: windowLabel(b.window_days),
           days: b.window_days,

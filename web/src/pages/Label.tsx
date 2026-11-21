@@ -56,20 +56,38 @@ function LabelBody({ site }: { site: SiteData }) {
         <h2 id="acc-h" className="text-lg font-bold">
           Accuracy so far
         </h2>
-        {lab.accuracy ? (
-          <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              ["Event type right", plainPct(lab.accuracy.type_accuracy)],
-              ["Companies it named that were right", plainPct(lab.accuracy.entity_precision)],
-              ["Companies it found", plainPct(lab.accuracy.entity_recall)],
-              ["Sent to human review", plainPct(lab.accuracy.low_confidence_rate)],
-            ].map(([k, v]) => (
-              <div key={k} className="rounded-xl bg-surface-alt p-3">
-                <dt className="text-xs text-muted">{k}</dt>
-                <dd className="text-xl font-extrabold">{v}</dd>
-              </div>
-            ))}
-          </dl>
+        {lab.accuracy && !lab.accuracy.measurable ? (
+          // Honest by construction: on a gold set of only "none of the above", a labeler that always
+          // answers "none" scores 100%, so no accuracy number is shown until there are real events.
+          <div className="mt-3 rounded-xl bg-notice-bg p-4 text-[15px] leading-relaxed text-notice-fg" data-testid="accuracy-not-measurable">
+            <p className="font-semibold">Not measurable yet.</p>
+            <p className="mt-1">
+              {lab.accuracy.n_positive} of {lab.accuracy.n_scored} labeled headlines are real events; the rest are &ldquo;none of
+              the above&rdquo;. On a set like that, a labeler that always answers &ldquo;none&rdquo; would score{" "}
+              {plainPct(lab.accuracy.majority_baseline)}, so an accuracy number would say nothing. It appears once at least 20
+              labeled headlines are real events. The headlines below mix likely events with the rest to get there.
+            </p>
+          </div>
+        ) : lab.accuracy ? (
+          <>
+            <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                ["Real events typed right", plainPct(lab.accuracy.event_recall)],
+                ["Its event answers that were right", plainPct(lab.accuracy.event_precision)],
+                ["All answers right", plainPct(lab.accuracy.type_accuracy)],
+                ["Always answering the most common label", plainPct(lab.accuracy.majority_baseline)],
+              ].map(([k, v]) => (
+                <div key={k} className="rounded-xl bg-surface-alt p-3">
+                  <dt className="text-xs text-muted">{k}</dt>
+                  <dd className="text-xl font-extrabold">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-2 text-xs text-muted">
+              The last number is the bar to beat: a labeler is only useful if it does better than always giving the most common
+              answer. Based on {lab.accuracy.n_positive} real events.
+            </p>
+          </>
         ) : (
           <p className="mt-2 text-[15px] text-muted">
             No accuracy yet: nobody has labeled headlines. The first set of labels you add here produces the first number.

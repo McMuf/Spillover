@@ -27,7 +27,7 @@ def claims_with_text() -> list[tuple[Claim, str]]:
 @pytest.fixture(scope="module")
 def site(market: MarketData, tmp_path_factory: pytest.TempPathFactory) -> SiteData:
     empty = tmp_path_factory.mktemp("empty")
-    return build_site_data(claims_with_text(), market, empty / "p", empty / "o", n_boot=500)
+    return build_site_data(claims_with_text(), market, empty / "p", empty / "o")
 
 
 def test_site_data_covers_every_seed_claim(site: SiteData) -> None:
@@ -60,8 +60,8 @@ def test_site_json_has_no_machine_local_data(site: SiteData) -> None:
 
 
 def test_export_is_deterministic(market: MarketData, tmp_path: Path) -> None:
-    a = build_site_data(claims_with_text(), market, tmp_path / "p", tmp_path / "o", n_boot=300)
-    b = build_site_data(claims_with_text(), market, tmp_path / "p", tmp_path / "o", n_boot=300)
+    a = build_site_data(claims_with_text(), market, tmp_path / "p", tmp_path / "o")
+    b = build_site_data(claims_with_text(), market, tmp_path / "p", tmp_path / "o")
     assert a.model_dump_json() == b.model_dump_json()
 
 
@@ -76,7 +76,7 @@ def test_chart_path_shows_the_injected_shock(market: MarketData, tmp_path: Path)
             instrument={"venue": "us_equity", "symbol": "SYN2"},
         )
     )
-    report = run_backtest(claim, market, n_boot=200)
+    report = run_backtest(claim, market)
     path = mean_window_path(claim, market, report.events)
     assert path is not None and path.n_events >= 15
     i0 = path.days.index(0)
@@ -108,8 +108,6 @@ def test_cli_export_site_writes_valid_json(tmp_path: Path) -> None:
             str(tmp_path / "p"),
             "--outcomes",
             str(tmp_path / "o"),
-            "--boot",
-            "200",
         ],
     )
     assert result.exit_code == 0, result.output
@@ -134,7 +132,7 @@ def test_a_superseded_unpriced_claim_says_so_plainly(market: MarketData, tmp_pat
         tmp_path, id="clm_x_v2", instrument={"venue": "us_index", "symbol": "SPX"}, **common
     )
     claims = [(load_claim(p), p.read_text()) for p in (old, new)]
-    site = build_site_data(claims, market, tmp_path / "p", tmp_path / "o", n_boot=200)
+    site = build_site_data(claims, market, tmp_path / "p", tmp_path / "o")
     v1 = next(c for c in site.claims if c.claim.id == "clm_x_v1")
     assert v1.backtest is None and v1.backtest_error is not None
     assert v1.backtest_error.startswith("Superseded by clm_x_v2")
@@ -202,7 +200,6 @@ def test_news_lists_recent_real_events_with_their_sources(
         data,
         tmp_path / "p",
         tmp_path / "o",
-        n_boot=200,
         store=tmp_path / "events",
     )
     ids = [s.event_id for s in site.news]

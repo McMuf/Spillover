@@ -87,7 +87,7 @@ function Board({ site }: { site: SiteData }) {
                   <tr key={r.claim_id} className="border-t border-line">
                     <td className="px-3 py-3"><ClaimCell site={site} id={r.claim_id} placebo={r.placebo} /></td>
                     <td className="px-3 py-3"><StatusBadge status={r.status} /></td>
-                    <td className="px-3 py-3"><span className={`font-semibold ${claimStat(r.measure, r.mean).cls}`}>{claimStat(r.measure, r.mean).text}</span> <span className="text-muted">{intervalText(r.ci_lo, r.ci_hi)}</span></td>
+                    <td className="px-3 py-3"><span className={`font-semibold ${claimStat(r.measure, r.mean).cls}`}>{claimStat(r.measure, r.mean).text}</span> <span className="text-muted">{intervalText(r.ci_lo, r.ci_hi, r.measure)}</span></td>
                     <td className="px-3 py-3">{r.effective_events} of {r.min_events}</td>
                     <td className="px-3 py-3">{r.beat_baseline ? "yes" : "no"}</td>
                     <td className="px-3 py-3">{r.q_value === null ? "n/a" : r.q_value.toFixed(3)}</td>

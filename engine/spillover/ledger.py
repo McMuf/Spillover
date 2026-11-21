@@ -23,7 +23,7 @@ from spillover.eventstudy import matching_events
 from spillover.models import Claim, Instrument, Window, superseded_ids
 from spillover.placebo_events import BACKTEST_ONLY_PREFIX
 
-RULES_VERSION = "0.1"
+RULES_VERSION = "0.2"
 # No headline extractor exists yet; events are supplied directly with their type already set.
 EXTRACTOR_VERSION = "none"
 PREDICTIONS_DIR = Path("predictions")

@@ -170,7 +170,7 @@ def review_claim(path: str, text: str, data: MarketData | None) -> ClaimReview:
             path, claim.id, [f"file name must match the claim id ({claim.id}.yaml)"], None, None
         )
     try:
-        report = run_backtest(claim, data, n_boot=1000)
+        report = run_backtest(claim, data)
     except DataError as exc:
         return ClaimReview(
             path,

@@ -1,0 +1,37 @@
+# clm_fomc_abs_move_spx_v2: clm_fomc_abs_move_spx_v1 registered again under rules 0.2.
+# Role: positive control. Bigger S&P 500 moves on Fed days are well documented, so the engine
+# should find this; if it cannot, the engine (not the market) is suspect.
+# Why this version: rules 0.2 (November 2026) fixed three problems an outside review found before
+# any claim was graded: the percentile bootstrap was too liberal with few events (11-18% false
+# positives at a nominal 5%), estimation windows included other scheduled news days, and the
+# verdict could be re-checked after every event. The README promises rule changes apply only to
+# claims registered afterwards, so this claim is registered again under rules 0.2; the earlier
+# version stays on record, frozen as registered, and is superseded. See docs/methodology.md.
+id: clm_fomc_abs_move_spx_v2
+
+statement: >
+  On FOMC decision days, the S&P 500 makes a larger absolute move over the day and the next
+  trading day than it does on ordinary days (by rank among ordinary windows of the same length).
+
+event_type: FOMC_DECISION
+trigger_entities: [FED]
+
+# The S&P 500 is itself the market, so there is no separate factor to control for.
+instrument: {venue: us_index, symbol: SPX}
+
+window: {start: first_report, end: +1_trading_day}
+expected_sign: positive
+
+# constant_mean: the baseline is the instrument's own trailing average return.
+baseline: constant_mean
+# Tests how |CAR| ranks among same-length windows of clean estimation days (rules 0.2).
+measure: abs_excess_return
+
+success: {spillover_ci_excludes_zero: true, min_forward_events: 8}
+
+falsifier: >
+  After 8 forward FOMC decisions, the interval for the move's size rank includes the typical
+  50% or lies below it.
+
+registered_by: McMuf
+registered_at: set_by_ci_on_merge

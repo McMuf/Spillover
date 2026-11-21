@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: >-
+  If you use Spillover, please cite the software as below. To cite one claim, use the
+  "Copy citation" or "BibTeX" button on its page, which names the exact claim version,
+  scoring rules and commit.
+title: "Spillover: an open ledger that tests how news spills over into markets"
+type: software
+# Replace with your real name if you want it cited (given-names / family-names), for example:
+#   - given-names: Jane
+#     family-names: Doe
+#     alias: McMuf
+authors:
+  - name: McMuf
+doi: "10.5281/zenodo.24409543"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.24409543"
+    description: "Zenodo archive of release v0.1.0a0"
+repository-code: "https://github.com/McMuf/Spillover"
+url: "https://mcmuf.github.io/Spillover/"
+abstract: >-
+  Spillover registers claims about how kinds of news move markets, freezes and
+  timestamps a prediction for every new qualifying event before its outcome is known,
+  and grades the claims with a public event-study method (market model, cumulative
+  abnormal returns, Student t-intervals checked by simulation, fixed stopping and
+  false-discovery-rate control).
+keywords:
+  - event study
+  - pre-registration
+  - financial markets
+  - news
+  - open science
+license: Apache-2.0
+version: "0.1.0a0"
+date-released: "2026-11-16"

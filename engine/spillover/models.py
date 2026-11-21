@@ -91,8 +91,22 @@ class Success(_Strict):
     min_forward_events: Annotated[int, Field(ge=MIN_FORWARD_EVENTS_FLOOR)]
 
 
+CLAIM_ID = r"^clm_[a-z0-9]+(?:_[a-z0-9]+)*_v[0-9]+$"
+
+
+class RespondsTo(_Strict):
+    """A claim written as an answer to another one, graded on its own like any claim.
+
+    * ``counter``: expects the opposite of the other claim (the other side of the argument).
+    * ``refine``: the same idea, narrowed or sharpened (another market, window or kind of event).
+    """
+
+    claim: Annotated[str, Field(pattern=CLAIM_ID)]
+    stance: Literal["counter", "refine"]
+
+
 class Claim(_Strict):
-    id: Annotated[str, Field(pattern=r"^clm_[a-z0-9]+(?:_[a-z0-9]+)*_v[0-9]+$")]
+    id: Annotated[str, Field(pattern=CLAIM_ID)]
     statement: Annotated[str, Field(min_length=10)]
     event_type: Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9_]*$")]
     trigger_entities: Annotated[list[str], Field(min_length=1)]
@@ -116,8 +130,11 @@ class Claim(_Strict):
     ) = None
     # "abnormal_return" tests the mean cumulative abnormal return over the window.
     # "abs_excess_return" tests whether |CAR| exceeds its typical size in the estimation window
-    # (used for volatility claims such as FOMC days).
+    # (used for volatility claims such as FOMC days); since rules 0.2 it is the rank of |CAR| among
+    # same-length ordinary windows, minus one half.
     measure: Literal["abnormal_return", "abs_excess_return"] = "abnormal_return"
+    # The claim this one answers, if any: a counter-claim or a refinement (grouped on its page).
+    responds_to: RespondsTo | None = None
     # Optional stated probability that the sign is as expected on any one event. Only claims that
     # state a confidence enter the calibration plot.
     confidence: Annotated[float, Field(ge=0.5, le=0.99)] | None = None
@@ -157,6 +174,12 @@ class Claim(_Strict):
                 raise ValueError("a factor cannot also be the instrument (or one of its basket)")
         elif self.baseline == "factor_only" and self.factor in self.instrument.members:
             raise ValueError("the factor cannot also be the instrument (or one of its basket)")
+        if self.responds_to is not None:
+            own, other = self.id.rsplit("_v", 1)[0], self.responds_to.claim.rsplit("_v", 1)[0]
+            if own == other:
+                raise ValueError(
+                    "a claim cannot respond to itself; a new version supersedes instead"
+                )
         return self
 
     @property

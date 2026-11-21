@@ -83,7 +83,9 @@ export function oneOffHint(statement: string): Check | null {
 const WINDOW: Record<string, string> = {
   "+1_trading_day": "by the next trading day",
   "+3_trading_days": "within three trading days",
+  "+4_trading_days": "within a week",
   "+5_trading_days": "within five trading days",
+  "+20_trading_days": "within a month",
 };
 
 /** The claim in one plain sentence, built only from the form's fields. */
@@ -93,9 +95,106 @@ export function plainSentence(
   sign: "positive" | "negative",
   windowEnd: string,
   baseline: "factor_only" | "constant_mean",
+  swing = false,
 ): string | null {
   if (!eventType || !symbol.trim()) return null;
+  if (swing) return `When ${eventLabel(eventType)}, ${shortName(symbol.trim())} moves more than usual in either direction, ${WINDOW[windowEnd] ?? windowEnd}.`;
   const move = sign === "positive" ? "rises" : "falls";
   const versus = baseline === "factor_only" ? "more than the market explains" : "more than usual";
   return `When ${eventLabel(eventType)}, ${shortName(symbol.trim())} ${move} ${versus}, ${WINDOW[windowEnd] ?? windowEnd}.`;
+}
+
+/*
+ * Guardrails for vague or open-ended ideas. They are fixed rules anyone can read, applied the same way
+ * to everyone, and they only check whether a claim CAN be tested, never whether it is right. No AI
+ * model judges a claim before it is published.
+ */
+
+const QUESTION = /^\s*(will|would|could|does|do|did|is|are|can|should|might)\b|\?\s*$/i;
+const DIRECTIONLESS = /\b(affects?|affected|impacts?|influences?|effects? on|changes?|moves? the market)\b/i;
+const HAS_DIRECTION = /\b(rises?|rising|rose|up|gains?|climbs?|jumps?|falls?|falling|fell|drops?|down|declines?|sinks?|higher|lower|more|bigger|larger|less|smaller|swings?|volatil\w*)\b/i;
+const HEDGE = /\b(might|may|could|possibly|perhaps|probably|maybe)\b/i;
+const TARGET = /(\$\s?\d|\b\d+(\.\d+)?\s?(dollars|usd|%|percent)\b|\bto \d)/i;
+
+/** Every guardrail that applies to the statement, most important first. */
+export function vagueHints(statement: string): Check[] {
+  const s = statement.trim();
+  if (!s) return [];
+  const out: Check[] = [];
+  if (QUESTION.test(s)) {
+    out.push({
+      level: "warn",
+      text: "This reads as a question. Questions are welcome on the Questions page; a claim states what you expect, like \"When X happens, Y falls within a week\". The steps below turn your question into one.",
+    });
+  }
+  if (DIRECTIONLESS.test(s) && !HAS_DIRECTION.test(s)) {
+    out.push({
+      level: "warn",
+      text: "Say which way. \"Affects\" or \"impacts\" can never be proved wrong; up, down, or bigger swings either way can. Step 5 asks for it.",
+    });
+  }
+  if (HEDGE.test(s)) {
+    out.push({
+      level: "warn",
+      text: "Drop the \"might\". A claim states the one direction you expect; whether you were right is what the market decides.",
+    });
+  }
+  if (TARGET.test(s)) {
+    out.push({
+      level: "ok",
+      text: "No price target needed: the claim is graded on whether the move beats a normal day in the direction you say, so a dollar figure or a percentage is not used.",
+    });
+  }
+  const oneOff = oneOffHint(s);
+  if (oneOff) out.push(oneOff);
+  return out;
+}
+
+export type Direction = "up" | "down" | "swing";
+
+/** Index-like series are their own market, so they are compared with their own normal day. */
+const OWN_BASELINE = new Set(["SPX", "MKT", "USD", "USDJPY", "WTI"]);
+const VENUE: Record<string, string> = { SPX: "us_index", NASDAQ: "us_index", MKT: "us_index", USD: "fx", USDJPY: "fx", WTI: "commodity" };
+
+export function baselineFor(symbol: string): "factor_only" | "constant_mean" {
+  return OWN_BASELINE.has(symbol.trim().toUpperCase()) ? "constant_mean" : "factor_only";
+}
+
+export function venueFor(symbol: string): string {
+  return VENUE[symbol.trim().toUpperCase()] ?? "us_equity";
+}
+
+/** A claim id from the choices: clm_<kind>_<market>_<direction>_v1. */
+export function suggestedId(eventType: string, symbol: string, direction: Direction): string {
+  const part = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const kind = part(eventType).split("_").slice(0, 2).join("_") || "idea";
+  const market = part(symbol) || "market";
+  return `clm_${kind}_${market}_${direction}_v1`;
+}
+
+export const WINDOWS: { value: string; label: string; words: string }[] = [
+  { value: "+1_trading_day", label: "Next day", words: "by the next trading day" },
+  { value: "+4_trading_days", label: "Within 1 week", words: "within a week" },
+  { value: "+20_trading_days", label: "Within 1 month", words: "within a month" },
+];
+
+/** A falsifier written from the choices, for people who are not sure how to word one. */
+export function suggestedFalsifier(symbol: string, direction: Direction, minEvents: number): string {
+  const name = shortName(symbol.trim() || "the market");
+  if (direction === "swing") {
+    return `After ${minEvents} new events, ${name}'s moves are not bigger than its ordinary moves of the same length (the interval for the size rank includes the typical 50% or lies below it).`;
+  }
+  const way = direction === "up" ? "above" : "below";
+  return `After ${minEvents} new events, ${name}'s average abnormal move is not clearly ${way} zero (the 95% interval includes zero or lies on the other side).`;
+}
+
+/** What the claim needs before it can be submitted, in plain words, ticked off as it fills in. */
+export function readiness(f: { statement: string; eventType: string; symbol: string; falsifier: string; handle: string }): { label: string; done: boolean }[] {
+  return [
+    { label: "Your idea in a sentence", done: f.statement.trim().length >= 10 },
+    { label: "A kind of event that keeps happening", done: !!f.eventType },
+    { label: "A market that should move", done: !!f.symbol.trim() },
+    { label: "What would prove it wrong", done: f.falsifier.trim().length >= 10 },
+    { label: "Your GitHub username", done: !!f.handle.trim() },
+  ];
 }

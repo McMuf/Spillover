@@ -193,7 +193,7 @@ def claim2(**over: Any) -> Claim:
 
 
 def test_seed_claim_2_finds_the_next_session_effect(seoul_to_new_york: MarketData) -> None:
-    report = run_backtest(claim2(), seoul_to_new_york, n_boot=2000)
+    report = run_backtest(claim2(), seoul_to_new_york)
     assert report.n_effective >= 10
     assert report.mean == pytest.approx(0.02, abs=0.006)
     assert report.ci_lo > 0

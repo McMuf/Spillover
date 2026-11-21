@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from
 import { useEffect, useRef } from "react";
 import type { SiteData } from "../generated/site";
 import { useSiteState } from "../lib/data";
-import { categoryOf, TOPIC_ICON } from "../lib/plain";
+import { categoryOf, liveClaims, TOPIC_ICON } from "../lib/plain";
 import { BrandMark } from "./BrandMark";
 import { Icon, type IconName } from "./Icon";
 
@@ -24,7 +24,7 @@ const CONTRIBUTE: { to: string; label: string; icon: IconName }[] = [
 /** Topics that have claims, most claims first. */
 function topicCounts(site: SiteData): [string, number][] {
   const n = new Map<string, number>();
-  for (const c of site.claims) {
+  for (const c of liveClaims(site)) {
     const t = categoryOf(c.claim.event_type);
     if (t !== "Control test") n.set(t, (n.get(t) ?? 0) + 1);
   }
@@ -92,7 +92,7 @@ export function Shell() {
       </a>
 
       <header className="sticky top-0 z-40 px-2 pt-2 md:px-4 md:pt-3">
-        <div className="float mx-auto max-w-[1440px] rounded-2xl bg-bg/90 backdrop-blur-md">
+        <div className="mx-auto max-w-[1440px] rounded-2xl border border-line bg-bg/85 backdrop-blur-md">
         <div className="flex items-center gap-4 px-3 py-2.5 md:px-4 xl:gap-8">
           <Link to="/" className="flex shrink-0 items-center gap-2.5 text-[19px] font-extrabold tracking-tight xl:w-[208px]">
             <BrandMark size={30} />
@@ -100,7 +100,7 @@ export function Shell() {
           </Link>
           <div className="hidden max-w-xl flex-1 md:block">{search}</div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
+            <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95">
               <Icon name="submit" size={16} />
               <span className="sm:hidden">Submit</span>
               <span className="hidden sm:inline">Submit a claim</span>
@@ -120,7 +120,7 @@ export function Shell() {
                 end={n.end}
                 className={({ isActive }) =>
                   `flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 pb-2.5 pt-1 text-[15px] font-medium ${
-                    isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"
+                    isActive ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg"
                   }`
                 }
               >
@@ -159,7 +159,7 @@ export function Shell() {
                     >
                       {({ isActive }) => (
                         <>
-                          <span className={isActive ? "text-accent" : ""}>
+                          <span className={isActive ? "text-fg" : ""}>
                             <Icon name={n.icon} size={19} />
                           </span>
                           {n.label}

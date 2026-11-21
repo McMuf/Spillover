@@ -11,6 +11,10 @@ export interface ClaimForm {
   windowEnd: string;
   expectedSign: "positive" | "negative";
   baseline: "factor_only" | "constant_mean";
+  /** abnormal_return for up/down claims; abs_excess_return for "bigger swings either way". */
+  measure: "abnormal_return" | "abs_excess_return";
+  /** The claim this one answers, if it is a counter-claim or a refinement. */
+  respondsTo: { claim: string; stance: "counter" | "refine" } | null;
   minEvents: number;
   falsifier: string;
   handle: string;
@@ -26,6 +30,8 @@ export const EMPTY_FORM: ClaimForm = {
   windowEnd: "+1_trading_day",
   expectedSign: "negative",
   baseline: "factor_only",
+  measure: "abnormal_return",
+  respondsTo: null,
   minEvents: 8,
   falsifier: "",
   handle: "",
@@ -60,6 +66,8 @@ export function toYaml(f: ClaimForm): string {
     `expected_sign: ${f.expectedSign}`,
     "",
     `baseline: ${f.baseline}`,
+    ...(f.measure === "abs_excess_return" ? ["measure: abs_excess_return"] : []),
+    ...(f.respondsTo ? [`responds_to: {claim: ${f.respondsTo.claim}, stance: ${f.respondsTo.stance}}`] : []),
     "",
     `success: {spillover_ci_excludes_zero: true, min_forward_events: ${f.minEvents}}`,
     "",

@@ -1,0 +1,31 @@
+name: Suggest a new kind of event
+description: A kind of news that keeps happening, which claims could be tested on (for example "a major oil producer is drawn into a military conflict").
+title: "Event type: "
+labels: ["event-type"]
+body:
+  - type: textarea
+    id: kind
+    attributes:
+      label: The kind of event, in one sentence
+      description: Something that happens again and again, not one story. Say what counts and what does not.
+      placeholder: A military strike on or by a country that produces more than 1 million barrels of oil a day.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Three or more past examples, with dates and a source link
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Where would new events come from?
+      description: An official feed, SEC filings, a calendar, or news headlines. Spillover only uses sources whose terms allow it.
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: A claim you would test on it
+      placeholder: When this happens, WTI crude rises more than usual within a week.

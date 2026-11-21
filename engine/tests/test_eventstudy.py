@@ -9,11 +9,13 @@ from spillover.data import DataError, MarketData
 from spillover.eventstudy import (
     EST_GAP,
     EST_LEN,
-    bootstrap_mean,
+    MIN_EST_DAYS,
     collapse_overlaps,
     compute_stat,
+    estimation_days,
     fdr_adjust,
     has_history,
+    mean_test,
     run_backtest,
 )
 from spillover.models import load_claim
@@ -37,26 +39,79 @@ def test_has_history_boundaries() -> None:
     assert not has_history(1000, 999, 1)
 
 
-def test_bootstrap_interval_brackets_the_mean_and_is_reproducible() -> None:
+def test_t_interval_brackets_the_mean() -> None:
     rng = np.random.default_rng(1)
     values = rng.normal(0.01, 0.02, 60)
-    a = bootstrap_mean(values, n_boot=4000, seed=7)
-    b = bootstrap_mean(values, n_boot=4000, seed=7)
-    assert a == b
-    assert a.lo < a.mean < a.hi
-    assert a.p_value < 0.01  # mean is 3 standard errors from zero
+    r = mean_test(values)
+    assert r.lo < r.mean < r.hi
+    assert r.p_value < 0.01  # mean is 3 standard errors from zero
+    assert mean_test(values) == r  # no randomness: the same data always gives the same answer
 
 
-def test_bootstrap_handles_tiny_samples() -> None:
-    one = bootstrap_mean(np.array([0.5]))
+def test_mean_test_handles_tiny_and_constant_samples() -> None:
+    one = mean_test(np.array([0.5]))
     assert one.p_value == 1.0
     assert np.isnan(one.lo)
-    assert np.isnan(bootstrap_mean(np.array([])).mean)
+    assert np.isnan(mean_test(np.array([])).mean)
+    flat = mean_test(np.array([0.0, 0.0, 0.0]))
+    assert flat.p_value == 1.0
 
 
-def test_bootstrap_null_is_not_rejected() -> None:
+def test_mean_test_null_is_not_rejected() -> None:
     values = np.random.default_rng(3).normal(0.0, 0.02, 40)
-    assert bootstrap_mean(values, n_boot=4000, seed=0).p_value > 0.05
+    assert mean_test(values).p_value > 0.05
+
+
+@pytest.mark.parametrize("measure", ["abnormal_return", "abs_excess_return"])
+def test_false_positive_rate_stays_near_5_percent_with_8_events(measure: str) -> None:
+    """The rules 0.2 fix. With 8 events and no effect, the percentile bootstrap of rules 0.1 called
+    11-18% of nulls significant. The t-test on the CAR, and on the rank of the move's size, must
+    stay near the nominal 5% even with fat-tailed returns."""
+    rng = np.random.default_rng(2026)
+    trials, rejections = 1500, 0
+    for _ in range(trials):
+        values = []
+        for _ in range(8):
+            y = rng.standard_t(3, 200) * 0.01
+            values.append(compute_stat(y, None, 180, 1, "constant_mean", measure)[1])  # type: ignore[arg-type]
+        rejections += mean_test(np.array(values)).p_value < 0.05
+    assert rejections / trials < 0.075, f"{rejections / trials:.1%} false positives at a nominal 5%"
+
+
+def test_size_rank_is_zero_for_a_typical_move_and_near_half_for_a_huge_one() -> None:
+    rng = np.random.default_rng(4)
+    y = rng.normal(0, 0.01, 300)
+    y[250] = 0.2  # a move far bigger than any ordinary day
+    _, big, _, _ = compute_stat(y, None, 250, 0, "constant_mean", "abs_excess_return")
+    assert big == pytest.approx(0.5)
+
+
+def test_other_events_days_are_left_out_of_the_estimation_window() -> None:
+    """Rules 0.2: a scheduled event inside the estimation window must not shape "a normal day"."""
+    rng = np.random.default_rng(6)
+    n = 400
+    x = rng.normal(0, 0.01, n)
+    y = 1.0 * x + rng.normal(0, 0.002, n)
+    day0 = 300
+    y[200] -= 0.3  # another event's day, inside the estimation window
+    drop = np.zeros(n, dtype=bool)
+    drop[200] = True
+    _, _, clean_alpha, clean_betas = compute_stat(
+        y, x, day0, 0, "factor_only", "abnormal_return", drop
+    )
+    _, _, dirty_alpha, _ = compute_stat(y, x, day0, 0, "factor_only", "abnormal_return")
+    assert clean_betas[0] == pytest.approx(1.0, abs=0.1)
+    assert abs(clean_alpha) < abs(dirty_alpha)
+    assert 200 not in estimation_days(day0, drop)
+
+
+def test_an_event_with_too_few_clean_days_has_no_history() -> None:
+    day0 = EST_GAP + EST_LEN + 10
+    drop = np.zeros(1000, dtype=bool)
+    est = estimation_days(day0, None)
+    drop[est[: EST_LEN - MIN_EST_DAYS + 1]] = True  # leaves one day fewer than required
+    assert has_history(1000, day0, 1)
+    assert not has_history(1000, day0, 1, drop)
 
 
 def test_market_model_recovers_alpha_and_beta() -> None:
@@ -181,8 +236,8 @@ def test_decompose_is_refused_rather_than_ignored(market: MarketData, tmp_path: 
 
 def test_report_is_deterministic_and_serializable(market: MarketData) -> None:
     claim = load_claim(CLAIMS / "clm_fomc_abs_move_spx_v1.yaml")
-    a = run_backtest(claim, market, n_boot=2000, seed=1)
-    b = run_backtest(claim, market, n_boot=2000, seed=1)
+    a = run_backtest(claim, market)
+    b = run_backtest(claim, market)
     assert a.to_dict() == b.to_dict()
     assert a.to_dict()["as_of"] == date.isoformat(market.as_of)
     yaml.safe_dump(a.to_dict())  # plain types only
@@ -191,4 +246,6 @@ def test_report_is_deterministic_and_serializable(market: MarketData) -> None:
 def test_engine_is_calibrated_on_random_dates(market: MarketData) -> None:
     """Scoring rule 7: on random dates the engine must not 'find' effects more than chance."""
     rate = placebo_rejection_rate(market, "XLK", n_trials=100, n_events=40, seed=11)
-    assert rate <= 0.12, f"placebo rejection rate {rate:.1%} is far above the nominal 5%"
+    assert rate <= 0.10, f"placebo rejection rate {rate:.1%} is far above the nominal 5%"
+    small = placebo_rejection_rate(market, "XLK", n_trials=150, n_events=8, seed=12)
+    assert small <= 0.10, f"with 8 events the rejection rate is {small:.1%}, far above 5%"

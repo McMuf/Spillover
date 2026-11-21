@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 
-// Automated WCAG 2.x A/AA audit of every page, (the app is dark only). Automated checks catch roughly a
+// Automated WCAG 2.x A/AA audit of every page, (the app has one light theme). Automated checks catch roughly a
 // third of accessibility problems, so this is a floor, not a substitute for manual review.
 const PAGES = [
   ["claims", "/#/"],
@@ -27,7 +27,7 @@ const PAGES = [
 ] as const;
 
 {
-  test.describe("dark theme", () => {
+  test.describe("light theme", () => {
 
     for (const [name, path] of PAGES) {
       test(`${name} has no WCAG A/AA violations`, async ({ page }) => {

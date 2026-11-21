@@ -24,7 +24,7 @@ const filing: Story = {
 function site(): SiteData {
   const claim = makeClaim("clm_demo_v1", {
     forward_log: [
-      { event_id: "ev2", event_date: "2025-03-03", created_at: "2025-03-01T00:00:00Z", sha256: "x", status: "graded", hit: true, value: -0.012, proof: "present" },
+      { event_id: "ev2", event_date: "2025-03-03", created_at: "2025-03-01T00:00:00Z", sha256: "x", status: "graded", hit: true, value: -0.012, proof: "present", checkins: [] },
     ],
   });
   const s = makeSite([claim]);
@@ -66,10 +66,10 @@ describe("news stories", () => {
     expect(claimsAboutType(site(), "CYBER_INCIDENT")).toHaveLength(0);
   });
 
-  it("words swing sizes instead of colouring them as up or down", () => {
+  it("words swing sizes as the share of normal days that moved less", () => {
     const swing = makeClaim("clm_s_v1");
     swing.claim.measure = "abs_excess_return";
-    expect(measuredValue(swing, -0.0004)).toEqual({ text: "0.04% smaller swing than usual", cls: "text-negative" });
+    expect(measuredValue(swing, -0.1)).toEqual({ text: "40% of normal days moved less", cls: "text-negative" });
     expect(measuredValue(makeClaim(), -0.02)).toEqual({ text: "−2.00%", cls: "text-negative" });
   });
 });

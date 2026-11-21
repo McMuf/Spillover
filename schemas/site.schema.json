@@ -57,6 +57,13 @@
           "title": "Expected Sign",
           "type": "string"
         },
+        "horizons": {
+          "items": {
+            "$ref": "#/$defs/HorizonOut"
+          },
+          "title": "Horizons",
+          "type": "array"
+        },
         "instrument": {
           "title": "Instrument",
           "type": "string"
@@ -78,10 +85,6 @@
         },
         "min_events": {
           "title": "Min Events",
-          "type": "integer"
-        },
-        "n_boot": {
-          "title": "N Boot",
           "type": "integer"
         },
         "n_effective": {
@@ -107,10 +110,6 @@
         "p_value": {
           "title": "P Value",
           "type": "number"
-        },
-        "seed": {
-          "title": "Seed",
-          "type": "integer"
         },
         "statement": {
           "title": "Statement",
@@ -145,10 +144,9 @@
         "ci_lo",
         "ci_hi",
         "p_value",
-        "n_boot",
-        "seed",
         "verdict",
-        "events"
+        "events",
+        "horizons"
       ],
       "title": "Backtest",
       "type": "object"
@@ -341,6 +339,39 @@
       "title": "Chart",
       "type": "object"
     },
+    "CheckIn": {
+      "additionalProperties": false,
+      "description": "A frozen prediction's statistic at a longer horizon: descriptive, never graded.",
+      "properties": {
+        "due": {
+          "format": "date",
+          "title": "Due",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "label",
+        "due",
+        "value"
+      ],
+      "title": "CheckIn",
+      "type": "object"
+    },
     "Claim": {
       "additionalProperties": false,
       "properties": {
@@ -459,6 +490,17 @@
           "title": "Registered By",
           "type": "string"
         },
+        "responds_to": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RespondsTo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "statement": {
           "minLength": 10,
           "title": "Statement",
@@ -492,6 +534,7 @@
         "factor",
         "factors",
         "measure",
+        "responds_to",
         "confidence",
         "success",
         "falsifier",
@@ -859,6 +902,13 @@
     "ForwardRow": {
       "additionalProperties": false,
       "properties": {
+        "checkins": {
+          "items": {
+            "$ref": "#/$defs/CheckIn"
+          },
+          "title": "Checkins",
+          "type": "array"
+        },
         "created_at": {
           "format": "date-time",
           "title": "Created At",
@@ -925,7 +975,8 @@
         "status",
         "hit",
         "value",
-        "proof"
+        "proof",
+        "checkins"
       ],
       "title": "ForwardRow",
       "type": "object"
@@ -961,6 +1012,79 @@
         "expected_entities"
       ],
       "title": "GoldLabel",
+      "type": "object"
+    },
+    "HorizonOut": {
+      "additionalProperties": false,
+      "description": "The claim's statistic over a longer window, from past events. Descriptive, never graded.",
+      "properties": {
+        "ci_hi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Hi"
+        },
+        "ci_lo": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ci Lo"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mean"
+        },
+        "n_days": {
+          "title": "N Days",
+          "type": "integer"
+        },
+        "n_events": {
+          "title": "N Events",
+          "type": "integer"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Note"
+        }
+      },
+      "required": [
+        "label",
+        "n_days",
+        "n_events",
+        "mean",
+        "ci_lo",
+        "ci_hi",
+        "note"
+      ],
+      "title": "HorizonOut",
       "type": "object"
     },
     "Instrument": {
@@ -1071,6 +1195,28 @@
           ],
           "title": "Entity Recall"
         },
+        "event_precision": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Event Precision"
+        },
+        "event_recall": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Event Recall"
+        },
         "extractor_version": {
           "title": "Extractor Version",
           "type": "string"
@@ -1089,6 +1235,25 @@
             }
           ],
           "title": "Low Confidence Rate"
+        },
+        "majority_baseline": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Majority Baseline"
+        },
+        "measurable": {
+          "title": "Measurable",
+          "type": "boolean"
+        },
+        "n_positive": {
+          "title": "N Positive",
+          "type": "integer"
         },
         "n_scored": {
           "title": "N Scored",
@@ -1113,7 +1278,12 @@
         "type_accuracy",
         "entity_precision",
         "entity_recall",
-        "low_confidence_rate"
+        "low_confidence_rate",
+        "n_positive",
+        "majority_baseline",
+        "event_recall",
+        "event_precision",
+        "measurable"
       ],
       "title": "LabelerAccuracy",
       "type": "object"
@@ -1519,6 +1689,59 @@
       "title": "ReplicationResultOut",
       "type": "object"
     },
+    "RespondsTo": {
+      "additionalProperties": false,
+      "description": "A claim written as an answer to another one, graded on its own like any claim.\n\n* ``counter``: expects the opposite of the other claim (the other side of the argument).\n* ``refine``: the same idea, narrowed or sharpened (another market, window or kind of event).",
+      "properties": {
+        "claim": {
+          "pattern": "^clm_[a-z0-9]+(?:_[a-z0-9]+)*_v[0-9]+$",
+          "title": "Claim",
+          "type": "string"
+        },
+        "stance": {
+          "enum": [
+            "counter",
+            "refine"
+          ],
+          "title": "Stance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim",
+        "stance"
+      ],
+      "title": "RespondsTo",
+      "type": "object"
+    },
+    "ResponseOut": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "stance": {
+          "enum": [
+            "counter",
+            "refine"
+          ],
+          "title": "Stance",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "stance",
+        "statement"
+      ],
+      "title": "ResponseOut",
+      "type": "object"
+    },
     "Scoreboard": {
       "additionalProperties": false,
       "properties": {
@@ -1646,6 +1869,10 @@
         "event_type": {
           "title": "Event Type",
           "type": "string"
+        },
+        "events_after_verdict": {
+          "title": "Events After Verdict",
+          "type": "integer"
         },
         "excluded_scheduled_overlap": {
           "title": "Excluded Scheduled Overlap",
@@ -1801,6 +2028,7 @@
         "status",
         "forward_events",
         "effective_events",
+        "events_after_verdict",
         "min_events",
         "excluded_scheduled_overlap",
         "collapsed_overlapping",
@@ -1883,6 +2111,13 @@
           "title": "Replications",
           "type": "array"
         },
+        "responses": {
+          "items": {
+            "$ref": "#/$defs/ResponseOut"
+          },
+          "title": "Responses",
+          "type": "array"
+        },
         "status": {
           "enum": [
             "Draft",
@@ -1893,6 +2128,17 @@
           ],
           "title": "Status",
           "type": "string"
+        },
+        "superseded_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Superseded By"
         },
         "yaml": {
           "title": "Yaml",
@@ -1909,7 +2155,9 @@
         "forward_log",
         "event_ids",
         "challenges",
-        "replications"
+        "replications",
+        "superseded_by",
+        "responses"
       ],
       "title": "SiteClaim",
       "type": "object"

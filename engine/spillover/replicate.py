@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 
 from spillover.data import DataError, MarketData
-from spillover.eventstudy import DEFAULT_BOOT, DEFAULT_SEED, run_backtest
+from spillover.eventstudy import run_backtest
 from spillover.lanes import (
     LaneError,
     Replication,
@@ -41,15 +41,13 @@ def run_replication(
     rep: Replication,
     claim: Claim,
     data: MarketData,
-    n_boot: int = DEFAULT_BOOT,
-    seed: int = DEFAULT_SEED,
 ) -> ReplicationResult:
     """Apply the changes to the claim and backtest it. Raises LaneError or DataError."""
     why = check_target(claim, rep.claim)
     if why is not None:
         raise LaneError(f"{rep.id}: {why}")
     variant = apply_changes(claim, rep.changes)
-    report = run_backtest(variant, data, n_boot=n_boot, seed=seed)
+    report = run_backtest(variant, data)
     draft = ReplicationResult(
         replication_id=rep.id,
         claim_id=claim.id,
@@ -98,7 +96,6 @@ def run_pending(
     claims_dir: Path,
     results_dir: Path,
     data: MarketData,
-    n_boot: int = DEFAULT_BOOT,
 ) -> tuple[list[Path], list[str]]:
     """Run every replication that has no result yet. Returns (written, problems)."""
     claims = {c.id: c for c in (load_claim(p) for p in claim_files(claims_dir))}
@@ -113,7 +110,7 @@ def run_pending(
         if result_path(results_dir, rep.id).exists():
             continue
         try:
-            result = run_replication(rep, claims.get(rep.claim) or _missing(rep), data, n_boot)
+            result = run_replication(rep, claims.get(rep.claim) or _missing(rep), data)
         except (LaneError, DataError) as exc:
             problems.append(f"{rep.id}: {exc}")
             continue

@@ -1,15 +1,16 @@
 /**
- * Design tokens. Spillover has one theme: dark plum, the lavender brand at dusk. No switcher.
+ * Design tokens. Spillover has one theme: light, with a lime accent. No switcher.
  *
  * Components use semantic names (bg, fg, accent...) through CSS variables, never raw colors.
- * Green and red mean direction (up and down) and nothing else; the brand color (violet) carries
- * identity: links, focus, active states, neutral charts. Surfaces are flat: no gradients.
+ * Green and red mean direction (up and down) and nothing else. Lime carries identity: bright lime
+ * (`pop`) as a fill behind dark text (buttons, active items, highlights), and a deep olive-lime
+ * (`accent`) for text and lines, because bright lime text on white is hard to read.
  */
 
-export type ThemeName = "dark";
+export type ThemeName = "light";
 
 export interface ColorTokens {
-  /** Page background: a plum-black. */
+  /** Page background: a warm off-white. */
   bg: string;
   /** Panels and raised areas. */
   surface: string;
@@ -20,12 +21,15 @@ export interface ColorTokens {
   /** Text. */
   fg: string;
   muted: string;
-  /** The brand color (violet): links, focus, active states, neutral chart lines, Proposed status. */
+  /** Deep olive-lime for links, focus, neutral chart lines and the Proposed status (readable as text). */
   accent: string;
   onAccent: string;
-  /** A soft lavender fill for active items, with `accent` or `fg` text on it. */
+  /** A pale lime fill for active items, with `fg` or `accent` text on it. */
   accentSoft: string;
-  /** Main call-to-action buttons: light pills on the dark page. */
+  /** Bright lime, only as a fill behind dark text: the main button, the live dot, highlights. */
+  pop: string;
+  onPop: string;
+  /** Secondary call-to-action buttons: ink pills. */
   primary: string;
   onPrimary: string;
   /** Up: a market number above zero, or a graded hit. */
@@ -36,37 +40,34 @@ export interface ColorTokens {
   noticeFg: string;
 }
 
-/**
- * Plum-black page, light ink, lilac brand. Green and red say direction; every colored number also
- * carries its sign (+ or −) or a word.
- */
 export const color: Record<ThemeName, ColorTokens> = {
-  /** Plum-black page, lilac text accents. */
-  dark: {
-    bg: "#110d18",
-    surface: "#1a1424",
-    surfaceAlt: "#241c32",
-    line: "#2f2641",
-    fg: "#f2edf9",
-    muted: "#a9a0bb",
-    accent: "#b69eff",
-    onAccent: "#170f2b",
-    accentSoft: "#2b2146",
-    primary: "#f2edf9",
-    onPrimary: "#110d18",
-    positive: "#3fd98a",
-    negative: "#ff7385",
-    noticeBg: "#2e1f22",
-    noticeFg: "#f2cdb9",
+  light: {
+    bg: "#fafaf7",
+    surface: "#f2f2ec",
+    surfaceAlt: "#e8e8e0",
+    line: "#e1e1d8",
+    fg: "#141413",
+    muted: "#5d5d55",
+    accent: "#3f6212",
+    onAccent: "#ffffff",
+    accentSoft: "#eef7cf",
+    pop: "#c5ef4a",
+    onPop: "#141413",
+    primary: "#141413",
+    onPrimary: "#fafaf7",
+    positive: "#13703a",
+    negative: "#b4232a",
+    noticeBg: "#f6f3df",
+    noticeFg: "#4f4520",
   },
 };
 
-export const THEMES: ThemeName[] = ["dark"];
+export const THEMES: ThemeName[] = ["light"];
 
 export const radius = { card: "16px", pill: "999px" };
 export const font = {
-  sans: '"Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-  mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  sans: '"Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  mono: '"Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
 };
 
 /** Pairs that must meet WCAG AA (4.5:1) for normal text. Checked by a unit test. */
@@ -83,6 +84,7 @@ export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTo
   ["accent", "surfaceAlt"],
   ["accent", "accentSoft"],
   ["onAccent", "accent"],
+  ["onPop", "pop"],
   ["onPrimary", "primary"],
   ["bg", "fg"],
   ["positive", "bg"],

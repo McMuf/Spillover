@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, type IconName } from "../components/Icon";
-import { Landscape } from "../components/Landscape";
+import { AsciiField } from "../components/AsciiField";
 import { NodeLegend } from "../components/NodeLegend";
 
 /**
@@ -39,7 +39,7 @@ function Life() {
       <span aria-hidden="true" className="absolute left-[23px] top-6 bottom-6 border-l-2 border-dashed border-accent/40 md:left-6 md:right-6 md:top-[23px] md:bottom-auto md:border-l-0 md:border-t-2" />
       {LIFE.map((s, i) => (
         <li key={s.title} className="relative flex gap-4 md:block">
-          <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full bg-accent text-on-accent ring-8 ring-bg">
+          <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full bg-pop text-on-pop ring-8 ring-bg">
             <Icon name={s.icon} size={20} />
           </span>
           <div className="md:mt-4">
@@ -65,7 +65,7 @@ function WindowDiagram() {
         <div className="flex flex-[1.6] items-center justify-center bg-[repeating-linear-gradient(135deg,var(--c-line)_0_6px,transparent_6px_12px)] text-muted">
           gap
         </div>
-        <div className="relative flex flex-[0.9] items-center justify-center rounded-md bg-accent text-on-accent">0</div>
+        <div className="relative flex flex-[0.9] items-center justify-center rounded-md bg-pop text-on-pop">0</div>
         <div className="flex flex-[2.6] items-center justify-center rounded-r-xl bg-notice-bg text-fg">window</div>
       </div>
       <div className="mt-3 grid grid-cols-[12fr_1.6fr_0.9fr_2.6fr] gap-1 text-[12px] leading-snug text-muted" aria-hidden="true">
@@ -76,8 +76,9 @@ function WindowDiagram() {
       </div>
       <figcaption className="mt-5 border-t border-line pt-4 text-[15px] leading-relaxed">
         The baseline is fitted over <strong>120 trading days that end 10 trading days before day 0</strong>. The gap keeps
-        run-up and leaked news out of the idea of a normal day. Day 0 is the first trading day on or after the event; a
-        window of &ldquo;+1 trading day&rdquo; is two days, day 0 and day +1.
+        run-up and leaked news out of the idea of a normal day, and days of other scheduled news (and of this claim&apos;s own
+        kind of event) are left out too; an event needs at least 60 clean days, or it is dropped and counted. Day 0 is the
+        first trading day on or after the event; a window of &ldquo;+1 trading day&rdquo; is two days, day 0 and day +1.
       </figcaption>
     </figure>
   );
@@ -91,7 +92,7 @@ const STEPS: { title: string; body: string }[] = [
   { title: "Collapse overlaps", body: "Windows that overlap keep only the first. Ten headlines about one story are one test, not ten." },
   { title: "Fit the baseline", body: "What a normal day predicts, from the market's move (or the instrument's own average)." },
   { title: "Abnormal return", body: "Each day: actual minus predicted. Their sum over the window is the CAR." },
-  { title: "Aggregate and test", body: "Bootstrap the average across the events that are left." },
+  { title: "Aggregate and test", body: "A Student t-interval for the average, on exactly the first N events the claim asked for." },
 ];
 
 function Steps() {
@@ -134,10 +135,10 @@ function Measures() {
           <rect x="140" y="12" width="14" height="48" rx="3" fill="var(--c-accent)" />
           <text x="176" y="40" fontSize="11" fill="var(--c-muted)" textAnchor="middle">day 0</text>
         </svg>
-        <h3 className="mt-3 text-lg font-bold">How big: excess absolute move</h3>
+        <h3 className="mt-3 text-lg font-bold">How big: the move&apos;s rank</h3>
         <p className="mt-1 text-[15px] leading-relaxed text-muted">
-          For &ldquo;bigger moves than usual&rdquo; claims: the size of the move, either way, against a typical window of the
-          same length.
+          For &ldquo;bigger moves than usual&rdquo; claims: how the size of the move, either way, ranks among ordinary windows
+          of the same length. Typical is 50%; &ldquo;bigger than 80% of ordinary days&rdquo; is a big move.
         </p>
       </div>
     </div>
@@ -218,13 +219,17 @@ function Statuses() {
       </dl>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <p className="rounded-2xl bg-surface p-5 text-[15px] leading-relaxed">
-          <strong>The range.</strong> <span className="text-muted">Returns have fat tails and events are few, so no textbook
-          t-tests. The interval is the 2.5th to 97.5th percentile of 10,000 resampled averages, with a fixed seed so anyone
-          can reproduce it. Fewer than two events: no interval.</span>
+          <strong>The range.</strong> <span className="text-muted">A Student t-interval for the average across events. It was
+          chosen by simulation: with 8 events and no real effect it is wrong about 5% of the time, as a 95% range should be.
+          The percentile bootstrap used before (rules 0.1) was wrong 11 to 18% of the time, so it was replaced before any
+          claim was graded. Size claims are tested on the move&apos;s rank, which stays honest with few events. Fewer than two
+          events: no interval.</span>
         </p>
         <p className="rounded-2xl bg-surface p-5 text-[15px] leading-relaxed">
-          <strong>Many claims, one standard.</strong> <span className="text-muted">Test enough claims and some look real by
-          luck. P-values are adjusted across the whole set (Benjamini-Hochberg), so one lucky claim is not a finding.</span>
+          <strong>Fixed stopping, one standard.</strong> <span className="text-muted">A verdict uses exactly the first N events the
+          claim asked for, so nobody can wait until the numbers happen to look good; later events are shown but never
+          counted. Test enough claims and some look real by luck, so p-values are adjusted (Benjamini-Hochberg) together with
+          the claims that finished first; a later claim can never move an earlier verdict.</span>
         </p>
       </div>
     </>
@@ -272,7 +277,9 @@ const GLOSSARY: Array<[string, string]> = [
   ["CAR (cumulative abnormal return)", "The abnormal returns added up over the claim's window. The headline number for a claim."],
   ["Baseline", "The naive model of a normal day. “Factor only” predicts from the market's move (alpha plus beta times the factor). “Constant mean” uses the instrument's own average, for an index that is itself the market."],
   ["Effective events", "Independent events left after dropping events with too little history, events whose window overlaps a scheduled event, and events whose windows overlap each other. This is the sample that counts."],
-  ["Bootstrap interval", "A 95% range for the average effect, found by resampling the events thousands of times. It assumes little about the shape of returns."],
+  ["Student t-interval", "A 95% range for the average effect across events: the average, plus or minus a multiple of its standard error that grows when there are few events. Checked by simulation to be wrong about 5% of the time with 8 events, as a 95% range should be."],
+  ["Size rank", "For bigger-move claims: the share of ordinary same-length windows whose move was smaller than the event's. 50% is typical. Ranks stay well behaved with few events, where raw size differences do not."],
+  ["Fixed sample", "A claim states how many new events it needs (at least 8). The verdict uses exactly those first events, so it cannot be checked over and over until it looks good."],
   ["False discovery rate", "When many claims are tested, some look significant by luck. Results are adjusted across the whole set so one lucky claim does not look like a finding."],
   ["Placebo", "A claim on random dates that should show nothing. If it ever works, the engine has a bug."],
   ["Backtest", "A result from events that already happened. Useful for deciding whether a claim is testable, but not forward evidence."],
@@ -285,7 +292,7 @@ const REFERENCES = [
   "MacKinlay, A. C. (1997). Event studies in economics and finance. Journal of Economic Literature, 35(1), 13–39.",
   "Brown, S. J., and Warner, J. B. (1985). Using daily stock returns: The case of event studies. Journal of Financial Economics, 14(1), 3–31.",
   "Fama, E. F., Fisher, L., Jensen, M. C., and Roll, R. (1969). The adjustment of stock prices to new information. International Economic Review, 10(1), 1–21.",
-  "Efron, B. (1979). Bootstrap methods: Another look at the jackknife. The Annals of Statistics, 7(1), 1–26.",
+  "Corrado, C. J. (1989). A nonparametric test for abnormal security-price performance in event studies. Journal of Financial Economics, 23(2), 385–395.",
   "Benjamini, Y., and Hochberg, Y. (1995). Controlling the false discovery rate: A practical and powerful approach to multiple testing. Journal of the Royal Statistical Society, Series B, 57(1), 289–300.",
   "Harvey, C. R., Liu, Y., and Zhu, H. (2016). … and the cross-section of expected returns. The Review of Financial Studies, 29(1), 5–68.",
   "Chen, A. Y., and Zimmermann, T. (2022). Open source cross-sectional asset pricing. Critical Finance Review, 11(2), 207–264.",
@@ -317,8 +324,10 @@ const JUMP = [
 export default function Method() {
   return (
     <div className="space-y-12">
-      <header className="relative overflow-hidden rounded-3xl bg-surface">
-        <Landscape className="pointer-events-none absolute bottom-0 right-0 hidden h-full w-[48%] md:block" />
+      <header className="hex-bg relative overflow-hidden rounded-3xl border border-line bg-surface">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] border-l border-line bg-bg md:block">
+          <AsciiField seed={7} className="absolute inset-0" />
+        </div>
         <div className="relative px-6 py-10 md:w-[60%] md:px-10 md:py-14">
           <p className="text-sm font-semibold text-accent">How it works</p>
           <h1 className="mt-2 text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">How the numbers are made</h1>

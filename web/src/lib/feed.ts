@@ -3,7 +3,7 @@ import type { Question } from "./community";
 import { claimStat } from "./format";
 import type { Headline } from "./liveNews";
 import { storyTitle, type Story } from "./news";
-import { byTrending, categoryOf, eventLabel, shortHeadline } from "./plain";
+import { byTrending, categoryOf, eventLabel, shortHeadline, liveClaims } from "./plain";
 
 export type FeedItem =
   | { kind: "briefing"; id: string; at: string; lead: string; bullets: string[]; symbols: string[] }
@@ -28,7 +28,7 @@ export function briefing(site: SiteData, headlines: Headline[], now: Date): Feed
   const next = site.upcoming[0];
   const testable = headlines.filter((h) => h.event_type !== "NONE");
   const frozen = site.claims.reduce((n, c) => n + c.forward_log.length, 0);
-  const clear = site.claims.filter(
+  const clear = liveClaims(site).filter(
     (c) => c.claim.event_type !== "RANDOM_DATE" && c.backtest && c.backtest.ci_lo !== null && c.backtest.ci_hi !== null && (c.backtest.ci_lo > 0 || c.backtest.ci_hi < 0),
   );
   const parts: string[] = [];
@@ -50,7 +50,7 @@ export function briefing(site: SiteData, headlines: Headline[], now: Date): Feed
 }
 
 export function feedItems(site: SiteData, headlines: Headline[]): FeedItem[] {
-  const claims: FeedItem[] = site.claims
+  const claims: FeedItem[] = liveClaims(site)
     .filter((c) => c.claim.event_type !== "RANDOM_DATE")
     // A draft has no registration time yet ("set_by_ci_on_merge"), so it sorts after every dated item.
     .map((c) => ({
@@ -89,7 +89,7 @@ const newest = (a: FeedItem, b: FeedItem) => b.at.localeCompare(a.at) || a.id.lo
  */
 export function ordered(items: FeedItem[], mode: "trending" | "latest", site: SiteData): FeedItem[] {
   if (mode === "latest") return [...items].sort(newest);
-  const rank = new Map(byTrending(site.claims).map((c, i) => [`claim-${c.claim.id}`, i]));
+  const rank = new Map(byTrending(liveClaims(site)).map((c, i) => [`claim-${c.claim.id}`, i]));
   const headlines = items
     .filter((it): it is Extract<FeedItem, { kind: "headline" }> => it.kind === "headline")
     .sort(

@@ -48,7 +48,7 @@ def test_a_failing_feed_is_skipped_and_reported() -> None:
     good = rss(("Fed holds rates", "https://www.nytimes.com/a", NOW, ""))
 
     def get(url: str) -> str:
-        if "bad" in url:
+        if url == "https://bad/1":
             raise FetchError("GET https://bad failed: HTTP 403")
         return good
 
@@ -56,7 +56,7 @@ def test_a_failing_feed_is_skipped_and_reported() -> None:
         get, NOW, (("ft.com", "https://bad/1"), ("nytimes.com", "https://ok/1"))
     )
     assert [h.domain for h in got] == ["nytimes.com"]
-    assert len(failed) == 1 and failed[0].startswith("ft.com")
+    assert [outlet for outlet, _ in failed] == ["ft.com"]
 
 
 def test_one_outlet_cannot_fill_the_page() -> None:

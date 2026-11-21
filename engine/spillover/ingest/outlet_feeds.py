@@ -70,15 +70,15 @@ def fetch_outlet_headlines(
     get_text: Callable[[str], str],
     now: datetime,
     feeds: tuple[tuple[str, str], ...] = FEEDS,
-) -> tuple[list[GdeltHeadline], list[str]]:
-    """Recent headlines from every feed that answers, and a note for each feed that did not."""
+) -> tuple[list[GdeltHeadline], list[tuple[str, str]]]:
+    """Recent headlines from every feed that answers, and (outlet, reason) for each that did not."""
     found: list[GdeltHeadline] = []
-    failed: list[str] = []
+    failed: list[tuple[str, str]] = []
     for domain, url in feeds:
         try:
             parsed = parse_feed(get_text(url), domain)
         except (FetchError, FeedError) as exc:
-            failed.append(f"{domain}: {str(exc)[:80]}")
+            failed.append((domain, str(exc)[:80]))
             continue
         for h in parsed.headlines:
             link = h.url.strip()

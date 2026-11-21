@@ -302,8 +302,8 @@ def export_site(
         now = datetime.now(UTC)
         # The outlets' own public feeds first (Bloomberg, WSJ, NYT, FT, The Economist, BBC, ...).
         feeds, failed = fetch_outlet_headlines(http_get, now)
-        for note in failed:
-            typer.echo(f"warning: news feed skipped ({redact(note)})", err=True)
+        for outlet_domain, reason in failed:
+            typer.echo(f"warning: {outlet_domain} feed skipped ({redact(reason)})", err=True)
         # Then GDELT, kept to the same listed outlets, to top up: its raw 15-minute files first (no
         # rate limit), its search API second (GitHub's shared runner addresses are often limited).
         gdelt: list[GdeltHeadline] = []

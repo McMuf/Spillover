@@ -47,8 +47,8 @@ id = "DEXJPUS"  # Japanese yen per US dollar, Board of Governors of the Federal 
 # --- Single stocks (Tiingo, adjusted daily closes) -------------------------------------------------
 # On: the repository secret TIINGO_API_KEY is set. Split- and dividend-adjusted daily closes from
 # Tiingo's free plan (up to 500 different tickers a month, 50 an hour, 1,000 requests a day). Every
-# scheduled run fetches each ticker once, so keep this list short: 10 tickers x about 33 runs a day
-# is about 330 requests. Only derived statistics are published, never prices. A stock that fails to
+# scheduled run fetches each ticker once, so keep this list short: 11 tickers x about 33 runs a day
+# is about 360 requests. Only derived statistics are published, never prices. A stock that fails to
 # load is skipped, never fatal.
 
 [[series]]
@@ -100,6 +100,11 @@ id = "META"
 symbol = "DAL"   # Delta Air Lines
 provider = "tiingo"
 id = "DAL"
+
+[[series]]
+symbol = "CRWD"  # CrowdStrike (clm_acquisition_announced_crwd_up_v1)
+provider = "tiingo"
+id = "CRWD"
 
 # --- Single stocks (Alpha Vantage, adjusted daily closes) -----------------------------------------
 # Off until the repository secret ALPHAVANTAGE_API_KEY exists. Its free tier (25 requests a day,

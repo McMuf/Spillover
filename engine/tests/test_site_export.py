@@ -30,7 +30,7 @@ def site(market: MarketData, tmp_path_factory: pytest.TempPathFactory) -> SiteDa
     return build_site_data(claims_with_text(), market, empty / "p", empty / "o")
 
 
-def test_site_data_covers_every_seed_claim(site: SiteData) -> None:
+def test_site_data_covers_every_seed_claim(site: SiteData, market: MarketData) -> None:
     ids = [c.claim.id for c in site.claims]
     assert ids == sorted(ids) and len(ids) >= 2
     assert site.meta.data_synthetic is True and site.meta.repo == "McMuf/Spillover"
@@ -39,7 +39,12 @@ def test_site_data_covers_every_seed_claim(site: SiteData) -> None:
         # Draft. Which is which depends on the claim file, so check the status against the file.
         registered = isinstance(c.claim.registered_at, datetime)
         assert c.status == ("Proposed" if registered else "Draft")
-        assert c.backtest is not None and c.chart is not None
+        # The synthetic fixtures price only a few series; a claim on any other market has no
+        # backtest here (the live build prices it from the CI config, which another test checks).
+        if c.claim.instrument.symbol in market.returns:
+            assert c.backtest is not None and c.chart is not None
+        else:
+            assert c.backtest is None and c.chart is None
         assert "registered_at" in c.yaml, "the claim page shows the real YAML"
 
 

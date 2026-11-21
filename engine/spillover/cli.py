@@ -382,11 +382,21 @@ def test_all(
     """Run every claim and adjust p-values across the set (Benjamini-Hochberg FDR)."""
     try:
         market = load_market_data(data)
-        reports = [run_backtest(load_claim(p), market) for p in claim_files(claims_dir)]
+        claims = [load_claim(p) for p in claim_files(claims_dir)]
     except (ClaimError, DataError) as exc:
         raise _fail(str(exc)) from exc
-    if not reports:
+    if not claims:
         raise _fail(f"no claims found in {claims_dir}")
+    # A claim whose market has no prices in this dataset is listed and skipped, so one unpriced
+    # claim does not stop the others from being tested.
+    reports, skipped = [], []
+    for claim in claims:
+        try:
+            reports.append(run_backtest(claim, market))
+        except DataError as exc:
+            skipped.append(f"{claim.id}: {exc}")
+    if not reports:
+        raise _fail("no claim could be tested on this data:\n" + "\n".join(skipped))
     adjusted = fdr_adjust([r.p_value for r in reports])
     tag = "SYNTHETIC fixtures" if market.synthetic else str(data)
     typer.echo(
@@ -400,6 +410,10 @@ def test_all(
             f"{r.claim_id:<34}{r.n_effective:>4}{r.mean * 100:>9.2f}%"
             f"{r.p_value:>9.4f}{q:>10.4f}  {short}"
         )
+    if skipped:
+        typer.echo(f"\nNot tested ({len(skipped)}), no prices in this dataset:")
+        for line in skipped:
+            typer.echo(f"  {line}")
 
 
 @app.command("placebo-check")

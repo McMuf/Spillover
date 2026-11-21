@@ -224,10 +224,10 @@ export function ActionLink({
 /** "7 claims | 53 predictions frozen": a row of headline numbers split by hairlines. */
 export function StatRow({ items, label }: { items: { value: string; label: string }[]; label: string }) {
   return (
-    <dl aria-label={label} className="grid grid-cols-2 gap-y-2 text-sm sm:flex sm:flex-wrap sm:items-center">
+    <dl aria-label={label} className="grid max-w-md grid-cols-2 gap-x-6 gap-y-2 text-sm 2xl:flex 2xl:max-w-none 2xl:flex-wrap 2xl:items-center">
       {items.map((it, i) => (
-        // dt before dd for screen readers; shown number-first. Hairline dividers once it is one row.
-        <div key={it.label} className={`flex flex-row-reverse items-baseline justify-end gap-1.5 ${i > 0 ? "sm:ml-4 sm:border-l sm:border-line sm:pl-4" : ""}`}>
+        // dt before dd for screen readers; shown number-first. Hairline dividers only on screens wide enough for one row.
+        <div key={it.label} className={`flex flex-row-reverse items-baseline justify-end gap-1.5 ${i > 0 ? "2xl:ml-4 2xl:border-l 2xl:border-line 2xl:pl-4" : ""}`}>
           <dt className="text-muted">{it.label}</dt>
           <dd className="font-bold text-fg">
             <Ticker text={it.value} />

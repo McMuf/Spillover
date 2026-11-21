@@ -26,6 +26,7 @@ import { findClaim } from "../lib/data";
 import { embedSnippet } from "../lib/embed";
 import { claimStat, dirText, intervalText, pct, scoreboardRow, venueLabel, windowLabel, type Direction } from "../lib/format";
 import { challengeTemplate, newFileUrl, replicationTemplate } from "../lib/lanes";
+import { entryNumbers, stampTime } from "../lib/ledger";
 import { factorNames } from "../lib/paths";
 import { categoryOf, eventHeadline, highlightTerms, shortHeadline, whatPastDataSays, whatWeTest } from "../lib/plain";
 
@@ -73,7 +74,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
         </ul>
 
         <h2 className={`${H3} mt-7`}>The claim, as registered</h2>
-        <blockquote className="border-l-2 border-line pl-4 text-[15px] leading-relaxed">{clean(c.statement)}</blockquote>
+        <blockquote className="border-l-2 border-line pl-4 font-serif text-[18px] leading-relaxed">{clean(c.statement)}</blockquote>
         <p className="mt-2 text-xs text-muted">
           <span className="font-mono">{c.id}</span>
           {", by "}<PersonLink handle={c.registered_by} />
@@ -508,6 +509,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
     engineVersion: site.meta.engine_version,
   };
   const forward = scoreboardRow(site.scoreboard.claims, c.id)?.effective_events ?? 0;
+  const entryNo = entryNumbers(site).get(c.id);
 
   const copy = async (kind: "text" | "bibtex") => {
     const text = kind === "text" ? citeText(cite) : citeBibtex(cite);
@@ -533,7 +535,9 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
           <p className="text-sm">
             <PersonLink handle={c.registered_by} className="font-semibold hover:underline" />
             <span className="block text-xs text-muted">
-              {c.registered_at !== "set_by_ci_on_merge" ? `Registered and frozen ${c.registered_at.slice(0, 10)}` : "Draft, not registered yet"}
+              {c.registered_at !== "set_by_ci_on_merge"
+                ? `Entry no. ${entryNo ?? "?"}, frozen ${stampTime(c.registered_at)}`
+                : "Draft, not registered yet"}
             </span>
           </p>
         </div>
@@ -543,7 +547,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             {b ? `${b.n_effective} past events tested, as of ${b.as_of}` : "Not tested yet"}
           </Stamp>
         </div>
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tight md:text-[40px]">
+        <h1 className="font-serif text-[32px] font-medium leading-[1.12] md:text-[44px]">
           <Highlight text={shortHeadline(item)} terms={highlightTerms(item)} />
         </h1>
         <p className="mt-3 text-[17px] leading-relaxed text-muted">{whatWeTest(item)}</p>

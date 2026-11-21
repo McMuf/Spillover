@@ -24,15 +24,15 @@ export function Identicon({ handle, size = 44 }: { handle: string; size?: number
   // The person's own GitHub profile picture, stored with the site at build time.
   const photo = personIcon(useIcons(), handle);
   if (photo) {
-    return <img src={photo} alt="" aria-hidden="true" width={size} height={size} className="shrink-0 rounded-full bg-surface-alt object-cover" loading="lazy" decoding="async" />;
+    return <img src={photo} alt="" aria-hidden="true" width={size} height={size} className="shrink-0 bg-surface-alt object-cover" loading="lazy" decoding="async" />;
   }
   const hue = hash(handle) % 360;
   const cell = size / 7;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" focusable="false" className="shrink-0 rounded-full bg-surface-alt">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" focusable="false" className="shrink-0 bg-surface-alt">
       {identiconCells(handle).flatMap((row, r) =>
         row.map((on, c) =>
-          on ? <rect key={`${r}-${c}`} x={cell * (c + 1)} y={cell * (r + 1)} width={cell - 1} height={cell - 1} rx="1.5" style={{ fill: `hsl(${hue} 55% var(--identicon-l, 46%))` }} /> : null,
+          on ? <rect key={`${r}-${c}`} x={cell * (c + 1)} y={cell * (r + 1)} width={cell - 1} height={cell - 1} style={{ fill: `hsl(${hue} 55% var(--identicon-l, 46%))` }} /> : null,
         ),
       )}
     </svg>

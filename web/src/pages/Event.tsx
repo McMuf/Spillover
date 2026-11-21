@@ -69,7 +69,7 @@ function Implications({ story, site }: { story: Story; site: SiteData }) {
         </p>
         <Link
           to={`/submit?eventType=${encodeURIComponent(story.event_type)}`}
-          className="mt-4 inline-block rounded-full bg-fg px-5 py-2 text-sm font-semibold text-bg"
+          className="mt-4 inline-block bg-fg px-5 py-2 text-sm font-semibold text-bg"
         >
           Write a claim about events like this
         </Link>
@@ -86,7 +86,7 @@ function Implications({ story, site }: { story: Story; site: SiteData }) {
         const v = whatPastDataSays(c);
         const triggered = story.claim_ids.includes(c.claim.id);
         return (
-          <article key={c.claim.id} className="rounded-2xl bg-surface p-5">
+          <article key={c.claim.id} className="bg-surface p-5">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <TickerChip symbol={c.claim.instrument.symbol} to={`/claims/${c.claim.id}`} />
               <Tag>{c.status}</Tag>
@@ -165,7 +165,7 @@ function Data({ story, site }: { story: Story; site: SiteData }) {
       {rows.map(({ claim, forward, value, counted }) => {
         const past = pastEvents(site, claim, story.date);
         return (
-          <section key={claim.claim.id} aria-labelledby={`data-${claim.claim.id}`} className="rounded-2xl bg-surface p-5">
+          <section key={claim.claim.id} aria-labelledby={`data-${claim.claim.id}`} className="bg-surface p-5">
             <h2 id={`data-${claim.claim.id}`} className="text-[17px] font-bold leading-snug">
               {capitalize(shortName(claim.claim.instrument.symbol))}:{" "}
               <Link to={`/claims/${claim.claim.id}`} className="font-normal text-muted hover:underline">

@@ -7,7 +7,7 @@ import type { SiteData } from "../generated/site";
 import { askUrl, GISCUS } from "../lib/community";
 import type { FeedItem } from "../lib/feed";
 
-const CHIP = "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold";
+const CHIP = "shrink-0 whitespace-nowrap px-3.5 py-1.5 text-[13px] font-semibold";
 const chip = (on: boolean) => `${CHIP} ${on ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`;
 
 const EXAMPLES = [
@@ -25,7 +25,7 @@ function Ask({ site }: { site: SiteData }) {
   const [body, setBody] = useState("");
   const href = askUrl(site.community, title, body);
   return (
-    <section aria-labelledby="ask-h" className="rounded-2xl bg-surface p-5">
+    <section aria-labelledby="ask-h" className="bg-surface p-5">
       <h2 id="ask-h" className="text-[17px] font-bold">
         Ask a question
       </h2>
@@ -41,7 +41,7 @@ function Ask({ site }: { site: SiteData }) {
           maxLength={200}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={EXAMPLES[0]}
-          className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-[15px] text-fg placeholder:text-muted"
+          className="mt-1.5 w-full border border-line bg-bg px-3 py-2.5 text-[15px] text-fg placeholder:text-muted"
         />
       </label>
       <label className="mt-3 block">
@@ -54,7 +54,7 @@ function Ask({ site }: { site: SiteData }) {
           rows={3}
           onChange={(e) => setBody(e.target.value)}
           placeholder="A headline, a chart, a hunch…"
-          className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-[15px] text-fg placeholder:text-muted"
+          className="mt-1.5 w-full border border-line bg-bg px-3 py-2.5 text-[15px] text-fg placeholder:text-muted"
         />
       </label>
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -62,7 +62,7 @@ function Ask({ site }: { site: SiteData }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
+          className="inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90"
         >
           Continue on GitHub
           <Icon name="external" size={16} />
@@ -71,7 +71,7 @@ function Ask({ site }: { site: SiteData }) {
       </div>
       <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Example questions">
         {EXAMPLES.map((e) => (
-          <button key={e} type="button" onClick={() => setTitle(e)} className="rounded-full border border-line px-3 py-1 text-[13px] text-muted hover:text-fg">
+          <button key={e} type="button" onClick={() => setTitle(e)} className="border border-line px-3 py-1 text-[13px] text-muted hover:text-fg">
             {e}
           </button>
         ))}
@@ -109,7 +109,7 @@ function QuestionsBody({ site }: { site: SiteData }) {
               document.getElementById("ask-h")?.scrollIntoView({ behavior: "smooth" });
               document.getElementById("ask-title")?.focus({ preventScroll: true });
             }}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90 lg:hidden"
+            className="mt-4 inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90 lg:hidden"
           >
             <Icon name="pen" size={16} />
             Ask a question

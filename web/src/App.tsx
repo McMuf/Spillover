@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Shell } from "./components/Shell";
 import { SiteProvider } from "./lib/data";
+import Architecture from "./pages/Architecture";
 import ClaimPage from "./pages/Claim";
 import EmbedClaim from "./pages/Embed";
 import EventPage from "./pages/Event";
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="events/:id" element={<EventPage />} />
               <Route path="scoreboard" element={<ScoreboardPage />} />
               <Route path="method" element={<Method />} />
+              <Route path="architecture" element={<Architecture />} />
               <Route path="submit" element={<Suspense fallback={<p className="text-muted">Loading form…</p>}><SubmitPage /></Suspense>} />
               <Route path="*" element={<NotFound />} />
             </Route>

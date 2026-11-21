@@ -14,28 +14,28 @@ export function LedgerList({ site }: { site: SiteData }) {
   const entries = ledger(site);
   if (entries.length === 0) return null;
   return (
-    <section aria-labelledby="ledger-h" className="mb-10">
+    <section aria-labelledby="ledger-h" className="lift mb-10 bg-bg px-4 pb-1 pt-4 md:px-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="ledger-h" className="text-[22px] font-bold tracking-tight">
           The ledger
         </h2>
         <p className="text-sm text-muted">Every live claim, numbered in the order it was frozen.</p>
       </div>
-      <ol className="border-t border-fg/80">
+      <ol className="border-t border-fg">
         {entries.map(({ no, item }) => {
           const c = item.claim;
           const b = item.backtest;
           const stat = claimStat(c.measure, b?.mean);
           const done = scoreboardRow(site.scoreboard.claims, c.id)?.effective_events ?? 0;
           return (
-            <li key={c.id} className="border-b border-line">
+            <li key={c.id} className="border-b border-line last:border-b-0">
               <Link
                 to={`/claims/${c.id}`}
                 className="group grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 py-4 md:grid-cols-[2.75rem_minmax(0,1fr)_9rem_7rem_8rem] md:items-center"
               >
                 <span className="pt-1 text-sm font-semibold tabular-nums text-muted md:pt-0">{no}</span>
                 <span className="min-w-0">
-                  <span className="block font-serif text-[19px] leading-snug group-hover:underline">{shortHeadline(item)}</span>
+                  <span className="block text-[17px] font-semibold leading-snug group-hover:underline">{shortHeadline(item)}</span>
                   <span className="mt-1 flex items-center gap-1.5 text-xs text-muted">
                     <Logo symbol={c.instrument.symbol} size={16} />
                     {c.instrument.symbol}, registered by {c.registered_by}

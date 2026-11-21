@@ -4,8 +4,7 @@ import { AreaChart } from "../components/AreaChart";
 import { FeedRow } from "../components/FeedRow";
 import { HowItWorks } from "../components/HowItWorks";
 import { Icon } from "../components/Icon";
-import { AsciiField } from "../components/AsciiField";
-import { FrozenEntry } from "../components/FrozenEntry";
+import { PourField } from "../components/PourField";
 import { LedgerList } from "../components/LedgerList";
 import { Logo } from "../components/Logo";
 import { Ready } from "../components/Ready";
@@ -20,7 +19,7 @@ import { useLiveNews } from "../lib/liveNews";
 import { people } from "../lib/people";
 import { byTrending, liveClaims } from "../lib/plain";
 
-const CHIP = "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold";
+const CHIP = "shrink-0 whitespace-nowrap px-3.5 py-1.5 text-[13px] font-semibold";
 const chip = (on: boolean) => `${CHIP} ${on ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`;
 
 /** Feed, News and Markets: the three ways in, as on a markets app's home. */
@@ -58,17 +57,17 @@ function Composer() {
     void navigate(t ? `/submit?statement=${encodeURIComponent(t)}` : "/submit");
   };
   return (
-    <form onSubmit={go} aria-label="Write a claim" className="flex gap-2 rounded-2xl bg-surface p-2">
+    <form onSubmit={go} aria-label="Write a claim" className="flex gap-2 bg-surface p-2">
       <label className="min-w-0 flex-1">
         <span className="sr-only">Saw something in the news? Say what you think it does to markets.</span>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Saw something in the news? Say what you think it does to markets…"
-          className="w-full rounded-xl bg-transparent px-3 py-2.5 text-[15px] text-fg placeholder:text-muted"
+          className="w-full bg-transparent px-3 py-2.5 text-[15px] text-fg placeholder:text-muted"
         />
       </label>
-      <button type="submit" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-fg px-4 text-sm font-semibold text-bg hover:opacity-90">
+      <button type="submit" className="inline-flex shrink-0 items-center gap-1.5 bg-fg px-4 text-sm font-semibold text-bg hover:opacity-90">
         Start
       </button>
     </form>
@@ -141,7 +140,7 @@ function Markets({ site }: { site: SiteData }) {
   }, [site]);
   if (rows.length === 0) return null;
   return (
-    <section aria-labelledby="markets-h">
+    <section aria-labelledby="markets-h" className="lift bg-bg p-4">
       <div className="flex items-baseline justify-between">
         <h2 id="markets-h" className="text-[17px] font-bold">
           Markets
@@ -161,7 +160,7 @@ function Markets({ site }: { site: SiteData }) {
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-x-1.5">
                     <span className="text-[15px] font-bold">{symbol}</span>
-                    <span className="whitespace-nowrap rounded bg-surface-alt px-1 text-[11px] text-muted">
+                    <span className="whitespace-nowrap bg-surface-alt px-1 text-[11px] text-muted">
                       {claims.length} claim{claims.length === 1 ? "" : "s"}
                     </span>
                   </span>
@@ -185,7 +184,7 @@ function Markets({ site }: { site: SiteData }) {
 
 function NewHere() {
   return (
-    <section aria-labelledby="newhere-h" className="hex-bg rounded-2xl border border-line bg-surface p-5">
+    <section aria-labelledby="newhere-h" className="hex-bg lift bg-surface p-5">
       <h2 id="newhere-h" className="text-[17px] font-bold leading-snug">
         New here? Test what you think the news does to markets.
       </h2>
@@ -215,18 +214,16 @@ function HomeBody({ site }: { site: SiteData }) {
         {/* Barely visible hexagons behind the hero, fading out: depth, not decoration. */}
         <div aria-hidden="true" className="hex-bg hex-fade pointer-events-none absolute -inset-x-4 -top-6 bottom-0 -z-10 md:-inset-x-6" />
         <div className="py-2 md:py-8">
-          <h1 className="max-w-3xl text-[36px] font-semibold leading-[1.02] tracking-[-0.035em] md:text-[52px]">
-            Say what the news will do to a market. We freeze it, then the market grades it.
-          </h1>
-          <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-muted">
-            Spillover is an open ledger. Every claim is timestamped before new events happen and graded in
-            public on what prices actually did.
+          <h1 className="text-[56px] font-extrabold leading-none tracking-[-0.045em] md:text-[88px]">Spillover</h1>
+          <p className="mt-5 max-w-xl text-[18px] leading-relaxed text-muted">
+            An open ledger for how news spills over into markets. Write a claim, it is timestamped before new
+            events happen, and the market grades it in public.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link to="/submit" className="inline-flex items-center gap-2 rounded-full bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop hover:brightness-95">
+            <Link to="/submit" className="lift-press inline-flex items-center gap-2 bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop">
               Write a claim
             </Link>
-            <Link to="/method" className="inline-flex items-center gap-2 rounded-full border border-fg/20 bg-bg/60 px-5 py-2.5 text-[15px] font-semibold hover:bg-bg">
+            <Link to="/method" className="lift-press inline-flex items-center gap-2 bg-bg px-5 py-2.5 text-[15px] font-semibold">
               How it works
             </Link>
           </div>
@@ -242,7 +239,10 @@ function HomeBody({ site }: { site: SiteData }) {
             />
           </div>
         </div>
-        <FrozenEntry site={site} />
+        {/* A glass filled by a pour of stock ticks until it spills over. */}
+        <div className="lift relative min-h-[260px] overflow-hidden bg-bg md:min-h-[340px]">
+          <PourField className="absolute inset-0" />
+        </div>
       </header>
 
       <LedgerList site={site} />
@@ -261,10 +261,6 @@ function HomeBody({ site }: { site: SiteData }) {
           </div>
         </div>
         <aside aria-label="Markets" className="min-w-0 space-y-8 lg:sticky lg:top-24 lg:self-start">
-          {/* The market as a basin: news lands, ripples spill into each other. Moving the pointer stirs it. */}
-          <div className="relative h-[150px] overflow-hidden rounded-2xl border border-line bg-bg">
-            <AsciiField className="absolute inset-0" />
-          </div>
           <Markets site={site} />
           <NewHere />
         </aside>

@@ -21,7 +21,7 @@ import {
 import { EMPTY_FORM, pullRequestUrl, toYaml, validateYaml, type ClaimForm } from "../lib/claimYaml";
 import { eventLabel, shortName } from "../lib/plain";
 
-const FIELD = "mt-1 w-full rounded-xl border border-transparent bg-surface-alt px-4 py-3 text-[15px] text-fg focus:border-accent";
+const FIELD = "mt-1 w-full border border-transparent bg-surface-alt px-4 py-3 text-[15px] text-fg focus:border-accent";
 
 const MARK: Record<Check["level"], { glyph: string; cls: string; label: string }> = {
   ok: { glyph: "✓", cls: "text-positive", label: "OK" },
@@ -76,11 +76,11 @@ const STEPS: { n: number; title: string; body: string; example: string }[] = [
 
 function Guide() {
   return (
-    <section aria-labelledby="guide-h" className="rounded-2xl bg-surface p-5">
+    <section aria-labelledby="guide-h" className="bg-surface p-5">
       <h2 id="guide-h" className="text-lg font-extrabold">From a news story to a claim</h2>
       <ol className="mt-3 grid gap-3 sm:grid-cols-2">
         {STEPS.map((s) => (
-          <li key={s.n} className="rounded-xl bg-surface-alt p-4">
+          <li key={s.n} className="bg-surface-alt p-4">
             <p className="text-sm font-bold">
               <span className="mr-2 text-accent">{s.n}</span>
               {s.title}
@@ -117,7 +117,7 @@ function MarketPicks({ priced, onPick, current }: { priced: string[]; onPick: (s
           type="button"
           aria-pressed={current.toUpperCase() === s}
           onClick={() => onPick(s)}
-          className={`rounded-full px-3 py-1 text-[13px] font-semibold ${current.toUpperCase() === s ? "bg-fg text-bg" : "border border-line hover:bg-surface"}`}
+          className={`px-3 py-1 text-[13px] font-semibold ${current.toUpperCase() === s ? "bg-fg text-bg" : "border border-line hover:bg-surface"}`}
         >
           {shortName(s)}
         </button>
@@ -128,10 +128,10 @@ function MarketPicks({ priced, onPick, current }: { priced: string[]; onPick: (s
 
 function Step({ n, title, children, done }: { n: number; title: string; children: ReactNode; done: boolean }) {
   return (
-    <fieldset className="rounded-2xl border border-line bg-bg p-5">
+    <fieldset className="border border-line bg-bg p-5">
       <legend className="sr-only">{`Step ${n}: ${title}`}</legend>
       <p className="flex items-center gap-2 text-[15px] font-bold" aria-hidden="true">
-        <span className={`grid h-6 w-6 place-items-center rounded-full text-xs ${done ? "bg-pop text-on-pop" : "bg-surface-alt text-muted"}`}>
+        <span className={`grid h-6 w-6 place-items-center text-xs ${done ? "bg-pop text-on-pop" : "bg-surface-alt text-muted"}`}>
           {done ? "✓" : n}
         </span>
         {title}
@@ -233,7 +233,7 @@ function Form({ site }: { site: SiteData }) {
       </header>
 
       {start.from && derived.respondsTo && (
-        <p role="note" className="rounded-2xl border border-line bg-accent-soft p-4 text-[15px]">
+        <p role="note" className="border border-line bg-accent-soft p-4 text-[15px]">
           You are writing a <strong>{derived.respondsTo.stance === "counter" ? "counter-claim" : "refinement"}</strong> to{" "}
           <strong>{start.from.claim.id}</strong>. It is graded on its own, by the same rules, and listed on that claim&apos;s page.
           {derived.respondsTo.stance === "counter" ? " The direction is already set to the opposite." : ""}
@@ -315,7 +315,7 @@ function Form({ site }: { site: SiteData }) {
                   role="radio"
                   aria-checked={direction === d.value}
                   onClick={() => setDirection(d.value)}
-                  className={`rounded-xl border p-3 text-left ${direction === d.value ? "border-fg bg-accent-soft" : "border-line hover:bg-surface"}`}
+                  className={` border p-3 text-left ${direction === d.value ? "border-fg bg-accent-soft" : "border-line hover:bg-surface"}`}
                 >
                   <span className="block text-sm font-bold">{d.label}</span>
                   <span className="block text-xs text-muted">{d.hint}</span>
@@ -330,7 +330,7 @@ function Form({ site }: { site: SiteData }) {
                   role="radio"
                   aria-checked={f.windowEnd === w.value}
                   onClick={() => set("windowEnd", w.value)}
-                  className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${f.windowEnd === w.value ? "bg-fg text-bg" : "border border-line hover:bg-surface"}`}
+                  className={` px-3.5 py-1.5 text-[13px] font-semibold ${f.windowEnd === w.value ? "bg-fg text-bg" : "border border-line hover:bg-surface"}`}
                 >
                   {w.label}
                 </button>
@@ -350,7 +350,7 @@ function Form({ site }: { site: SiteData }) {
             <button
               type="button"
               onClick={() => set("falsifier", suggestedFalsifier(f.symbol, direction, f.minEvents))}
-              className="mt-2 rounded-full border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface"
+              className="mt-2 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface"
             >
               Write it for me
             </button>
@@ -363,7 +363,7 @@ function Form({ site }: { site: SiteData }) {
             </label>
           </Step>
 
-          <details className="rounded-2xl border border-line bg-bg p-5">
+          <details className="border border-line bg-bg p-5">
             <summary className="cursor-pointer text-sm font-semibold">Advanced (filled in for you)</summary>
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
               <label className="block text-sm">Claim id
@@ -395,7 +395,7 @@ function Form({ site }: { site: SiteData }) {
         </form>
 
         <div className="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <section aria-labelledby="plain-h" className="hex-bg rounded-2xl border border-line bg-surface p-5">
+          <section aria-labelledby="plain-h" className="hex-bg border border-line bg-surface p-5">
             <h2 id="plain-h" className="mb-1 text-lg font-extrabold">Your claim, made testable</h2>
             <p className="text-[15px] leading-relaxed" data-testid="plain-sentence">
               {sentence ?? <span className="text-muted">Choose a kind of event and a market to see it.</span>}
@@ -415,7 +415,7 @@ function Form({ site }: { site: SiteData }) {
             </p>
           </section>
 
-          <section aria-labelledby="valid-h" className="rounded-2xl border border-line bg-bg p-5">
+          <section aria-labelledby="valid-h" className="border border-line bg-bg p-5">
             <h2 id="valid-h" className="mb-2 text-lg font-extrabold">Validation</h2>
             {problems.length === 0 ? (
               <p role="status" className="text-sm font-medium text-positive">✓ Valid against the claim schema.</p>
@@ -431,7 +431,7 @@ function Form({ site }: { site: SiteData }) {
           <a
             href={problems.length === 0 ? pullRequestUrl(repo, derived.id.trim(), text) : undefined}
             aria-disabled={problems.length > 0}
-            className={`inline-flex w-full justify-center rounded-full px-5 py-2.5 text-sm font-semibold ${problems.length === 0 ? "bg-pop text-on-pop" : "cursor-not-allowed bg-surface-alt text-muted"}`}
+            className={`inline-flex w-full justify-center px-5 py-2.5 text-sm font-semibold ${problems.length === 0 ? "bg-pop text-on-pop" : "cursor-not-allowed bg-surface-alt text-muted"}`}
           >
             Open pull request on GitHub
           </a>
@@ -440,9 +440,9 @@ function Form({ site }: { site: SiteData }) {
             After merge you cannot edit the claim, only register a new version.
           </p>
 
-          <details className="rounded-2xl border border-line bg-bg p-4">
+          <details className="border border-line bg-bg p-4">
             <summary className="cursor-pointer text-sm font-semibold">See the claim file</summary>
-            <pre tabIndex={0} aria-label="Generated claim file (scrollable)" className="mt-3 max-h-96 overflow-auto rounded-xl bg-surface p-3 font-mono text-xs" data-testid="yaml-preview">{text}</pre>
+            <pre tabIndex={0} aria-label="Generated claim file (scrollable)" className="mt-3 max-h-96 overflow-auto bg-surface p-3 font-mono text-xs" data-testid="yaml-preview">{text}</pre>
             <p className="mt-2 text-xs text-muted">
               To check it locally first: save it as <code className="font-mono">claims/{derived.id}.yaml</code> and run{" "}
               <code className="font-mono">make test-claim CLAIM=claims/{derived.id}.yaml</code>.

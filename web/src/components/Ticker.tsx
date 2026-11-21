@@ -39,7 +39,7 @@ export function Ticker({ text, className = "" }: { text: string; className?: str
   // Digits that only exist in the new text start from 0 too, so lengths may differ during a roll.
   const chars = text.split("");
   return (
-    <span className={`inline-flex items-baseline rounded ${flash} ${className}`}>
+    <span className={`inline-flex items-baseline  ${flash} ${className}`}>
       <span className="sr-only">{text}</span>
       {chars.map((ch, i) => {
         const target = shown[i] ?? "0";

@@ -20,6 +20,7 @@ const PAGES = [
   ["event", "/#/events/fomc_2025-12-17"],
   ["scoreboard", "/#/scoreboard"],
   ["method", "/#/method"],
+  ["architecture", "/#/architecture"],
   ["embed card", "/#/embed/claims/clm_fomc_abs_move_spx_v1"],
   ["submit", "/#/submit"],
   ["people", "/#/people"],

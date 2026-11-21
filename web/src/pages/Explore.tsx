@@ -1,13 +1,12 @@
 import { sortClaims, SORTS, type SortKey } from "../lib/ranking";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Highlight } from "../components/Highlight";
 import { Logo } from "../components/Logo";
-import { SpilloverMap } from "../components/SpilloverMap";
 import { Ready } from "../components/Ready";
 import { StatusBadge } from "../components/StatusBadge";
 import { AreaChart } from "../components/AreaChart";
-import { PillButton, Segmented, StatRow } from "../components/ui";
+import { PillButton, StatRow } from "../components/ui";
 import type { SiteData } from "../generated/site";
 import { instrumentName } from "../lib/brands";
 import { claimStat, scoreboardRow } from "../lib/format";
@@ -28,7 +27,6 @@ function ExploreBody({ site }: { site: SiteData }) {
     else next.set("topic", t);
     setParams(next);
   };
-  const [view, setView] = useState<"table" | "map">("table");
   const sort = (SORTS.find((s) => s.key === params.get("sort"))?.key ?? "kind") as SortKey;
   const setSort = (k: SortKey) => {
     const next = new URLSearchParams(params);
@@ -62,15 +60,6 @@ function ExploreBody({ site }: { site: SiteData }) {
             ]}
           />
         </div>
-        <Segmented
-          label="View"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: "table", label: "Table" },
-            { value: "map", label: "Map" },
-          ]}
-        />
       </div>
 
       <div role="group" aria-label="Topic" className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
@@ -92,7 +81,7 @@ function ExploreBody({ site }: { site: SiteData }) {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="rounded-full border border-line bg-bg px-3 py-1.5 text-sm"
+            className="border border-line bg-bg px-3 py-1.5 text-sm"
             aria-describedby="sort-rule"
           >
             {SORTS.map((s) => (
@@ -111,8 +100,7 @@ function ExploreBody({ site }: { site: SiteData }) {
         {shown.length} of {liveClaims(site).length} claims
       </p>
 
-      {view === "table" ? (
-        <div tabIndex={0} role="region" aria-label="Claims (scrollable)" className="relative overflow-x-auto rounded-[20px] bg-surface px-2">
+        <div tabIndex={0} role="region" aria-label="Claims (scrollable)" className="relative overflow-x-auto bg-surface px-2">
           <table className="w-full min-w-[54rem] text-left text-[15px]">
             <caption className="sr-only">All claims</caption>
             <thead>
@@ -165,9 +153,6 @@ function ExploreBody({ site }: { site: SiteData }) {
             </tbody>
           </table>
         </div>
-      ) : (
-        <SpilloverMap claims={shown} />
-      )}
     </>
   );
 }

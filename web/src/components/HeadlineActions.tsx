@@ -49,7 +49,7 @@ export function HeadlineActions({ h, children, className = "" }: { h: Headline; 
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 rounded-full border border-line px-2 py-0.5 align-middle text-[11px] font-semibold text-muted hover:bg-surface hover:text-fg"
+        className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 border border-line px-2 py-0.5 align-middle text-[11px] font-semibold text-muted hover:bg-surface hover:text-fg"
       >
         <Icon name="bulb" size={12} />
         Claim ideas
@@ -59,13 +59,13 @@ export function HeadlineActions({ h, children, className = "" }: { h: Headline; 
           id={panelId}
           role="region"
           aria-label={`What to do with: ${h.title}`}
-          className="absolute left-0 top-full z-30 mt-2 w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-line bg-bg p-2 shadow-[0_12px_32px_-12px_rgba(20,20,19,0.25)]"
+          className="absolute left-0 top-full z-30 mt-2 w-[min(26rem,calc(100vw-2rem))] border border-line bg-bg p-2 shadow-[0_12px_32px_-12px_rgba(20,20,19,0.25)]"
         >
           <a
             href={h.url}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-surface"
+            className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-semibold hover:bg-surface"
           >
             Read the article on {h.domain.replace(/^www\./, "")}
             <Icon name="external" size={15} />
@@ -74,7 +74,7 @@ export function HeadlineActions({ h, children, className = "" }: { h: Headline; 
           <ul>
             {ideas.map((i) => (
               <li key={i.href}>
-                <Link to={i.href} className="block rounded-xl px-3 py-2 hover:bg-accent-soft">
+                <Link to={i.href} className="block px-3 py-2 hover:bg-accent-soft">
                   <span className="block text-sm font-semibold leading-snug">{i.title}</span>
                   <span className="block text-xs text-muted">{i.why}</span>
                 </Link>
@@ -83,7 +83,7 @@ export function HeadlineActions({ h, children, className = "" }: { h: Headline; 
             <li>
               <Link
                 to={`/submit?${new URLSearchParams({ statement: h.title, ...(h.event_type !== "NONE" ? { eventType: h.event_type } : {}) }).toString()}`}
-                className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-accent-soft"
+                className="flex items-center justify-between gap-3 px-3 py-2 text-sm font-semibold hover:bg-accent-soft"
               >
                 Start from this headline
               </Link>

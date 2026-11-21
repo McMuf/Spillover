@@ -33,7 +33,7 @@ export function UpcomingStrip({ site }: { site: SiteData }) {
           const soon = countdown(s.date);
           return (
             <li key={s.event_id} className="w-[180px] shrink-0">
-              <Link to={`/events/${s.event_id}`} className="group block rounded-2xl bg-surface px-4 py-3 hover:bg-surface-alt">
+              <Link to={`/events/${s.event_id}`} className="group block bg-surface px-4 py-3 hover:bg-surface-alt">
                 <span className="block text-xs text-muted">{categoryOf(s.event_type)}</span>
                 <span className="mt-0.5 block truncate text-sm font-semibold text-fg group-hover:underline">{SHORT[s.event_type] ?? storyTitle(s)}</span>
                 <span className="mt-0.5 block text-xs">

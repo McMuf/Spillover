@@ -90,25 +90,3 @@ export function claimPath(item: SiteClaim, site: SiteData): ClaimPath {
     },
   };
 }
-
-/** Which kinds of news have been tested against which markets: rows are event types, columns markets. */
-export interface SpilloverMatrix {
-  rows: { type: string; title: string; topic: string }[];
-  cols: { symbol: string; name: string }[];
-  cell: (type: string, symbol: string) => SiteClaim[];
-}
-
-export function spilloverMatrix(claims: SiteClaim[]): SpilloverMatrix {
-  const rows = [...new Map(claims.map((c) => [c.claim.event_type, { type: c.claim.event_type, title: eventTitle(c.claim), topic: categoryOf(c.claim.event_type) }])).values()].sort(
-    (a, b) => Number(a.type === "RANDOM_DATE") - Number(b.type === "RANDOM_DATE") || a.title.localeCompare(b.title),
-  );
-  const cols = [...new Map(claims.map((c) => [c.claim.instrument.symbol, { symbol: c.claim.instrument.symbol, name: instrumentName(c.claim.instrument.symbol) }])).values()].sort((a, b) =>
-    a.symbol.localeCompare(b.symbol),
-  );
-  const index = new Map<string, SiteClaim[]>();
-  for (const c of claims) {
-    const k = `${c.claim.event_type}|${c.claim.instrument.symbol}`;
-    index.set(k, [...(index.get(k) ?? []), c]);
-  }
-  return { rows, cols, cell: (type, symbol) => index.get(`${type}|${symbol}`) ?? [] };
-}

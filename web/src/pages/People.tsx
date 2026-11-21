@@ -46,17 +46,17 @@ function Person({ p }: { p: Profile }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <BackButton to="/people" label="Back to people" />
-      <header className="overflow-hidden rounded-[20px] bg-surface">
+      <header className="overflow-hidden bg-surface">
         <div className="h-16 bg-surface-alt" aria-hidden="true" />
         <div className="px-5 pb-5">
           <div className="-mt-8 flex flex-wrap items-end justify-between gap-3">
-            <span className="rounded-full bg-surface p-1">
+            <span className="bg-surface p-1">
               <Identicon handle={p.handle} size={64} />
             </span>
             {isHandle(p.handle) && (
               <a
                 href={`https://github.com/${p.handle}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-1.5 text-sm font-semibold hover:bg-surface-alt"
+                className="inline-flex items-center gap-1.5 border border-line px-4 py-1.5 text-sm font-semibold hover:bg-surface-alt"
                 rel="noopener noreferrer"
               >
                 GitHub profile

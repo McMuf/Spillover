@@ -41,7 +41,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const url = logoFor(key);
   if (url) {
     return (
-      <span aria-hidden="true" style={{ ...box, background: TILE[key] ?? "#ffffff" }} className="grid shrink-0 place-items-center overflow-hidden rounded-full ring-1 ring-line">
+      <span aria-hidden="true" style={{ ...box, background: TILE[key] ?? "#ffffff" }} className="grid shrink-0 place-items-center overflow-hidden ring-1 ring-line">
         <img src={url} alt="" style={{ width: "62%", height: "62%" }} className="object-contain" />
       </span>
     );
@@ -49,7 +49,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const concept = CONCEPT[key];
   if (concept) {
     return (
-      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center rounded-full bg-surface-alt text-fg">
+      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center bg-surface-alt text-fg">
         <Icon name={concept} size={Math.round(size * 0.5)} />
       </span>
     );
@@ -60,7 +60,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
     // White glyph on dark brand colors, near-black glyph on light ones.
     const glyph = luminance(bg) > 0.4 ? "#111111" : "#ffffff";
     return (
-      <span aria-hidden="true" style={{ ...box, background: bg }} className="grid shrink-0 place-items-center rounded-full ring-1 ring-line">
+      <span aria-hidden="true" style={{ ...box, background: bg }} className="grid shrink-0 place-items-center ring-1 ring-line">
         <svg viewBox="0 0 24 24" width={size * 0.56} height={size * 0.56} focusable="false">
           <path d={brand.path} fill={glyph} />
         </svg>
@@ -71,7 +71,7 @@ export function Logo({ symbol, size = 40 }: { symbol: string; size?: number }) {
   const site = symbolIcon(icons, key);
   if (site) {
     return (
-      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-line">
+      <span aria-hidden="true" style={box} className="grid shrink-0 place-items-center overflow-hidden bg-white ring-1 ring-line">
         <img src={site} alt="" style={{ width: "62%", height: "62%" }} className="object-contain" loading="lazy" decoding="async" />
       </span>
     );

@@ -1,0 +1,26 @@
+{
+  "baseline": "factor_only",
+  "claim_id": "clm_placebo_random_dates_v3",
+  "claim_version": 3,
+  "confidence": null,
+  "created_at": "2026-11-21T10:55:00.773215Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2027-01-19",
+  "event_id": "rnd_2027-01-19",
+  "event_type": "RANDOM_DATE",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "NASDAQ",
+    "venue": "us_index"
+  },
+  "measure": "abnormal_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.2",
+  "schema_version": 1,
+  "sha256": "82450c714dc81d20eecb5506fc9e6ccbd7a2a05e2c4031c42a66e9c79d90c5ff",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

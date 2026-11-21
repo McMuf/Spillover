@@ -1,0 +1,26 @@
+{
+  "baseline": "factor_only",
+  "claim_id": "clm_fomc_nasdaq_beyond_spx_v2",
+  "claim_version": 2,
+  "confidence": null,
+  "created_at": "2026-11-21T10:55:00.773215Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2027-09-15",
+  "event_id": "fomc_2027-09-15",
+  "event_type": "FOMC_DECISION",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "NASDAQ",
+    "venue": "us_index"
+  },
+  "measure": "abs_excess_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.2",
+  "schema_version": 1,
+  "sha256": "82947be943a3dbd2b8ff71b7bc7a273ea394f6a9b5f9d59a392ba610eac5dfbd",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

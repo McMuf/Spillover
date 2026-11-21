@@ -1,0 +1,26 @@
+{
+  "baseline": "constant_mean",
+  "claim_id": "clm_jobs_abs_move_spx_v2",
+  "claim_version": 2,
+  "confidence": null,
+  "created_at": "2026-11-21T10:55:00.773215Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2026-12-04",
+  "event_id": "jobs_report_2026-12-04",
+  "event_type": "JOBS_REPORT",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "SPX",
+    "venue": "us_index"
+  },
+  "measure": "abs_excess_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.2",
+  "schema_version": 1,
+  "sha256": "cb0ae924232fe594a234f3becd4524f54efbbeeb9f01c6a5233a5b62553c382f",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

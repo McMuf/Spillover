@@ -1,0 +1,26 @@
+{
+  "baseline": "constant_mean",
+  "claim_id": "clm_fomc_abs_move_spx_v2",
+  "claim_version": 2,
+  "confidence": null,
+  "created_at": "2026-11-21T10:55:00.773215Z",
+  "engine_version": "0.1.0a0",
+  "event_date": "2027-03-17",
+  "event_id": "fomc_2027-03-17",
+  "event_type": "FOMC_DECISION",
+  "extractor_version": "none",
+  "factor": "MKT",
+  "instrument": {
+    "symbol": "SPX",
+    "venue": "us_index"
+  },
+  "measure": "abs_excess_return",
+  "predicted_sign": "positive",
+  "rules_version": "0.2",
+  "schema_version": 1,
+  "sha256": "95e65bc5e729f0df1fe80c31802feb25390060fb22255a3b39bf7f4a1828eee2",
+  "window": {
+    "end": "+1_trading_day",
+    "start": "first_report"
+  }
+}

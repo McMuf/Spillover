@@ -22,10 +22,9 @@ export function makeBacktest(over: Partial<Backtest> = {}): Backtest {
     ci_lo: -0.02,
     ci_hi: -0.004,
     p_value: 0.004,
-    n_boot: 1000,
-    seed: 0,
     verdict: "Consistent with the claim in sample",
     events: [{ event_id: "ev1", event_date: "2025-01-02", car: -0.01, value: -0.01 }],
+    horizons: [],
     ...over,
   };
 }
@@ -49,6 +48,7 @@ export function makeClaim(id = "clm_demo_v1", over: Partial<SiteClaim> = {}): Si
       success: { spillover_ci_excludes_zero: true, min_forward_events: 8 },
       falsifier: "The interval includes zero after eight forward events.",
       registered_by: "someone",
+      responds_to: null,
       registered_at: "set_by_ci_on_merge",
     },
     yaml: "id: " + id + "\n",
@@ -60,6 +60,8 @@ export function makeClaim(id = "clm_demo_v1", over: Partial<SiteClaim> = {}): Si
     event_ids: ["ev1"],
     challenges: [],
     replications: [],
+    superseded_by: null,
+    responses: [],
     ...over,
   };
 }

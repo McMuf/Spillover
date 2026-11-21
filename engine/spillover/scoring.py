@@ -17,7 +17,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from spillover.data import DataError, MarketData
-from spillover.eventstudy import Baseline, Measure, compute_stat, has_history
+from spillover.eventstudy import Baseline, Measure, compute_stat, contaminated_days, has_history
 from spillover.ledger import (
     RULES_VERSION,
     LedgerError,
@@ -124,7 +124,8 @@ def grade_prediction(pred: Prediction, data: MarketData, now: datetime) -> Outco
     day0 = data.day_index(pred.event_date)
     if day0 is None or day0 + end_offset > len(data.dates) - 1:
         return None
-    if not has_history(len(data.dates), day0, end_offset):
+    drop = contaminated_days(data, pred.event_type, end_offset)
+    if not has_history(len(data.dates), day0, end_offset, drop):
         raise ScoreError(f"{pred.event_id}: not enough history before the event to grade it")
 
     window_start, window_end = data.dates[day0], data.dates[day0 + end_offset]
@@ -141,7 +142,7 @@ def grade_prediction(pred: Prediction, data: MarketData, now: datetime) -> Outco
     y = data.instrument_series(pred.instrument.symbol, pred.instrument.basket)
     # Several factors are stored as one string joined with "+" (symbols cannot contain "+").
     x = data.factor_matrix(pred.factor.split("+")) if baseline == "factor_only" else None
-    car, value, _alpha, _betas = compute_stat(y, x, day0, end_offset, baseline, measure)
+    car, value, _alpha, _betas = compute_stat(y, x, day0, end_offset, baseline, measure, drop)
 
     ev = data.events
     sched = ev.filter(ev["scheduled"] & (ev["event_type"] != pred.event_type))

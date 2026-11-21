@@ -5,13 +5,15 @@ Pipeline for one claim:
 1. Select events matching the claim, locate each event's day 0 on the trading calendar.
 2. Drop events without enough history, and events whose window overlaps a scheduled event.
 3. Collapse events whose windows overlap, so the effective sample counts independent tests.
-4. Fit the baseline over a 120 trading-day estimation window that ends 10 days before the event.
+4. Fit the baseline over a 120 trading-day estimation window that ends 10 days before the event,
+   leaving out days of other scheduled events and of the claim's own event type.
 5. Abnormal return = actual minus baseline-predicted; sum over the window to get the CAR.
-6. Bootstrap the mean statistic across effective events for an interval and a p-value.
+6. A Student-t interval and p-value for the mean statistic across effective events.
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any, Literal
@@ -20,6 +22,7 @@ import numpy as np
 import numpy.typing as npt
 import polars as pl
 import statsmodels.api as sm
+from scipy import stats as scipy_stats
 from statsmodels.stats.multitest import multipletests
 
 from spillover.data import DataError, MarketData
@@ -27,10 +30,12 @@ from spillover.models import Claim
 
 EST_LEN = 120  # trading days in the estimation window
 EST_GAP = 10  # estimation window ends this many trading days before the event
-DEFAULT_BOOT = 10_000
-DEFAULT_SEED = 0
+MIN_EST_DAYS = 60  # clean estimation days an event needs after dropping other events' days
+LEVEL = 0.95  # two-sided interval level
 
 FloatArray = npt.NDArray[np.float64]
+IntArray = npt.NDArray[np.int64]
+BoolArray = npt.NDArray[np.bool_]
 Baseline = Literal["factor_only", "constant_mean"]
 Measure = Literal["abnormal_return", "abs_excess_return"]
 
@@ -54,9 +59,34 @@ def matching_events(claim: Claim, data: MarketData) -> pl.DataFrame:
     ).unique(subset="event_id", keep="first", maintain_order=True)
 
 
-def has_history(n_days: int, day0: int, end_offset: int) -> bool:
+def contaminated_days(data: MarketData, event_type: str, end_offset: int) -> BoolArray:
+    """Days that are not "normal": every scheduled event (any type) and every event of the claim's
+    own type, from its day 0 through the claim's window length. They are left out of estimation
+    windows, so a normal day is fitted only on days with no known news of this kind (rules 0.2).
+    """
+    mask = np.zeros(len(data.dates), dtype=bool)
+    ev = data.events
+    rows = ev.filter(ev["scheduled"] | (ev["event_type"] == event_type))
+    for d in rows["date"].to_list():
+        i = data.day_index(d)
+        if i is not None:
+            mask[i : i + end_offset + 1] = True
+    return mask
+
+
+def estimation_days(day0: int, drop: BoolArray | None) -> IntArray:
+    """Indices of the estimation window (EST_LEN days ending EST_GAP days before day 0), without
+    contaminated days."""
+    est_end = day0 - EST_GAP
+    idx = np.arange(est_end - EST_LEN + 1, est_end + 1)
+    return idx if drop is None else idx[~drop[idx]]
+
+
+def has_history(n_days: int, day0: int, end_offset: int, drop: BoolArray | None = None) -> bool:
     """Is there a full estimation window before the event and a full event window after it?"""
-    return day0 - EST_GAP - EST_LEN + 1 >= 0 and day0 + end_offset < n_days
+    if not (day0 - EST_GAP - EST_LEN + 1 >= 0 and day0 + end_offset < n_days):
+        return False
+    return len(estimation_days(day0, drop)) >= MIN_EST_DAYS
 
 
 def _as_matrix(x: FloatArray | None) -> FloatArray | None:
@@ -73,14 +103,23 @@ def compute_stat(
     end_offset: int,
     baseline: Baseline,
     measure: Measure,
+    drop: BoolArray | None = None,
 ) -> tuple[float, float, float, tuple[float, ...]]:
     """Return (car, value, alpha, betas) for one event. Caller must check ``has_history``.
 
-    ``x`` is one factor series (1-D) or several (days x k). With several factors the baseline is
-    alpha + beta_1 * f_1 + ... + beta_k * f_k, fitted by OLS on the estimation window.
+    ``car`` is the cumulative abnormal return over the window. ``value`` is the statistic that is
+    tested, centered so that 0 means "no effect":
+
+    * ``abnormal_return``: the CAR itself.
+    * ``abs_excess_return``: how the size of the move ranks among same-length windows in the
+      estimation period, minus one half. +0.3 means the move was bigger than 80% of ordinary
+      windows; 0 means typical. A rank, unlike a raw size difference, is close to uniform when
+      nothing happens, which keeps the test honest with few events (see docs/methodology.md).
+
+    ``x`` is one factor series (1-D) or several (days x k): the baseline is alpha + beta_1 * f_1 +
+    ... + beta_k * f_k, fitted by OLS on the clean estimation days (``drop`` marks days left out).
     """
-    est_end = day0 - EST_GAP
-    est = slice(est_end - EST_LEN + 1, est_end + 1)
+    est = estimation_days(day0, drop)
     win = slice(day0, day0 + end_offset + 1)
     xm = _as_matrix(x)
 
@@ -93,23 +132,30 @@ def compute_stat(
     else:
         alpha, betas = float(np.mean(y[est])), ()
 
-    def normal(slc: slice) -> FloatArray:
-        base = np.full_like(y[slc], alpha)
+    def normal(rows: slice | IntArray) -> FloatArray:
+        base = np.full(len(y[rows]), alpha)
         if xm is None or not betas:
             return base
-        return base + xm[slc] @ np.asarray(betas, dtype=np.float64)
+        return base + xm[rows] @ np.asarray(betas, dtype=np.float64)
 
     car = float(np.sum(y[win] - normal(win)))
     if measure == "abnormal_return":
         return car, car, alpha, betas
 
-    # abs_excess_return: compare |CAR| with the typical |CAR| of same-length windows in the
-    # estimation period (rolling sums of the estimation residuals).
-    resid = y[est] - normal(est)
+    # abs_excess_return: rank |CAR| among |sums| of same-length runs of clean estimation days.
     length = end_offset + 1
-    rolling = np.convolve(resid, np.ones(length), mode="valid")
-    typical = float(np.mean(np.abs(rolling)))
-    return car, abs(car) - typical, alpha, betas
+    clean = np.zeros(len(y), dtype=bool)
+    clean[est] = True
+    resid = np.zeros(len(y))
+    resid[est] = y[est] - normal(est)
+    starts = [
+        i for i in range(int(est[0]), int(est[-1]) - length + 2) if clean[i : i + length].all()
+    ]
+    sizes = np.abs(np.array([resid[i : i + length].sum() for i in starts]))
+    if len(sizes) == 0:
+        raise DataError("no clean estimation windows to compare the move with")
+    rank = (np.sum(sizes < abs(car)) + 0.5 * np.sum(sizes == abs(car))) / len(sizes)
+    return car, float(rank) - 0.5, alpha, betas
 
 
 def collapse_overlaps(day0s: list[int], n_days_window: int) -> list[int]:
@@ -122,34 +168,33 @@ def collapse_overlaps(day0s: list[int], n_days_window: int) -> list[int]:
 
 
 @dataclass(frozen=True)
-class BootResult:
+class MeanTest:
     mean: float
     lo: float
     hi: float
     p_value: float
 
 
-def bootstrap_mean(
-    values: FloatArray, n_boot: int = DEFAULT_BOOT, seed: int = DEFAULT_SEED, level: float = 0.95
-) -> BootResult:
-    """Percentile interval for the mean, plus a two-sided p-value for H0: mean = 0.
+def mean_test(values: FloatArray, level: float = LEVEL) -> MeanTest:
+    """Student-t interval for the mean of the per-event statistics, and the two-sided p-value for
+    H0: mean = 0.
 
-    The p-value comes from a bootstrap of the mean-centered sample (the null distribution), so it
-    does not assume normal returns. With fewer than 2 values nothing can be said.
+    Chosen over a percentile bootstrap because, with the 8 to 20 events claims have, a percentile
+    bootstrap's interval is too narrow: in simulation it called a true null "significant" 11-18% of
+    the time at a nominal 5%, while this test stays near 5% (docs/methodology.md, rules 0.2).
+    With fewer than 2 values nothing can be said.
     """
     n = len(values)
     if n < 2:
         mean = float(values[0]) if n == 1 else float("nan")
-        return BootResult(mean, float("nan"), float("nan"), 1.0)
-    rng = np.random.default_rng(seed)
+        return MeanTest(mean, float("nan"), float("nan"), 1.0)
     mean = float(np.mean(values))
-    idx = rng.integers(0, n, size=(n_boot, n))
-    boot_means = values[idx].mean(axis=1)
-    tail = (1.0 - level) / 2.0
-    lo, hi = np.quantile(boot_means, [tail, 1.0 - tail])
-    null_dev = np.abs(boot_means - mean)
-    p = float((np.sum(null_dev >= abs(mean)) + 1) / (n_boot + 1))
-    return BootResult(mean, float(lo), float(hi), min(p, 1.0))
+    se = float(np.std(values, ddof=1)) / math.sqrt(n)
+    if se == 0.0:
+        return MeanTest(mean, mean, mean, 0.0 if mean != 0.0 else 1.0)
+    t_crit = float(scipy_stats.t.ppf(0.5 + level / 2.0, n - 1))
+    p = float(2.0 * scipy_stats.t.sf(abs(mean / se), n - 1))
+    return MeanTest(mean, mean - t_crit * se, mean + t_crit * se, min(p, 1.0))
 
 
 def fdr_adjust(p_values: list[float]) -> list[float]:
@@ -181,8 +226,6 @@ class BacktestReport:
     ci_lo: float
     ci_hi: float
     p_value: float
-    n_boot: int
-    seed: int
     verdict: str
     events: list[EventStat]
 
@@ -265,9 +308,7 @@ def mean_window_path(claim: Claim, data: MarketData, stats: list[EventStat]) -> 
     )
 
 
-def run_backtest(
-    claim: Claim, data: MarketData, n_boot: int = DEFAULT_BOOT, seed: int = DEFAULT_SEED
-) -> BacktestReport:
+def run_backtest(claim: Claim, data: MarketData) -> BacktestReport:
     if claim.decompose:
         raise DataError(
             "decompose (mechanical weight vs spillover) is not implemented yet; "
@@ -281,6 +322,7 @@ def run_backtest(
     x = data.factor_matrix(claim.factor_names) if claim.baseline == "factor_only" else None
     end_offset = claim.window.end_offset
     n_days = len(data.dates)
+    drop = contaminated_days(data, claim.event_type, end_offset)
 
     ev = data.events
     # Upcoming scheduled events (a real calendar lists next year's meetings) are not history.
@@ -297,7 +339,7 @@ def run_backtest(
         matched["event_id"].to_list(), matched["date"].to_list(), strict=True
     ):
         t0 = data.day_index(when)
-        if t0 is None or not has_history(n_days, t0, end_offset):
+        if t0 is None or not has_history(n_days, t0, end_offset, drop):
             n_no_history += 1
         elif any(t0 <= s <= t0 + end_offset for s in sched_idx):
             n_sched += 1
@@ -310,11 +352,13 @@ def run_backtest(
     stats: list[EventStat] = []
     for t0 in kept:
         event_id, when = candidates[t0]
-        car, value, alpha, betas = compute_stat(y, x, t0, end_offset, claim.baseline, claim.measure)
+        car, value, alpha, betas = compute_stat(
+            y, x, t0, end_offset, claim.baseline, claim.measure, drop
+        )
         stats.append(EventStat(event_id, when, t0, car, value, alpha, betas))
 
     values = np.array([s.value for s in stats], dtype=np.float64)
-    boot = bootstrap_mean(values, n_boot=n_boot, seed=seed)
+    boot = mean_test(values)
 
     return BacktestReport(
         claim_id=claim.id,
@@ -337,8 +381,87 @@ def run_backtest(
         ci_lo=boot.lo,
         ci_hi=boot.hi,
         p_value=boot.p_value,
-        n_boot=n_boot,
-        seed=seed,
         verdict=backtest_verdict(boot.mean, boot.lo, boot.hi, len(stats), claim),
         events=stats,
     )
+
+
+# --- check-ins: how the effect looks over longer horizons (descriptive, never graded) -------------
+
+# Calendar names and their length in trading days (day 0 included).
+HORIZONS: tuple[tuple[str, int], ...] = (
+    ("1 week", 5),
+    ("1 month", 21),
+    ("6 months", 126),
+    ("1 year", 252),
+    ("5 years", 1260),
+)
+# A size rank compares the move with same-length windows inside the estimation period, so it can
+# only be computed for horizons well inside that period.
+MAX_RANK_DAYS = EST_LEN // 4
+
+
+@dataclass(frozen=True)
+class HorizonStat:
+    """The claim's statistic measured over a longer window, from past events. Descriptive only."""
+
+    label: str
+    n_days: int
+    n_events: int
+    mean: float
+    lo: float
+    hi: float
+    note: str | None  # why it could not be measured, when it could not
+
+
+def horizon_profile(claim: Claim, data: MarketData) -> list[HorizonStat]:
+    """The claim's statistic at 1 week, 1 month, 6 months, 1 year and 5 years after each past event.
+
+    Long windows are descriptions, not tests: over months the baseline's small errors add up and
+    many other things happen, so other news inside the window is *not* removed here (it would remove
+    almost every event). Overlapping windows are still collapsed, so ``n_events`` counts independent
+    windows, which is why long horizons have few. Never used for a verdict.
+    """
+    data = data.restrict(claim.symbols)
+    y = data.instrument_series(claim.instrument.symbol, claim.instrument.basket)
+    x = data.factor_matrix(claim.factor_names) if claim.baseline == "factor_only" else None
+    n_days_total = len(data.dates)
+    drop = contaminated_days(data, claim.event_type, claim.window.end_offset)
+    matched = matching_events(claim, data)
+    day0s = sorted(
+        {
+            t0
+            for d in matched.filter(matched["date"] <= data.as_of)["date"].to_list()
+            if (t0 := data.day_index(d)) is not None
+        }
+    )
+    out: list[HorizonStat] = []
+    nan = float("nan")
+    for label, n in HORIZONS:
+        if claim.measure == "abs_excess_return" and n > MAX_RANK_DAYS:
+            out.append(
+                HorizonStat(
+                    label, n, 0, nan, nan, nan, "Size ranks cannot be measured this far out"
+                )
+            )
+            continue
+        usable = [t for t in day0s if has_history(n_days_total, t, n - 1, drop)]
+        kept = collapse_overlaps(usable, n)
+        measured: list[float] = []
+        for t in kept:
+            try:
+                measured.append(
+                    compute_stat(y, x, t, n - 1, claim.baseline, claim.measure, drop)[1]
+                )
+            except DataError:
+                continue  # no clean same-length windows to rank against for this event
+        res = mean_test(np.array(measured, dtype=np.float64))
+        note = None
+        if len(measured) < 2:
+            note = (
+                "No ordinary windows this long to compare with (other news days are left out)"
+                if kept and claim.measure == "abs_excess_return"
+                else "Not enough past events with this much data after them"
+            )
+        out.append(HorizonStat(label, n, len(measured), res.mean, res.lo, res.hi, note))
+    return out

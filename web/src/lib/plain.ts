@@ -1,7 +1,8 @@
 import type { IconName } from "../components/Icon";
+import type { SiteData } from "../generated/site";
 import type { SiteClaim, SiteEvent } from "../generated/site";
 import { instrumentName, NAME_BY_SYMBOL } from "./brands";
-import { intervalText, pct } from "./format";
+import { intervalText, pct, rankPct } from "./format";
 
 /** Topic labels for event types, shown as small grey chips. */
 const CATEGORY: Record<string, string> = {
@@ -24,6 +25,7 @@ const CATEGORY: Record<string, string> = {
   BANKRUPTCY: "Filings",
   RESTATEMENT: "Filings",
   RANDOM_DATE: "Control test",
+  MEGA_TECH_IPO: "Deals",
 };
 
 /** Each topic's icon in menus (a real symbol for the topic, never its first letter). */
@@ -42,6 +44,11 @@ export const TOPIC_ICON: Record<string, IconName> = {
   Headlines: "news",
   Questions: "message",
 };
+
+/** Claims that are live tests: everything except versions a newer registered version replaced. */
+export function liveClaims(site: SiteData): SiteData["claims"] {
+  return site.claims.filter((c) => !c.superseded_by);
+}
 
 export function categoryOf(eventType: string): string {
   return CATEGORY[eventType] ?? "Markets";
@@ -67,6 +74,7 @@ const EVENT_LABEL: Record<string, string> = {
   CYBER_INCIDENT: "a company reports a serious cyberattack to the SEC",
   BANKRUPTCY: "a company files for bankruptcy",
   RESTATEMENT: "a company says its past financial statements can't be relied on",
+  MEGA_TECH_IPO: "a big tech company starts trading (an IPO or direct listing)",
 };
 
 export function eventLabel(eventType: string): string {
@@ -170,14 +178,18 @@ export function whatPastDataSays(item: SiteClaim): Verdict {
   if (!b) return { headline: "No backtest yet", detail: item.backtest_error ?? "There is not enough history to test this claim yet." };
   const clear = b.ci_lo !== null && b.ci_hi !== null && (b.ci_lo > 0 || b.ci_hi < 0);
   const name = shortName(item.claim.instrument.symbol);
+  const m = item.claim.measure;
+  const swing = m === "abs_excess_return";
+  const effect = b.mean === null ? "n/a" : swing ? `a swing bigger than ${rankPct(b.mean)} of normal days` : pct(b.mean);
+  const none = swing ? "the typical 50%" : "zero";
   return clear
     ? {
-        headline: `On ${b.n_effective} past events, ${name} showed a clear effect of ${pct(b.mean)}`,
-        detail: `The range of plausible values, ${intervalText(b.ci_lo, b.ci_hi)}, does not include zero. That is a pattern in history, not proof it will repeat.`,
+        headline: `On ${b.n_effective} past events, ${name} showed a clear effect: ${effect}`,
+        detail: `The range of plausible values, ${intervalText(b.ci_lo, b.ci_hi, m)}, does not include ${none}. That is a pattern in history, not proof it will repeat.`,
       }
     : {
-        headline: `On ${b.n_effective} past events, any effect on ${name} was too small to tell apart from chance (${pct(b.mean)})`,
-        detail: `The range of plausible values, ${intervalText(b.ci_lo, b.ci_hi)}, includes zero, so we cannot say there was a real effect.`,
+        headline: `On ${b.n_effective} past events, any effect on ${name} was too small to tell apart from chance (${effect})`,
+        detail: `The range of plausible values, ${intervalText(b.ci_lo, b.ci_hi, m)}, includes ${none}, so we cannot say there was a real effect.`,
       };
 }
 

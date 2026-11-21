@@ -11,37 +11,45 @@
   --color-accent: var(--c-accent);
   --color-on-accent: var(--c-on-accent);
   --color-accent-soft: var(--c-accent-soft);
+  --color-pop: var(--c-pop);
+  --color-on-pop: var(--c-on-pop);
   --color-primary: var(--c-primary);
   --color-on-primary: var(--c-on-primary);
   --color-positive: var(--c-positive);
   --color-negative: var(--c-negative);
   --color-notice-bg: var(--c-notice-bg);
   --color-notice-fg: var(--c-notice-fg);
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --radius-card: 16px;
+  /* Geist reads best a little lighter than the defaults: crisp, not heavy. */
+  --font-weight-extrabold: 680;
+  --font-weight-bold: 620;
+  --font-weight-semibold: 560;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
-  color-scheme: dark;
-  --identicon-l: 68%;
+  color-scheme: light;
+  --identicon-l: 42%;
 }
 
 body {
   margin: 0;
-  background: var(--c-bg, #110d18);
-  color: var(--c-fg, #f2edf9);
+  background: var(--c-bg, #fafaf7);
+  color: var(--c-fg, #141413);
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
 }
 
 h1,
 h2,
 h3 {
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 :focus-visible {
@@ -49,14 +57,22 @@ h3 {
   outline-offset: 2px;
 }
 
-/* Things that float above the page (the top bar, menus, the ask box): a soft violet-tinted shadow. */
-.float {
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--c-accent) 8%, transparent),
-    0 8px 24px -8px color-mix(in srgb, var(--c-accent) 18%, transparent);
+/*
+ * Barely visible hexagon geometry behind heroes and panels, for depth without decoration. Drawn
+ * as an SVG tile (pointy-top hexagons, 28px across) in near-black at a few percent opacity.
+ */
+.hex-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cpath d='M14 0 L28 8.08 L28 24.25 L14 32.33 L0 24.25 L0 8.08 Z M14 32.33 L14 48.5 M0 24.25 L0 40.42 M28 24.25 L28 40.42' fill='none' stroke='%23141413' stroke-opacity='0.055' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 28px 48.5px;
+}
+/* The same pattern, fading out toward the bottom-right: for the corner of a panel. */
+.hex-fade {
+  -webkit-mask-image: radial-gradient(120% 90% at 0% 0%, black 30%, transparent 75%);
+  mask-image: radial-gradient(120% 90% at 0% 0%, black 30%, transparent 75%);
 }
 ::selection {
-  background: var(--c-accent-soft);
+  background: var(--c-pop);
+  color: var(--c-on-pop);
 }
 
 /* Carousels scroll by arrows, swipe or keyboard; the bar itself is hidden. */

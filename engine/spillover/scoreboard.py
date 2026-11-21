@@ -8,14 +8,15 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from spillover.eventstudy import DEFAULT_BOOT, DEFAULT_SEED, bootstrap_mean, fdr_adjust
+from spillover.eventstudy import fdr_adjust, mean_test
 from spillover.ledger import RULES_VERSION, engine_version
-from spillover.models import Claim
+from spillover.models import Claim, superseded_ids
 from spillover.scoring import Outcome, load_outcome, outcome_files
 
 FDR_LEVEL = 0.05
@@ -120,13 +121,39 @@ def _load_all(outcomes_root: Path) -> dict[str, list[Outcome]]:
     return grouped
 
 
-def build_scoreboard(
-    claims: list[Claim],
-    outcomes_root: Path,
-    n_boot: int = DEFAULT_BOOT,
-    seed: int = DEFAULT_SEED,
-) -> dict[str, Any]:
-    registered = sorted((c for c in claims if c.registered_at_utc is not None), key=lambda c: c.id)
+def verdict_sample(eff: list[Outcome], min_events: int) -> list[Outcome]:
+    """The events a verdict rests on: exactly the first ``min_events`` effective events, in the
+    order their windows opened (rules 0.2).
+
+    A fixed sample size means the verdict cannot be re-checked after every event until it happens
+    to look significant ("optional stopping"). Events after these are shown, never counted.
+    """
+    ordered = sorted(eff, key=lambda o: (o.window_start, o.event_id))
+    return ordered[:min_events]
+
+
+def completion_q_values(done: dict[str, tuple[date, float]]) -> dict[str, float]:
+    """False-discovery-rate q-values that never change once a claim has its verdict.
+
+    Each claim is adjusted together with the claims that completed (reached their fixed sample) on
+    or before the day it did. Claims that complete later cannot move an earlier claim's q-value.
+    """
+    out: dict[str, float] = {}
+    for cid, (when, _p) in done.items():
+        family = sorted(k for k, (w, _) in done.items() if w <= when)
+        qs = fdr_adjust([done[k][1] for k in family])
+        out[cid] = qs[family.index(cid)]
+    return out
+
+
+def build_scoreboard(claims: list[Claim], outcomes_root: Path) -> dict[str, Any]:
+    # A superseded claim keeps its record but is no longer a live test: it collects no new evidence
+    # and is left out of the scoreboard and of the false-discovery family.
+    replaced = superseded_ids(claims)
+    registered = sorted(
+        (c for c in claims if c.registered_at_utc is not None and c.id not in replaced),
+        key=lambda c: c.id,
+    )
     grouped = _load_all(outcomes_root)
 
     # First pass: effective sample and bootstrap for every registered claim.
@@ -134,22 +161,28 @@ def build_scoreboard(
     for c in registered:
         outs = grouped.get(c.id, [])
         live = [o for o in outs if o.sha256 not in superseded_hashes(outs)]
-        eff, n_sched, n_coll = effective_outcomes(outs)
+        all_eff, n_sched, n_coll = effective_outcomes(outs)
+        eff = verdict_sample(all_eff, c.success.min_forward_events)
         values = np.array([o.value for o in eff], dtype=np.float64)
-        boot = bootstrap_mean(values, n_boot=n_boot, seed=seed) if len(eff) else None
+        boot = mean_test(values) if len(eff) else None
         prelim[c.id] = {
             "live": live,
             "eff": eff,
+            "after": len(all_eff) - len(eff),
             "n_sched": n_sched,
             "n_coll": n_coll,
             "boot": boot,
         }
 
-    # False-discovery-rate adjustment across the claims that have a defined p-value.
-    testable = [cid for cid, d in prelim.items() if d["boot"] is not None and len(d["eff"]) >= 2]
-    qs = dict(
-        zip(testable, fdr_adjust([prelim[cid]["boot"].p_value for cid in testable]), strict=True)
-    )
+    # False-discovery-rate adjustment, only among claims that have their full fixed sample, each
+    # with the claims that completed by its own completion day (so a verdict never moves later).
+    done = {
+        c.id: (prelim[c.id]["eff"][-1].window_end, prelim[c.id]["boot"].p_value)
+        for c in registered
+        if prelim[c.id]["boot"] is not None
+        and len(prelim[c.id]["eff"]) >= c.success.min_forward_events
+    }
+    qs = completion_q_values(done)
 
     rows: list[dict[str, Any]] = []
     for c in registered:
@@ -184,6 +217,7 @@ def build_scoreboard(
                 ),
                 "forward_events": len(d["live"]),
                 "effective_events": n_eff,
+                "events_after_verdict": d["after"],
                 "min_events": c.success.min_forward_events,
                 "excluded_scheduled_overlap": d["n_sched"],
                 "collapsed_overlapping": d["n_coll"],

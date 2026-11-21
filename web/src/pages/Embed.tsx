@@ -33,7 +33,7 @@ export default function EmbedClaim() {
               {b && (
                 <p className="mt-3 text-xs text-muted">
                   <span className="font-semibold uppercase tracking-wide">Backtest</span> · n={b.n_effective} ·{" "}
-                  <span className={`font-semibold ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).text}</span> {intervalText(b.ci_lo, b.ci_hi)} · as of {b.as_of}
+                  <span className={`font-semibold ${claimStat(c.measure, b.mean).cls}`}>{claimStat(c.measure, b.mean).text}</span> {intervalText(b.ci_lo, b.ci_hi, c.measure)} · as of {b.as_of}
                   {b.data_synthetic && " · SYNTHETIC data"}
                 </p>
               )}

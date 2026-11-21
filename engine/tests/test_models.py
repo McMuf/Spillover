@@ -89,3 +89,23 @@ def test_non_mapping_yaml_is_rejected(tmp_path: Path) -> None:
     path.write_text("- just\n- a list\n", encoding="utf-8")
     with pytest.raises(ClaimError):
         load_claim(path)
+
+
+def test_a_counter_claim_names_the_claim_it_answers(tmp_path: Path) -> None:
+    from spillover.models import load_claim
+
+    path = write(
+        tmp_path,
+        id="clm_fomc_spx_calm_v1",
+        responds_to={"claim": "clm_fomc_abs_move_spx_v2", "stance": "counter"},
+    )
+    claim = load_claim(path)
+    assert claim.responds_to is not None and claim.responds_to.stance == "counter"
+
+
+def test_a_claim_cannot_answer_itself_or_another_version_of_itself(tmp_path: Path) -> None:
+    from spillover.models import ClaimError, load_claim
+
+    path = write(tmp_path, id="clm_x_v2", responds_to={"claim": "clm_x_v1", "stance": "counter"})
+    with pytest.raises(ClaimError, match="respond to itself"):
+        load_claim(path)

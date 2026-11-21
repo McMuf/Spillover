@@ -1,6 +1,6 @@
 import type { SiteClaim, SiteData, SiteEvent } from "../generated/site";
 import { claimStat } from "./format";
-import { eventHeadline, eventSentence } from "./plain";
+import { eventHeadline, eventSentence, liveClaims } from "./plain";
 
 export type Story = SiteData["news"][number];
 export type Origin = Story["origin"];
@@ -67,7 +67,7 @@ export function claimsFor(site: SiteData, s: Story): SiteClaim[] {
 
 /** Registered claims about this kind of event, triggered or not (another company, say). */
 export function claimsAboutType(site: SiteData, eventType: string): SiteClaim[] {
-  return site.claims.filter((c) => c.claim.event_type === eventType);
+  return liveClaims(site).filter((c) => c.claim.event_type === eventType);
 }
 
 export interface Measurement {
@@ -100,9 +100,8 @@ export function pastEvents(site: SiteData, claim: SiteClaim, before: string, n =
 }
 
 /**
- * A measured value as text, with its colour. Red and green mean the price went down or up, so a
- * "swings more than usual" value (bigger or smaller than a normal move, either direction) is
- * worded and shown in a neutral colour instead.
+ * A measured value as text, with its colour (green above zero, red below). A "swings more than usual"
+ * value is worded as the share of normal days that moved less, so it never reads as a price change.
  */
 export function measuredValue(claim: SiteClaim, v: number | null): { text: string; cls: string } {
   const s = claimStat(claim.claim.measure, v);

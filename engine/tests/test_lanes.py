@@ -210,7 +210,7 @@ def test_a_replication_is_run_by_the_engine_and_recorded_with_a_hash(
 ) -> None:
     claim = registered_claim(tmp_path)
     rep = parse_replication(dump(replication_data()), "x")
-    result = run_replication(rep, claim, market, n_boot=300)
+    result = run_replication(rep, claim, market)
     assert result.replication_id == rep.id and result.claim_id == claim.id
     assert result.applied_changes == {"window_end": "+3_trading_days"}
     # Enough independent events to estimate, after scheduled-release overlaps are dropped.
@@ -224,7 +224,7 @@ def test_a_replication_is_run_by_the_engine_and_recorded_with_a_hash(
 def test_replicating_a_draft_claim_is_refused(market: MarketData, tmp_path: Path) -> None:
     draft = registered_claim(tmp_path, registered_at="set_by_ci_on_merge")
     with pytest.raises(LaneError, match="not registered"):
-        run_replication(parse_replication(dump(replication_data()), "x"), draft, market, n_boot=100)
+        run_replication(parse_replication(dump(replication_data()), "x"), draft, market)
 
 
 def test_pending_replications_are_run_once_and_results_are_tamper_evident(
@@ -241,9 +241,9 @@ def test_pending_replications_are_run_once_and_results_are_tamper_evident(
         dump(replication_data(id="rep_syn_broken_v1", claim="clm_nope_v1"))
     )
 
-    written, problems = run_pending(reps, claims, results, market, n_boot=200)
+    written, problems = run_pending(reps, claims, results, market)
     assert len(written) == 1 and len(problems) == 1 and "does not exist" in problems[0]
-    again, _ = run_pending(reps, claims, results, market, n_boot=200)
+    again, _ = run_pending(reps, claims, results, market)
     assert again == [], "a replication that has a result is not re-run"
 
     load_result(written[0])  # verifies the hash
@@ -315,8 +315,6 @@ def test_cli_replicate_refuses_synthetic_data_unless_forced(tmp_path: Path) -> N
         str(tmp_path / "res"),
         "--data",
         str(FIXTURES),
-        "--boot",
-        "200",
     ]
     refused = runner.invoke(app, base)
     assert (
@@ -347,7 +345,7 @@ def test_the_site_export_includes_challenges_and_verified_replication_results(
     (reps / "rep_syn_other_window_v1.yaml").write_text(
         dump(replication_data(submitted_at="2026-01-05T12:00:00Z"))
     )
-    run_pending(reps, claims, results, market, n_boot=200)
+    run_pending(reps, claims, results, market)
 
     claim = _load(claims / "clm_syn_shock_v1.yaml")
     site = build_site_data(
@@ -355,7 +353,6 @@ def test_the_site_export_includes_challenges_and_verified_replication_results(
         market,
         tmp_path / "p",
         tmp_path / "o",
-        n_boot=100,
         challenges_dir=chl,
         replications_dir=reps,
         results_dir=results,
@@ -378,7 +375,6 @@ def test_the_site_export_includes_challenges_and_verified_replication_results(
             market,
             tmp_path / "p",
             tmp_path / "o",
-            n_boot=100,
             challenges_dir=chl,
             replications_dir=reps,
             results_dir=results,

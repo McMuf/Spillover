@@ -27,20 +27,28 @@ class DataSettings(_Strict):
 
 class SeriesSpec(_Strict):
     symbol: Annotated[str, Field(pattern=r"^[A-Za-z0-9._-]+$")]
-    provider: Literal["fred", "csv", "alias", "alphavantage"]
-    id: str | None = None  # FRED series id, or the ticker for alphavantage
+    provider: Literal["fred", "csv", "alias", "alphavantage", "tiingo"]
+    id: str | None = None  # FRED series id, or the ticker for alphavantage and tiingo
     path: Path | None = None  # CSV file you exported yourself
     of: str | None = None  # alias: copy another symbol's returns (for example MKT = SPX)
 
     @model_validator(mode="after")
     def _fields(self) -> Self:
-        need = {"fred": self.id, "alphavantage": self.id, "csv": self.path, "alias": self.of}[
-            self.provider
-        ]
+        need = {
+            "fred": self.id,
+            "alphavantage": self.id,
+            "tiingo": self.id,
+            "csv": self.path,
+            "alias": self.of,
+        }[self.provider]
         if need is None:
-            field = {"fred": "id", "alphavantage": "id", "csv": "path", "alias": "of"}[
-                self.provider
-            ]
+            field = {
+                "fred": "id",
+                "alphavantage": "id",
+                "tiingo": "id",
+                "csv": "path",
+                "alias": "of",
+            }[self.provider]
             raise ValueError(f"provider '{self.provider}' needs '{field}'")
         return self
 
@@ -94,7 +102,7 @@ class FilingsSpec(_Strict):
 class ExtractorSettings(_Strict):
     # "rules": the free, deterministic labeler (phrase rules + a company list). "claude": the
     # Claude API (needs ANTHROPIC_API_KEY and credit). Both write the same validated answers.
-    engine: Literal["claude", "rules"] = "claude"
+    engine: Literal["claude", "rules", "embedding"] = "claude"
     companies: Path = Path("labels/companies.json")  # rules: the company name/ticker snapshot
     model: str = "claude-haiku-5-5"
     store: Path = Path("events")

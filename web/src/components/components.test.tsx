@@ -15,6 +15,7 @@ import { NodeLegend } from "./NodeLegend";
 import { StatusBadge } from "./StatusBadge";
 
 const row = (over: Partial<ForwardRow>): ForwardRow => ({
+  checkins: [],
   event_id: "ev",
   event_date: "2026-02-01",
   created_at: "2026-02-01T12:00:00Z",

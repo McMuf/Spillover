@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import math
 import tempfile
+from collections.abc import Callable
 from dataclasses import asdict
 from datetime import date, datetime, timedelta
+from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Literal
 
@@ -23,10 +25,17 @@ from pydantic import BaseModel, ConfigDict
 from spillover.data import DataError, MarketData
 from spillover.eventstore import load_records
 from spillover.eventstudy import (
-    DEFAULT_BOOT,
-    DEFAULT_SEED,
+    HORIZONS,
+    MAX_RANK_DAYS,
     BacktestReport,
+    Baseline,
+    HorizonStat,
+    Measure,
     WindowPath,
+    compute_stat,
+    contaminated_days,
+    has_history,
+    horizon_profile,
     matching_events,
     mean_window_path,
     run_backtest,
@@ -85,6 +94,7 @@ class ScoreboardClaim(_M):
     status: Literal["Proposed", "Supported", "Not supported", "Inconclusive"]
     forward_events: int
     effective_events: int
+    events_after_verdict: int  # forward events after the fixed sample; shown, never counted
     min_events: int
     excluded_scheduled_overlap: int
     collapsed_overlapping: int
@@ -162,10 +172,10 @@ class Backtest(_M):
     ci_lo: float | None
     ci_hi: float | None
     p_value: float
-    n_boot: int
-    seed: int
     verdict: str
     events: list[EventStatOut]
+    # Check-ins over longer horizons (1 week to 5 years), from past events. Descriptive only.
+    horizons: list[HorizonOut]
 
 
 class Chart(_M):
@@ -178,6 +188,26 @@ class Chart(_M):
     estimation_end: int
 
 
+class CheckIn(_M):
+    """A frozen prediction's statistic at a longer horizon: descriptive, never graded."""
+
+    label: str  # "1 week", "1 month", ...
+    due: date  # when it can be measured (calendar estimate of the trading-day horizon)
+    value: float | None  # None until the data reaches it
+
+
+class HorizonOut(_M):
+    """The claim's statistic over a longer window, from past events. Descriptive, never graded."""
+
+    label: str
+    n_days: int
+    n_events: int
+    mean: float | None
+    ci_lo: float | None
+    ci_hi: float | None
+    note: str | None
+
+
 class ForwardRow(_M):
     event_id: str
     event_date: date
@@ -187,6 +217,7 @@ class ForwardRow(_M):
     hit: bool | None
     value: float | None
     proof: Literal["none", "present"]
+    checkins: list[CheckIn]
 
 
 class EvidenceOut(_M):
@@ -226,6 +257,12 @@ class ReplicationOut(_M):
     result: ReplicationResultOut | None
 
 
+class ResponseOut(_M):
+    claim_id: str
+    stance: Literal["counter", "refine"]
+    statement: str
+
+
 class SiteClaim(_M):
     claim: Claim
     yaml: str
@@ -237,6 +274,11 @@ class SiteClaim(_M):
     event_ids: list[str]
     challenges: list[ChallengeOut]
     replications: list[ReplicationOut]
+    # The newer registered version that replaced this one, or None. Superseded claims keep their
+    # page and record but are left out of lists and counts.
+    superseded_by: str | None
+    # Claims written in answer to this one (counter-claims and refinements), each graded on its own.
+    responses: list[ResponseOut]
 
 
 class EventClaimStat(_M):
@@ -292,6 +334,11 @@ class LabelerAccuracy(_M):
     entity_precision: float | None
     entity_recall: float | None
     low_confidence_rate: float | None
+    n_positive: int  # gold rows that are real events, not "none of the above"
+    majority_baseline: float | None  # what always giving the most common answer would score
+    event_recall: float | None  # of real events in the gold set, the share typed right
+    event_precision: float | None  # of the labeler's event answers, the share that were right
+    measurable: bool  # enough real events (gold.MIN_POSITIVES) for accuracy to mean anything
 
 
 class GoldLabel(_M):
@@ -504,7 +551,23 @@ def label_headlines(
     return out
 
 
+def balanced[T](items: list[T], is_event: Callable[[T], bool]) -> list[T]:
+    """Alternate items the labeler thinks are events with items it thinks are not.
+
+    A gold set of nothing but "none of the above" cannot measure a labeler (always answering NONE
+    would score 100%), so people are offered real-event candidates as often as the rest. The order
+    never reveals which is which, and the labeler's answer is never shown.
+    """
+    events = [i for i in items if is_event(i)]
+    others = [i for i in items if not is_event(i)]
+    out: list[T] = []
+    for a, b in zip_longest(events, others):
+        out.extend(x for x in (a, b) if x is not None)
+    return out
+
+
 def headline_candidates(items: list[LiveHeadline]) -> list[LabelCandidate]:
+    items = balanced(items, lambda h: h.event_type != NONE)
     return [
         LabelCandidate(
             headline_id=h.headline_id,
@@ -614,14 +677,20 @@ def build_labeling(
                     entity_precision=report.entity_precision,
                     entity_recall=report.entity_recall,
                     low_confidence_rate=report.low_confidence_rate,
+                    n_positive=report.n_positive,
+                    majority_baseline=report.majority_baseline,
+                    event_recall=report.event_recall,
+                    event_precision=report.event_precision,
+                    measurable=report.measurable,
                 )
         except (GoldError, ExtractionError):
             gold_rows, accuracy = [], None
     done = {(g.source, g.title) for g in gold_rows}
     seen: set[tuple[str, str]] = set()
     candidates: list[LabelCandidate] = []
-    records = sorted(
-        load_records(store), key=lambda r: (r.published_at, r.headline_id), reverse=True
+    records = balanced(
+        sorted(load_records(store), key=lambda r: (r.published_at, r.headline_id), reverse=True),
+        lambda r: r.event_type != NONE,
     )
     for r in records:
         key = (r.source, r.title)
@@ -668,7 +737,19 @@ def _f(x: float) -> float | None:
     return None if math.isnan(x) or math.isinf(x) else x
 
 
-def _backtest(r: BacktestReport) -> Backtest:
+def _horizon(h: HorizonStat) -> HorizonOut:
+    return HorizonOut(
+        label=h.label,
+        n_days=h.n_days,
+        n_events=h.n_events,
+        mean=_f(h.mean),
+        ci_lo=_f(h.lo),
+        ci_hi=_f(h.hi),
+        note=h.note,
+    )
+
+
+def _backtest(r: BacktestReport, horizons: list[HorizonStat] | None = None) -> Backtest:
     return Backtest(
         claim_id=r.claim_id,
         statement=r.statement,
@@ -689,14 +770,49 @@ def _backtest(r: BacktestReport) -> Backtest:
         ci_lo=_f(r.ci_lo),
         ci_hi=_f(r.ci_hi),
         p_value=r.p_value,
-        n_boot=r.n_boot,
-        seed=r.seed,
         verdict=r.verdict,
         events=[
             EventStatOut(event_id=e.event_id, event_date=e.event_date, car=e.car, value=e.value)
             for e in r.events
         ],
+        horizons=[_horizon(h) for h in horizons or []],
     )
+
+
+# Calendar-day estimates of each check-in horizon, for showing when it will be measurable.
+CHECKIN_CALENDAR_DAYS = {
+    "1 week": 7,
+    "1 month": 30,
+    "6 months": 182,
+    "1 year": 365,
+    "5 years": 1826,
+}
+
+
+def _checkins(pred: Prediction, data: MarketData) -> list[CheckIn]:
+    """A frozen prediction's statistic at each check-in horizon, once the data reaches it."""
+    own = _own_calendar(data, pred)
+    day0 = own.day_index(pred.event_date)
+    baseline: Baseline = "factor_only" if pred.baseline == "factor_only" else "constant_mean"
+    measure: Measure = (
+        "abs_excess_return" if pred.measure == "abs_excess_return" else "abnormal_return"
+    )
+    out: list[CheckIn] = []
+    for label, n in HORIZONS:
+        due = pred.event_date + timedelta(days=CHECKIN_CALENDAR_DAYS[label])
+        value: float | None = None
+        rankable = not (measure == "abs_excess_return" and n > MAX_RANK_DAYS)
+        if day0 is not None and day0 + n - 1 < len(own.dates) and rankable:
+            try:
+                y = own.instrument_series(pred.instrument.symbol, pred.instrument.basket)
+                x = own.factor_matrix(pred.factor.split("+")) if baseline == "factor_only" else None
+                drop = contaminated_days(own, pred.event_type, pred.window.end_offset)
+                if has_history(len(own.dates), day0, n - 1, drop):
+                    value = _f(compute_stat(y, x, day0, n - 1, baseline, measure, drop)[1])
+            except DataError:
+                value = None
+        out.append(CheckIn(label=label, due=due, value=value))
+    return out
 
 
 def _chart(w: WindowPath) -> Chart:
@@ -750,6 +866,7 @@ def _forward_log(
                 hit=outcome.hit if outcome else None,
                 value=outcome.value if outcome else None,
                 proof=proof,
+                checkins=_checkins(pred, data),
             )
         )
     return sorted(rows, key=lambda r: (r.event_date, r.event_id))
@@ -814,8 +931,6 @@ def build_site_data(
     data: MarketData,
     predictions_root: Path,
     outcomes_root: Path,
-    n_boot: int = DEFAULT_BOOT,
-    seed: int = DEFAULT_SEED,
     challenges_dir: Path | None = None,
     replications_dir: Path | None = None,
     results_dir: Path | None = None,
@@ -826,9 +941,7 @@ def build_site_data(
     community: Community | None = None,
 ) -> SiteData:
     """``claims`` pairs each claim with its raw YAML text (shown on the claim page)."""
-    board = Scoreboard.model_validate(
-        build_scoreboard([c for c, _ in claims], outcomes_root, n_boot=n_boot, seed=seed)
-    )
+    board = Scoreboard.model_validate(build_scoreboard([c for c, _ in claims], outcomes_root))
     status_of = {row.claim_id: row.status for row in board.claims}
 
     challenges_by_claim = _challenges(challenges_dir)
@@ -838,6 +951,16 @@ def build_site_data(
     event_to_claims: dict[str, list[str]] = {}
 
     replaced = superseded_ids([c for c, _ in claims])
+    responses_to: dict[str, list[ResponseOut]] = {}
+    for c, _ in sorted(claims, key=lambda p: p[0].id):
+        if c.responds_to is not None:
+            responses_to.setdefault(c.responds_to.claim, []).append(
+                ResponseOut(
+                    claim_id=c.id,
+                    stance=c.responds_to.stance,
+                    statement=" ".join(c.statement.split()),
+                )
+            )
     latest = {c.id.rsplit("_v", 1)[0]: c.id for c, _ in sorted(claims, key=lambda p: p[0].version)}
 
     for claim, text in sorted(claims, key=lambda p: p[0].id):
@@ -849,8 +972,8 @@ def build_site_data(
             if missing:
                 # Said plainly, without server paths: this text is published on the website.
                 raise DataError(f"No price data for {', '.join(missing)} in this dataset.")
-            report = run_backtest(claim, data, n_boot=n_boot, seed=seed)
-            backtest = _backtest(report)
+            report = run_backtest(claim, data)
+            backtest = _backtest(report, horizon_profile(claim, data))
             path = mean_window_path(claim, data, report.events)
             chart = _chart(path) if path else None
             for e in report.events:
@@ -871,7 +994,11 @@ def build_site_data(
             SiteClaim(
                 claim=claim,
                 yaml=text,
-                status=status_of.get(claim.id, "Draft"),  # type: ignore[arg-type]
+                status=status_of.get(  # type: ignore[arg-type]
+                    # A superseded claim is off the scoreboard but keeps its registered status.
+                    claim.id,
+                    "Proposed" if claim.registered_at_utc is not None else "Draft",
+                ),
                 backtest=backtest,
                 backtest_error=error,
                 chart=chart,
@@ -879,6 +1006,8 @@ def build_site_data(
                 event_ids=ids,
                 challenges=challenges_by_claim.get(claim.id, []),
                 replications=replications_by_claim.get(claim.id, []),
+                superseded_by=latest[claim.id.rsplit("_v", 1)[0]] if claim.id in replaced else None,
+                responses=responses_to.get(claim.id, []),
             )
         )
 

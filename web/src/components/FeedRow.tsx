@@ -7,6 +7,7 @@ import { claimStat } from "../lib/format";
 import { ORIGIN_TAG, storySentence, storyTitle } from "../lib/news";
 import { entityName, eventLabel, highlightTerms, shortHeadline, whatWeTest } from "../lib/plain";
 import { BrandMark } from "./BrandMark";
+import { HeadlineActions } from "./HeadlineActions";
 import { Highlight } from "./Highlight";
 import { Icon } from "./Icon";
 import { Identicon } from "./Identicon";
@@ -145,7 +146,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
               <span className={`font-bold ${stat.cls}`}>
                 <Ticker text={stat.value} />
               </span>{" "}
-              {stat.note ?? "abnormal move"} across {b.n_effective} past events · {it.forward_log.length} predictions frozen
+              {stat.note ? `${stat.note},` : "abnormal move"} across {b.n_effective} past events · {it.forward_log.length} predictions frozen
               {comments > 0 && (
                 <>
                   {" · "}
@@ -247,9 +248,9 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
           }
         >
           <div className="flex gap-3">
-            <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" className="min-w-0 flex-1 text-[16px] leading-snug hover:underline">
+            <HeadlineActions h={h} className="min-w-0 flex-1 text-[16px] leading-snug">
               {h.title}
-            </a>
+            </HeadlineActions>
             {h.image && (
               <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
                 <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 rounded-xl md:h-24 md:w-36" />

@@ -123,8 +123,6 @@ def test_site_build_carries_headlines_and_survives_a_gdelt_outage(
         str(tmp_path / "p"),
         "--outcomes",
         str(tmp_path / "o"),
-        "--boot",
-        "100",
     ]
 
     monkeypatch.setattr(cli, "http_get", lambda url: SAMPLE)
@@ -199,8 +197,6 @@ def test_a_refused_build_shows_the_previous_builds_headlines(
         str(tmp_path / "p"),
         "--outcomes",
         str(tmp_path / "o"),
-        "--boot",
-        "100",
         "--live-headlines",
     ]
     monkeypatch.setattr(cli, "http_get", lambda url: SAMPLE)

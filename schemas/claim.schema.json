@@ -45,6 +45,31 @@
       "title": "Instrument",
       "type": "object"
     },
+    "RespondsTo": {
+      "additionalProperties": false,
+      "description": "A claim written as an answer to another one, graded on its own like any claim.\n\n* ``counter``: expects the opposite of the other claim (the other side of the argument).\n* ``refine``: the same idea, narrowed or sharpened (another market, window or kind of event).",
+      "properties": {
+        "claim": {
+          "pattern": "^clm_[a-z0-9]+(?:_[a-z0-9]+)*_v[0-9]+$",
+          "title": "Claim",
+          "type": "string"
+        },
+        "stance": {
+          "enum": [
+            "counter",
+            "refine"
+          ],
+          "title": "Stance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim",
+        "stance"
+      ],
+      "title": "RespondsTo",
+      "type": "object"
+    },
     "Success": {
       "additionalProperties": false,
       "properties": {
@@ -206,6 +231,17 @@
       "minLength": 1,
       "title": "Registered By",
       "type": "string"
+    },
+    "responds_to": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RespondsTo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "statement": {
       "minLength": 10,

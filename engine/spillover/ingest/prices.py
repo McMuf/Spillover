@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import urllib.parse
 from datetime import date
 from pathlib import Path
@@ -98,6 +99,41 @@ def alphavantage_levels(symbol: str, api_key: str, start: date, fetch: Fetcher) 
         }
     )
     return parse_alphavantage(fetch(f"{ALPHAVANTAGE_URL}?{query}"), symbol, start)
+
+
+TIINGO_URL = "https://api.tiingo.com/tiingo/daily/{ticker}/prices"
+
+
+def parse_tiingo(payload: str, symbol: str, start: date) -> Levels:
+    """Split- and dividend-adjusted daily closes (``adjClose``) from Tiingo's end-of-day API."""
+    try:
+        body = json.loads(payload)
+    except ValueError:
+        raise PriceError(f"Tiingo {symbol}: response is not JSON") from None
+    if isinstance(body, dict):
+        # Tiingo answers an unknown ticker, a bad key or a rate limit with {"detail": "..."}.
+        raise PriceError(f"Tiingo {symbol}: {str(body.get('detail', 'unexpected response'))[:300]}")
+    if not isinstance(body, list) or not body:
+        raise PriceError(f"Tiingo {symbol}: no daily prices in the response")
+    out: Levels = {}
+    try:
+        for row in body:
+            d = date.fromisoformat(str(row["date"])[:10])
+            if d >= start:
+                out[d] = float(row["adjClose"])
+    except (ValueError, KeyError, TypeError):
+        raise PriceError(f"Tiingo {symbol}: malformed row (expected adjusted closes)") from None
+    if not out:
+        raise PriceError(f"Tiingo {symbol}: no prices on or after {start}")
+    return dict(sorted(out.items()))
+
+
+def tiingo_levels(symbol: str, api_key: str, start: date, fetch: Fetcher) -> Levels:
+    if not re.fullmatch(r"[A-Za-z0-9.\-]{1,12}", symbol):
+        raise PriceError(f"Tiingo: {symbol!r} is not a ticker")
+    query = urllib.parse.urlencode({"startDate": start.isoformat(), "token": api_key})
+    url = f"{TIINGO_URL.format(ticker=urllib.parse.quote(symbol.lower()))}?{query}"
+    return parse_tiingo(fetch(url), symbol, start)
 
 
 FRED_RELEASE_DATES_URL = "https://api.stlouisfed.org/fred/release/dates"

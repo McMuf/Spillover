@@ -104,6 +104,14 @@ TAXONOMY: tuple[EventType, ...] = (
         "of its previous 60 trading days. Derived from prices, never from headlines.",
         origin="prices",
     ),
+    # From a reviewed list (events/curated/mega_tech_ipos.csv), one row per listing with a source.
+    EventType(
+        "MEGA_TECH_IPO",
+        "A technology company valued at about $10 billion or more starts trading on a US exchange, "
+        "by IPO or direct listing (its first trading day). From a reviewed list with a source for "
+        "each row; new listings are added by pull request. All share the entity NEW_LISTING.",
+        origin="calendar",
+    ),
     # From SEC 8-K filings: the filing's item number fixes the type (see ingest/filings.py). Dated
     # by when SEC accepted the filing, which can be days after the news first broke.
     EventType(

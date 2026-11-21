@@ -1,7 +1,7 @@
 [project]
 name = "spillover"
 version = "0.1.0a0"
-description = "An open, community-run ledger that tests how news spills over into markets."
+description = "An open ledger, built to be run by a community, that tests how news spills over into markets."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
@@ -36,6 +36,13 @@ ots = [
 
 [project.scripts]
 spillover = "spillover.cli:app"
+
+[project.optional-dependencies]
+ml = [
+    "huggingface-hub>=0.26",
+    "onnxruntime>=1.20",
+    "tokenizers>=0.20",
+]
 
 [build-system]
 requires = ["hatchling"]

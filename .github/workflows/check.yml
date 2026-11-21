@@ -68,9 +68,10 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
+      # --extra ml: the type checker must see the optional local-model labeler's libraries.
       - name: Install
         run: |
-          uv sync
+          uv sync --extra ml
           pnpm --dir web install --frozen-lockfile
 
       - name: Export the site data from the engine

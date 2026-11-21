@@ -4,7 +4,7 @@ import { AreaChart } from "../components/AreaChart";
 import { FeedRow } from "../components/FeedRow";
 import { HowItWorks } from "../components/HowItWorks";
 import { Icon } from "../components/Icon";
-import { Landscape } from "../components/Landscape";
+import { AsciiField } from "../components/AsciiField";
 import { Logo } from "../components/Logo";
 import { Ready } from "../components/Ready";
 import { Ticker } from "../components/Ticker";
@@ -16,7 +16,7 @@ import { briefing, feedItems, ordered, topics } from "../lib/feed";
 import { claimStat } from "../lib/format";
 import { useLiveNews } from "../lib/liveNews";
 import { people } from "../lib/people";
-import { byTrending } from "../lib/plain";
+import { byTrending, liveClaims } from "../lib/plain";
 
 const CHIP = "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold";
 const chip = (on: boolean) => `${CHIP} ${on ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`;
@@ -93,7 +93,7 @@ function Feed({ site }: { site: SiteData }) {
       </h2>
       <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 py-4 md:mx-0 md:px-0" role="group" aria-label="Filter the feed">
         <button type="button" aria-pressed={mode === "trending"} onClick={() => setMode("trending")} className={chip(mode === "trending")}>
-          Trending
+          Mixed
         </button>
         <button type="button" aria-pressed={mode === "latest"} onClick={() => setMode("latest")} className={chip(mode === "latest")}>
           Latest
@@ -105,6 +105,11 @@ function Feed({ site }: { site: SiteData }) {
           </button>
         ))}
       </div>
+      <p className="-mt-2 mb-1 text-xs text-muted">
+        {mode === "trending"
+          ? "Mixed: news, claims, questions and the record take turns; claims with the most evidence first. No votes or popularity."
+          : "Latest: everything, newest first."}
+      </p>
       <ul>
         {shown.map((it) => (
           <FeedRow key={it.id} item={it} site={site} fresh={it.kind === "headline" && live.fresh.has(it.headline.headline_id)} />
@@ -126,7 +131,7 @@ function Feed({ site }: { site: SiteData }) {
 function Markets({ site }: { site: SiteData }) {
   const rows = useMemo(() => {
     const by = new Map<string, SiteClaim[]>();
-    for (const c of byTrending(site.claims)) {
+    for (const c of byTrending(liveClaims(site))) {
       if (c.claim.event_type === "RANDOM_DATE") continue;
       const s = c.claim.instrument.symbol;
       by.set(s, [...(by.get(s) ?? []), c]);
@@ -166,7 +171,7 @@ function Markets({ site }: { site: SiteData }) {
                   <span className={`block text-[15px] font-bold tabular-nums ${stat.cls}`}>
                     <Ticker text={stat.value} />
                   </span>
-                  <span className="block text-[11px] text-muted">{stat.note ? stat.note.replace(" than usual", "") : "backtest"}</span>
+                  <span className="block text-[11px] text-muted">{stat.short ?? "backtest"}</span>
                 </span>
               </Link>
             </li>
@@ -179,7 +184,7 @@ function Markets({ site }: { site: SiteData }) {
 
 function NewHere() {
   return (
-    <section aria-labelledby="newhere-h" className="rounded-2xl bg-surface p-5">
+    <section aria-labelledby="newhere-h" className="hex-bg rounded-2xl border border-line bg-surface p-5">
       <h2 id="newhere-h" className="text-[17px] font-bold leading-snug">
         New here? Test what you think the news does to markets.
       </h2>
@@ -205,14 +210,19 @@ function HomeBody({ site }: { site: SiteData }) {
   const contributors = people(site).length;
   return (
     <>
-      <header className="relative mb-8 grid items-end gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+      <header className="relative isolate mb-8 grid items-stretch gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
+        {/* Barely visible hexagons behind the hero, fading out: depth, not decoration. */}
+        <div aria-hidden="true" className="hex-bg hex-fade pointer-events-none absolute -inset-x-4 -top-6 bottom-0 -z-10 md:-inset-x-6" />
         <div className="py-2 md:py-8">
-          <p className="text-sm font-semibold text-accent">An open ledger for news and markets</p>
-          <h1 className="mt-2 max-w-3xl text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[50px]">
+          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-bg px-3 py-1 text-xs font-semibold text-muted">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-pop ring-2 ring-pop/30" />
+            An open ledger for news and markets
+          </p>
+          <h1 className="mt-4 max-w-3xl text-[36px] font-semibold leading-[1.02] tracking-[-0.035em] md:text-[54px]">
             Does news really move markets? Spillover tests it in public.
           </h1>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link to="/submit" className="inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-[15px] font-semibold text-bg hover:opacity-90">
+            <Link to="/submit" className="inline-flex items-center gap-2 rounded-full bg-pop px-5 py-2.5 text-[15px] font-semibold text-on-pop hover:brightness-95">
               Write a claim
               <Icon name="arrowRight" size={16} />
             </Link>
@@ -224,7 +234,7 @@ function HomeBody({ site }: { site: SiteData }) {
             <StatRow
               label="Spillover so far"
               items={[
-                { value: String(site.claims.length), label: site.claims.length === 1 ? "claim" : "claims" },
+                { value: String(liveClaims(site).length), label: liveClaims(site).length === 1 ? "claim" : "claims" },
                 { value: String(frozen), label: "predictions frozen" },
                 { value: String(onRecord), label: "events on record" },
                 { value: String(contributors), label: contributors === 1 ? "contributor" : "contributors" },
@@ -232,7 +242,13 @@ function HomeBody({ site }: { site: SiteData }) {
             />
           </div>
         </div>
-        <Landscape className="hidden h-[300px] w-full rounded-3xl md:block" />
+        {/* The market as a basin: news lands, ripples spill into each other. Moving the pointer stirs it. */}
+        <div className="relative min-h-[190px] overflow-hidden rounded-3xl border border-line bg-bg md:min-h-[300px]">
+          <AsciiField className="absolute inset-0" />
+          <p aria-hidden="true" className="pointer-events-none absolute bottom-3 left-4 font-mono text-[11px] text-muted">
+            news lands · ripples spill over
+          </p>
+        </div>
       </header>
 
       <UpcomingStrip site={site} />

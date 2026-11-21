@@ -11,12 +11,21 @@ const GOOD: ClaimForm = {
   windowEnd: "+1_trading_day",
   expectedSign: "negative",
   baseline: "factor_only",
+  measure: "abnormal_return",
+  respondsTo: null,
   minEvents: 8,
   falsifier: "The interval includes zero after eight forward events.",
   handle: "someone",
 };
 
 describe("claim YAML generator and validator", () => {
+  it("writes a swing claim and a counter-claim the engine's schema accepts", () => {
+    const text = toYaml({ ...GOOD, measure: "abs_excess_return", respondsTo: { claim: "clm_other_v2", stance: "counter" } });
+    expect(text).toContain("measure: abs_excess_return");
+    expect(text).toContain("responds_to: {claim: clm_other_v2, stance: counter}");
+    expect(validateYaml(text)).toEqual([]);
+  });
+
   it("produces a claim that passes the engine's own JSON Schema", () => {
     expect(validateYaml(toYaml(GOOD))).toEqual([]);
   });

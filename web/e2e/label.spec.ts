@@ -85,3 +85,22 @@ test("with nothing to label yet, the page says so instead of showing an empty sp
   const send = await page.getByRole("heading", { name: "Add your labels to the project" }).boundingBox();
   expect(box && send && box.y + box.height <= send.y).toBe(true);
 });
+
+test("with only 'none of the above' labels, no accuracy number is shown", async ({ page }) => {
+  await page.route("**/data/site.json", async (route) => {
+    const res = await route.fetch();
+    const site = (await res.json()) as { labeling: { candidates: unknown[]; accuracy: unknown } };
+    site.labeling.candidates = HEADLINES;
+    site.labeling.accuracy = {
+      extractor_version: "rules-test", gold_sha256: "0".repeat(64), n_scored: 45, type_accuracy: 0.82,
+      entity_precision: 0, entity_recall: null, low_confidence_rate: 0, n_positive: 0, majority_baseline: 1,
+      event_recall: null, event_precision: 0, measurable: false,
+    };
+    await route.fulfill({ response: res, json: site });
+  });
+  await page.goto("/#/label");
+  const note = page.getByTestId("accuracy-not-measurable");
+  await expect(note).toContainText("Not measurable yet");
+  await expect(note).toContainText("100%");
+  await expect(page.getByText("82%")).toHaveCount(0);
+});

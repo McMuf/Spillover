@@ -8,7 +8,7 @@
 
 [data]
 out = "data/cache"
-start = "2021-01-01"
+start = "2017-01-01"  # FRED's S&P 500 series covers the last ten years
 
 [[series]]
 symbol = "SPX"
@@ -45,6 +45,48 @@ symbol = "WTI"
 provider = "fred"
 id = "DCOILWTICO"  # West Texas Intermediate crude oil spot price, US Energy Information Administration
 
+# --- Single stocks (Tiingo, adjusted daily closes) -------------------------------------------------
+# Off until the repository secret TIINGO_API_KEY exists. A free Tiingo account gives a key at once
+# (tiingo.com, Account > API): split- and dividend-adjusted daily closes going back decades, up to
+# 500 different tickers a month and 1,000 requests a day on the free plan. Read Tiingo's terms
+# before turning these on: only derived statistics are published, never prices. A stock that fails
+# to load is skipped, never fatal. Uncomment the block below once the key is set.
+#
+# [[series]]
+# symbol = "NVDA"   # Nvidia
+# provider = "tiingo"
+# id = "NVDA"
+#
+# [[series]]
+# symbol = "MU"     # Micron
+# provider = "tiingo"
+# id = "MU"
+#
+# [[series]]
+# symbol = "GOOGL"  # Alphabet
+# provider = "tiingo"
+# id = "GOOGL"
+#
+# [[series]]
+# symbol = "AMZN"   # Amazon
+# provider = "tiingo"
+# id = "AMZN"
+#
+# [[series]]
+# symbol = "MSFT"   # Microsoft
+# provider = "tiingo"
+# id = "MSFT"
+#
+# [[series]]
+# symbol = "TSM"    # TSMC
+# provider = "tiingo"
+# id = "TSM"
+#
+# [[series]]
+# symbol = "DAL"    # Delta Air Lines
+# provider = "tiingo"
+# id = "DAL"
+
 # --- Single stocks (Alpha Vantage, adjusted daily closes) -----------------------------------------
 # Off until the repository secret ALPHAVANTAGE_API_KEY exists. Its free tier (25 requests a day,
 # 100 days of history) is too small: the engine needs about 130 trading days before each event, and
@@ -78,6 +120,12 @@ type = "fred_release"
 release_id = 50  # Employment Situation (the jobs report)
 event_type = "JOBS_REPORT"
 entity = "BLS"
+
+# Big technology listings (IPOs and direct listings), from a reviewed list: one row per listing,
+# each with a source. New listings are added by pull request on or before their first trading day.
+[[events]]
+type = "csv"
+path = "events/curated/mega_tech_ipos.csv"
 
 [[events]]
 type = "store"

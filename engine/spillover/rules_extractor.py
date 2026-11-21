@@ -242,10 +242,7 @@ class RulesExtractor:
                 break
         if kind == NONE:
             return {"event_type": NONE, "entities": [], "confidence": "medium"}
-        scope = title
-        if kind == "REGULATORY_ACTION":
-            scope = target_segment(title) or title
-        strong, weak = self._companies(scope)
+        strong, weak = self._entities(title, kind)
         entities = sorted(strong | weak)[:8]
         if not entities:
             confidence = "low"
@@ -254,6 +251,16 @@ class RulesExtractor:
         else:
             confidence = "high"
         return {"event_type": kind, "entities": entities, "confidence": confidence}
+
+    def _entities(self, title: str, kind: str) -> tuple[set[str], set[str]]:
+        """Companies a headline of this kind is about: for a regulatory action, only its target."""
+        scope = (target_segment(title) or title) if kind == "REGULATORY_ACTION" else title
+        return self._companies(scope)
+
+    def label_entities(self, title: str, kind: str) -> list[str]:
+        """The listed companies a headline of this kind is about (used by other labelers too)."""
+        strong, weak = self._entities(title, kind)
+        return sorted(strong | weak)[:8]
 
     def _companies(self, title: str) -> tuple[set[str], set[str]]:
         """(identified unambiguously, identified by a single plain word)."""

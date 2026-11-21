@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from spillover.eventstudy import DEFAULT_BOOT, EST_GAP, EST_LEN
+from spillover.eventstudy import EST_GAP, EST_LEN, MIN_EST_DAYS
 from spillover.models import MIN_FORWARD_EVENTS_FLOOR
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,7 +12,8 @@ METHOD = (ROOT / "web" / "src" / "pages" / "Method.tsx").read_text()
 def test_the_method_page_states_the_engines_real_constants() -> None:
     assert f"{EST_LEN} trading days" in METHOD, "estimation window length"
     assert f"{EST_GAP} trading days before day 0" in METHOD, "gap before the event"
-    assert f"{DEFAULT_BOOT:,} resampled" in METHOD, "bootstrap resamples"
+    assert f"at least {MIN_EST_DAYS} clean days" in METHOD, "clean estimation days"
+    assert "Student" in METHOD and "t-interval" in METHOD, "the interval method"
 
 
 def test_the_method_page_uses_the_real_status_names() -> None:
@@ -23,3 +24,10 @@ def test_the_method_page_uses_the_real_status_names() -> None:
 def test_the_claim_floor_is_still_what_the_readme_template_says() -> None:
     assert MIN_FORWARD_EVENTS_FLOOR == 8
     assert "min_forward_events: 8" in (ROOT / "claims" / "_template.yaml").read_text()
+
+
+def test_the_citation_file_names_the_current_version() -> None:
+    import tomllib
+
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    assert f'version: "{version}"' in (ROOT / "CITATION.cff").read_text()

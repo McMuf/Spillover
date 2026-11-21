@@ -83,7 +83,7 @@ export function ReplicationList({ items, measure = "abnormal_return" }: { items:
                     {r.result.data_synthetic && " · on SYNTHETIC data"}
                   </p>
                   <p className="mt-1">
-                    <span className={claimStat(measure, r.result.mean).cls}>{claimStat(measure, r.result.mean).text}</span> <span className="text-muted">{intervalText(r.result.ci_lo, r.result.ci_hi)}</span>{" "}
+                    <span className={claimStat(measure, r.result.mean).cls}>{claimStat(measure, r.result.mean).text}</span> <span className="text-muted">{intervalText(r.result.ci_lo, r.result.ci_hi, measure)}</span>{" "}
                     · n={r.result.n_effective} of {r.result.n_matched} matched · as of {r.result.as_of}
                   </p>
                   <p className="mt-1 text-muted">{r.result.verdict}</p>

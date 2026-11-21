@@ -116,7 +116,7 @@ def test_graded_value_matches_the_backtest_statistic(market: MarketData, tmp_pat
     )
     outcome = grade_prediction(pred, market, NOW)
     assert outcome is not None
-    stat = next(e for e in run_backtest(claim, market, n_boot=200).events if e.event_id == event_id)
+    stat = next(e for e in run_backtest(claim, market).events if e.event_id == event_id)
     assert outcome.value == pytest.approx(stat.value)
     assert outcome.car == pytest.approx(stat.car)
     assert outcome.prediction_sha256 == pred.sha256
@@ -283,13 +283,16 @@ def test_scoreboard_supports_a_real_effect_and_rejects_the_wrong_sign(
     graded_shocks(market, good, preds, outs)
     graded_shocks(market, bad, preds, outs)
 
-    board = build_scoreboard([good, bad], outs, n_boot=2000)
+    board = build_scoreboard([good, bad], outs)
     rows = {r["claim_id"]: r for r in board["claims"]}
     assert rows["clm_syn_shock_v1"]["status"] == "Supported"
     assert rows["clm_syn_shock_v1"]["beat_baseline"] is True
     assert rows["clm_syn_shock_v1"]["q_value"] < 0.05
     assert rows["clm_syn_wrong_v1"]["status"] == "Not supported"
-    assert rows["clm_syn_shock_v1"]["effective_events"] >= 20
+    # Rules 0.2: the verdict rests on exactly the first min_events effective events; later events
+    # are counted separately and never change it (no optional stopping).
+    assert rows["clm_syn_shock_v1"]["effective_events"] == rows["clm_syn_shock_v1"]["min_events"]
+    assert rows["clm_syn_shock_v1"]["events_after_verdict"] >= 12
     assert board["synthetic"] is True  # outcomes graded on fixtures are always labeled
 
     who = {c["registered_by"]: c for c in board["contributors"]}
@@ -309,7 +312,7 @@ def test_scoreboard_proposed_until_enough_events_and_drafts_are_hidden(
         freeze(claim, preds, event_id, when)
     grade_all(preds, outs, market, NOW)
 
-    board = build_scoreboard([claim, draft], outs, n_boot=500)
+    board = build_scoreboard([claim, draft], outs)
     assert [r["claim_id"] for r in board["claims"]] == ["clm_syn_shock_v1"]
     row = board["claims"][0]
     assert row["status"] == "Proposed" and row["effective_events"] == 3
@@ -324,7 +327,7 @@ def test_a_placebo_that_works_raises_the_alert(market: MarketData, tmp_path: Pat
     )
     preds, outs = tmp_path / "predictions", tmp_path / "outcomes"
     graded_shocks(market, placebo, preds, outs)
-    board = build_scoreboard([placebo], outs, n_boot=2000)
+    board = build_scoreboard([placebo], outs)
     assert board["claims"][0]["placebo"] is True
     assert board["placebo"]["alert"] is True
     assert "engine is broken" in board["placebo"]["message"]
@@ -334,15 +337,15 @@ def test_scoreboard_is_deterministic_and_json_safe(market: MarketData, tmp_path:
     claim = make_claim(tmp_path)
     preds, outs = tmp_path / "predictions", tmp_path / "outcomes"
     graded_shocks(market, claim, preds, outs)
-    a = build_scoreboard([claim], outs, n_boot=500)
-    b = build_scoreboard([claim], outs, n_boot=500)
+    a = build_scoreboard([claim], outs)
+    b = build_scoreboard([claim], outs)
     assert a == b
     text = json.dumps(a, sort_keys=True, default=str)
     assert "NaN" not in text and "Infinity" not in text
 
 
 def test_empty_scoreboard_has_no_nans() -> None:
-    board = build_scoreboard([], Path("/nonexistent"), n_boot=10)
+    board = build_scoreboard([], Path("/nonexistent"))
     assert board["claims"] == [] and board["as_of"] is None
     assert all(not (isinstance(v, float) and math.isnan(v)) for v in board.values())
 
@@ -403,8 +406,6 @@ def test_cli_grade_scoreboard_round_trip(market: MarketData, tmp_path: Path) -> 
             str(outs),
             "--out",
             str(out),
-            "--boot",
-            "300",
         ],
     )
     assert s.exit_code == 0, s.output
@@ -446,3 +447,31 @@ def test_a_prediction_without_price_data_is_left_open_not_fatal(
     )
     assert result.exit_code == 0, result.output
     assert "not graded, no data" in result.output
+
+
+def test_a_verdict_cannot_change_after_its_fixed_sample(market: MarketData, tmp_path: Path) -> None:
+    """Later events never move a verdict: grading more of them leaves status and interval alone."""
+    claim = make_claim(tmp_path)
+    preds, outs = tmp_path / "predictions", tmp_path / "outcomes"
+    events = clear_shock_events(market)
+    for event_id, when in events[: claim.success.min_forward_events]:
+        freeze(claim, preds, event_id, when)
+    grade_all(preds, outs, market, NOW)
+    first = build_scoreboard([claim], outs)["claims"][0]
+    for event_id, when in events[claim.success.min_forward_events :]:
+        freeze(claim, preds, event_id, when)
+    grade_all(preds, outs, market, NOW)
+    later = build_scoreboard([claim], outs)["claims"][0]
+    for key in ("status", "mean", "ci_lo", "ci_hi", "p_value", "q_value"):
+        assert later[key] == first[key], key
+    assert later["events_after_verdict"] > 0
+
+
+def test_q_values_only_count_claims_that_finished_first() -> None:
+    from datetime import date as d
+
+    from spillover.scoreboard import completion_q_values
+
+    early = completion_q_values({"a": (d(2027, 1, 1), 0.01)})
+    both = completion_q_values({"a": (d(2027, 1, 1), 0.01), "b": (d(2027, 6, 1), 0.9)})
+    assert both["a"] == early["a"]  # a claim finishing later cannot move an earlier verdict

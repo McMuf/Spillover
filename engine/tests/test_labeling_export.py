@@ -44,9 +44,13 @@ def companies(tmp: Path) -> Path:
     return path
 
 
-def test_candidates_are_newest_first_and_carry_no_labeler_answer(tmp_path: Path) -> None:
+def test_candidates_alternate_likely_events_newest_first_and_carry_no_labeler_answer(
+    tmp_path: Path,
+) -> None:
     lab = build_labeling(store_with(tmp_path), tmp_path / "no-gold.jsonl", companies(tmp_path))
-    assert [c.headline_id for c in lab.candidates] == ["h2", "h1", "h0"]
+    # Likely events (h1, h0) alternate with the rest (h2), newest first within each, so the gold
+    # set gains real events and not only "none of the above".
+    assert [c.headline_id for c in lab.candidates] == ["h1", "h2", "h0"]
     dumped = lab.candidates[0].model_dump()
     assert set(dumped) == {"headline_id", "title", "source", "url", "published_at"}, (
         "labeling is blind"

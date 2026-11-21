@@ -96,3 +96,17 @@ describe("live news", () => {
     expect(mergeHeadlines([], build)).toEqual(build);
   });
 });
+
+describe("ranking", () => {
+  it("defaults to a plain catalogue and every order states its rule", async () => {
+    const { SORTS, sortClaims } = await import("./ranking");
+    expect(SORTS[0]!.key).toBe("kind");
+    expect(SORTS.every((s) => s.rule.length > 20)).toBe(true);
+    const a = makeClaim("clm_a_v1");
+    const b = makeClaim("clm_b_v1", { backtest: null });
+    const site = makeSite([a, b]);
+    site.upcoming = [{ event_id: "u", event_type: "X", origin: "calendar", date: "2026-12-01", entities: [], scheduled: true, sources: [], claim_ids: ["clm_b_v1"] }];
+    expect(sortClaims([a, b], "next", site).map((c) => c.claim.id)).toEqual(["clm_b_v1", "clm_a_v1"]);
+    expect(sortClaims([b, a], "evidence", site).map((c) => c.claim.id)).toEqual(["clm_a_v1", "clm_b_v1"]);
+  });
+});

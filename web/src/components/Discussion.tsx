@@ -44,7 +44,7 @@ export function Discussion({
               reactionsEnabled="1"
               emitMetadata="0"
               inputPosition="top"
-              theme="dark"
+              theme="light"
               lang="en"
               loading="lazy"
             />

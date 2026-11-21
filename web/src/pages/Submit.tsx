@@ -315,7 +315,7 @@ function Form({ site }: { site: SiteData }) {
                   role="radio"
                   aria-checked={direction === d.value}
                   onClick={() => setDirection(d.value)}
-                  className={` border p-3 text-left ${direction === d.value ? "border-fg bg-accent-soft" : "border-line hover:bg-surface"}`}
+                  className={`square border p-3 text-left ${direction === d.value ? "border-fg bg-accent-soft" : "border-line hover:bg-surface"}`}
                 >
                   <span className="block text-sm font-bold">{d.label}</span>
                   <span className="block text-xs text-muted">{d.hint}</span>

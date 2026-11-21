@@ -4,7 +4,7 @@ import { AreaChart } from "../components/AreaChart";
 import { FeedRow } from "../components/FeedRow";
 import { HowItWorks } from "../components/HowItWorks";
 import { Icon } from "../components/Icon";
-import { PourField } from "../components/PourField";
+import { Waterfall } from "../components/Waterfall";
 import { LedgerList } from "../components/LedgerList";
 import { Logo } from "../components/Logo";
 import { Ready } from "../components/Ready";
@@ -239,9 +239,9 @@ function HomeBody({ site }: { site: SiteData }) {
             />
           </div>
         </div>
-        {/* A glass filled by a pour of stock ticks until it spills over. */}
-        <div className="lift relative min-h-[260px] overflow-hidden bg-bg md:min-h-[340px]">
-          <PourField className="absolute inset-0" />
+        {/* A waterfall spilling over a cliff edge: Spillover, drawn literally. */}
+        <div className="lift relative min-h-[260px] overflow-hidden bg-black md:min-h-[360px]">
+          <Waterfall className="absolute inset-0" />
         </div>
       </header>
 

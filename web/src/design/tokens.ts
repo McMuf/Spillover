@@ -1,21 +1,20 @@
 /**
- * Design tokens. Spillover has one theme: light paper panels with a lime accent, raised on a deep
- * olive-black backdrop so the foreground stands clearly off the background. No switcher.
+ * Design tokens. Spillover has one theme: dark. Dark grey panels sit on a pure black backdrop with a
+ * faint white hexagon grid, so the foreground stands clearly off the background. No switcher.
  *
  * Components use semantic names (bg, fg, accent...) through CSS variables, never raw colors.
- * Green and red mean direction (up and down) and nothing else. Lime carries identity: bright lime
- * (`pop`) as a fill behind dark text (buttons, active items, highlights), and a deep olive-lime
- * (`accent`) for text and lines, because bright lime text on white is hard to read.
+ * Green and red mean direction (up and down) and nothing else. Lime carries identity: as a fill
+ * behind dark text (buttons, highlights) and as text for links and focus, which reads well on dark.
  */
 
-export type ThemeName = "light";
+export type ThemeName = "dark";
 
 export interface ColorTokens {
-  /** The plane behind everything: a deep olive-black the paper panels sit on, for depth. */
+  /** The plane behind everything: pure black, with a faint white hexagon grid. */
   backdrop: string;
   /** Text set directly on the backdrop. */
   onBackdrop: string;
-  /** Panel background: a warm off-white paper. */
+  /** Panel background: a grey near-black. */
   bg: string;
   /** Panels and raised areas. */
   surface: string;
@@ -46,30 +45,30 @@ export interface ColorTokens {
 }
 
 export const color: Record<ThemeName, ColorTokens> = {
-  light: {
-    backdrop: "#1a1c15",
-    onBackdrop: "#e9ebe0",
-    bg: "#fafaf7",
-    surface: "#f2f2ec",
-    surfaceAlt: "#e8e8e0",
-    line: "#e1e1d8",
-    fg: "#141413",
-    muted: "#5d5d55",
-    accent: "#3f6212",
-    onAccent: "#ffffff",
-    accentSoft: "#eef7cf",
+  dark: {
+    backdrop: "#000000",
+    onBackdrop: "#e6e7e2",
+    bg: "#161719",
+    surface: "#1e1f22",
+    surfaceAlt: "#28292d",
+    line: "#33353a",
+    fg: "#ededea",
+    muted: "#a3a49d",
+    accent: "#c5ef4a",
+    onAccent: "#141413",
+    accentSoft: "#2b3313",
     pop: "#c5ef4a",
     onPop: "#141413",
-    primary: "#141413",
-    onPrimary: "#fafaf7",
-    positive: "#13703a",
-    negative: "#b4232a",
-    noticeBg: "#f6f3df",
-    noticeFg: "#4f4520",
+    primary: "#ededea",
+    onPrimary: "#141413",
+    positive: "#4fd47f",
+    negative: "#ff7a7a",
+    noticeBg: "#2a2614",
+    noticeFg: "#ecdc8c",
   },
 };
 
-export const THEMES: ThemeName[] = ["light"];
+export const THEMES: ThemeName[] = ["dark"];
 
 export const radius = { card: "0px", pill: "0px" };
 export const font = {

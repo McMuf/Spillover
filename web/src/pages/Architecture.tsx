@@ -1,5 +1,5 @@
-import { Fragment } from "react";
 import { Link } from "react-router-dom";
+import { ArchitectureMap } from "../components/ArchitectureMap";
 
 const REPO = "https://github.com/McMuf/Spillover";
 
@@ -110,26 +110,14 @@ export default function Architecture() {
           How data moves
         </h2>
         <p className="mt-1 text-muted">Read left to right. Everything that is graded lives in Git.</p>
-        <ol className="mt-5 flex flex-col items-stretch gap-2 lg:flex-row lg:items-stretch">
-          {STAGES.map((s, i) => (
-            <Fragment key={s.title}>
-              <li className={`lift flex-1 p-4 ${s.title.startsWith("Engine") ? "bg-pop text-on-pop" : "bg-bg"}`}>
-                <h3 className="text-[15px] font-extrabold">{s.title}</h3>
-                <ul className="mt-2 space-y-1.5 text-sm">
-                  {s.items.map((it) => (
-                    <li key={it} className="border-t border-current/15 pt-1.5">
-                      {it}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-              {i < STAGES.length - 1 && (
-                <li aria-hidden="true" className="grid place-items-center py-1 text-xl font-bold text-muted lg:px-0.5 lg:py-0">
-                  <span className="lg:hidden">↓</span>
-                  <span className="hidden lg:inline">→</span>
-                </li>
-              )}
-            </Fragment>
+        <div className="lift mt-5 bg-black p-3 md:p-4">
+          <ArchitectureMap />
+        </div>
+        <ol className="sr-only">
+          {STAGES.map((s) => (
+            <li key={s.title}>
+              {s.title}: {s.items.join(", ")}
+            </li>
           ))}
         </ol>
       </section>
@@ -154,7 +142,7 @@ export default function Architecture() {
         </h2>
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           {PARTS.map((p) => (
-            <article key={p.name} className="border border-fg bg-bg p-5">
+            <article key={p.name} className="border border-line bg-bg p-5">
               <h3 className="text-[17px] font-extrabold">{p.name}</h3>
               <p className="mt-2 text-[15px] leading-relaxed">{p.does}</p>
               <p className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-muted">{p.why}</p>
@@ -171,7 +159,7 @@ export default function Architecture() {
         <div tabIndex={0} role="region" aria-label="Scheduled jobs (scrollable)" className="lift mt-5 overflow-x-auto bg-bg">
           <table className="w-full min-w-[40rem] text-left text-[15px]">
             <thead>
-              <tr className="border-b border-fg">
+              <tr className="border-b border-line">
                 <th scope="col" className="px-4 py-3 text-[13px] font-medium text-muted">Workflow</th>
                 <th scope="col" className="px-4 py-3 text-[13px] font-medium text-muted">Runs on</th>
                 <th scope="col" className="px-4 py-3 text-[13px] font-medium text-muted">What it does</th>

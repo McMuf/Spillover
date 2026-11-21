@@ -30,7 +30,7 @@ export function ago(iso: string, now = Date.now()): string {
 
 /** The label at the right of a row, like "Briefing" or "Testable". */
 function Label({ children }: { children: ReactNode }) {
-  return <span className="shrink-0 rounded-full bg-surface-alt px-2.5 py-0.5 text-xs font-medium text-muted">{children}</span>;
+  return <span className="shrink-0 bg-surface-alt px-2.5 py-0.5 text-xs font-medium text-muted">{children}</span>;
 }
 
 function Row({
@@ -90,7 +90,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
       return (
         <Row
           avatar={
-            <span aria-hidden="true" className="block overflow-hidden rounded-full">
+            <span aria-hidden="true" className="block overflow-hidden">
               <BrandMark size={40} />
             </span>
           }
@@ -197,14 +197,14 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
                 href={q.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+                className="inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
               >
                 <Icon name="message" size={14} />
                 {q.comments ? `${q.comments} repl${q.comments === 1 ? "y" : "ies"}` : "Answer"}
               </a>
               <Link
                 to={`/submit?statement=${encodeURIComponent(q.title)}`}
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+                className="inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
               >
                 <Icon name="pen" size={14} />
                 Shape into a claim
@@ -237,7 +237,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
                 {h.event_type !== "NONE" && (
                   <Link
                     to={`/submit?eventType=${encodeURIComponent(h.event_type)}`}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
+                    className="inline-flex shrink-0 items-center gap-1 border border-line px-3 py-1 text-[13px] font-semibold hover:bg-surface-alt"
                   >
                     <Icon name="pen" size={14} />
                     Claim: {eventLabel(h.event_type)}
@@ -253,7 +253,7 @@ export function FeedRow({ item, site, fresh }: { item: FeedItem; site: SiteData;
             </HeadlineActions>
             {h.image && (
               <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
-                <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 rounded-xl md:h-24 md:w-36" />
+                <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 md:h-24 md:w-36" />
               </a>
             )}
           </div>

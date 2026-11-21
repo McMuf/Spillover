@@ -14,7 +14,7 @@ export function StatusBadge({ status }: { status: Status }) {
   const s = STYLE[status];
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md bg-surface-alt px-2 py-0.5 text-xs font-semibold ${s.cls}`}
+      className={`inline-flex items-center gap-1  bg-surface-alt px-2 py-0.5 text-xs font-semibold ${s.cls}`}
     >
       <span aria-hidden="true">{s.mark}</span>
       {status}

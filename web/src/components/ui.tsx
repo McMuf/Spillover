@@ -70,7 +70,7 @@ export function Stamp({ children }: { children: ReactNode }) {
 /** A small grey label chip, like "AI & TECH". */
 export function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md bg-surface-alt px-2 py-0.5 text-xs font-semibold text-muted">
+    <span className="inline-flex shrink-0 items-center bg-surface-alt px-2 py-0.5 text-xs font-semibold text-muted">
       {children}
     </span>
   );
@@ -79,7 +79,7 @@ export function Tag({ children }: { children: ReactNode }) {
 /** A hairline-outlined label next to a symbol, like "PERP". */
 export function OutlineTag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md border border-line px-1.5 py-0.5 text-[13px] font-medium text-muted">
+    <span className="inline-flex shrink-0 items-center border border-line px-1.5 py-0.5 text-[13px] font-medium text-muted">
       {children}
     </span>
   );
@@ -87,7 +87,7 @@ export function OutlineTag({ children }: { children: ReactNode }) {
 
 /**
  * A market pill: logo, symbol, an optional number, and an arrow for its direction (green up, red down,
- * grey when direction does not apply). Filled and rounded because it is something you can tap.
+ * grey when direction does not apply). Filled because it is something you can tap.
  */
 export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string; value?: string; to?: string; dir?: Direction }) {
   const tone = { up: "text-positive", down: "text-negative", flat: "text-muted" }[dir];
@@ -102,7 +102,7 @@ export function TickerChip({ symbol, value, to, dir = "flat" }: { symbol: string
       {to && <span className="sr-only"> (open claim)</span>}
     </>
   );
-  const cls = "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-alt py-1 pl-1 pr-3 text-[13px]";
+  const cls = "inline-flex shrink-0 items-center gap-1.5 bg-surface-alt py-1 pl-1 pr-3 text-[13px]";
   return to ? (
     <Link to={to} className={`${cls} relative z-10 hover:bg-line`}>
       {body}
@@ -132,7 +132,7 @@ export function PillButton({
       aria-pressed={active}
       aria-label={label}
       onClick={onClick}
-      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ${
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 text-sm font-semibold ${
         active ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"
       }`}
     >
@@ -162,7 +162,7 @@ export function Segmented<T extends string>({
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${value === o.value ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`}
+          className={`whitespace-nowrap px-3.5 py-1.5 text-[13px] font-semibold ${value === o.value ? "bg-fg text-bg" : "border border-line text-muted hover:text-fg"}`}
         >
           {o.label}
         </button>
@@ -179,7 +179,7 @@ export function IconButton({ icon, label, onClick, disabled }: { icon: IconName;
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="grid h-9 w-9 place-items-center rounded-full bg-surface-alt text-fg hover:bg-line disabled:text-muted disabled:opacity-50"
+      className="grid h-9 w-9 place-items-center bg-surface-alt text-fg hover:bg-line disabled:text-muted disabled:opacity-50"
     >
       <Icon name={icon} size={18} />
     </button>
@@ -188,7 +188,7 @@ export function IconButton({ icon, label, onClick, disabled }: { icon: IconName;
 
 export function BackButton({ to, label = "Back" }: { to: string; label?: string }) {
   return (
-    <Link to={to} aria-label={label} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-alt text-fg hover:bg-line">
+    <Link to={to} aria-label={label} className="grid h-9 w-9 shrink-0 place-items-center bg-surface-alt text-fg hover:bg-line">
       <Icon name="back" size={18} />
     </Link>
   );
@@ -214,7 +214,7 @@ export function ActionLink({
       ? "bg-fg text-bg hover:opacity-90"
       : "border border-line text-fg hover:bg-surface";
   return (
-    <Link to={to} className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${cls}`}>
+    <Link to={to} className={`inline-flex items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-semibold ${cls}`}>
       {children}
       {icon && <Icon name={icon} size={16} />}
     </Link>

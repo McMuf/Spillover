@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, type IconName } from "../components/Icon";
-import { AsciiField } from "../components/AsciiField";
 import { NodeLegend } from "../components/NodeLegend";
 
 /**
@@ -39,7 +38,7 @@ function Life() {
       <span aria-hidden="true" className="absolute left-[23px] top-6 bottom-6 border-l-2 border-dashed border-accent/40 md:left-6 md:right-6 md:top-[23px] md:bottom-auto md:border-l-0 md:border-t-2" />
       {LIFE.map((s, i) => (
         <li key={s.title} className="relative flex gap-4 md:block">
-          <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full bg-pop text-on-pop ring-8 ring-bg">
+          <span className="relative grid h-12 w-12 shrink-0 place-items-center bg-pop text-on-pop ring-8 ring-bg">
             <Icon name={s.icon} size={20} />
           </span>
           <div className="md:mt-4">
@@ -59,14 +58,14 @@ function WindowDiagram() {
   // Proportions: 120 estimation days, a 10-day gap, then day 0 and the event window (shown wider
   // than scale so it can be read).
   return (
-    <figure className="rounded-2xl bg-surface p-5 md:p-6">
+    <figure className="bg-surface p-5 md:p-6">
       <div className="flex h-14 items-stretch gap-1 text-xs font-semibold" aria-hidden="true">
-        <div className="flex flex-[12] items-center justify-center rounded-l-xl bg-accent-soft text-accent">Normal days</div>
+        <div className="flex flex-[12] items-center justify-center bg-accent-soft text-accent">Normal days</div>
         <div className="flex flex-[1.6] items-center justify-center bg-[repeating-linear-gradient(135deg,var(--c-line)_0_6px,transparent_6px_12px)] text-muted">
           gap
         </div>
-        <div className="relative flex flex-[0.9] items-center justify-center rounded-md bg-pop text-on-pop">0</div>
-        <div className="flex flex-[2.6] items-center justify-center rounded-r-xl bg-notice-bg text-fg">window</div>
+        <div className="relative flex flex-[0.9] items-center justify-center bg-pop text-on-pop">0</div>
+        <div className="flex flex-[2.6] items-center justify-center bg-notice-bg text-fg">window</div>
       </div>
       <div className="mt-3 grid grid-cols-[12fr_1.6fr_0.9fr_2.6fr] gap-1 text-[12px] leading-snug text-muted" aria-hidden="true">
         <span>Estimation window: what a normal day looks like</span>
@@ -116,7 +115,7 @@ function Steps() {
 function Measures() {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-2xl bg-surface p-5">
+      <div className="bg-surface p-5">
         <svg viewBox="0 0 200 70" className="h-16 w-full" aria-hidden="true">
           <line x1="0" x2="200" y1="45" y2="45" stroke="var(--c-muted)" strokeDasharray="3 4" />
           <path d="M0 45 L40 44 L70 46 L95 45 L110 30 L135 22 L160 18 L200 14" fill="none" stroke="var(--c-accent)" strokeWidth="2.5" strokeLinejoin="round" />
@@ -127,7 +126,7 @@ function Measures() {
           Did the market move more than the baseline explains, <em>in the stated direction</em>? Most claims test this.
         </p>
       </div>
-      <div className="rounded-2xl bg-surface p-5">
+      <div className="bg-surface p-5">
         <svg viewBox="0 0 200 70" className="h-16 w-full" aria-hidden="true">
           {[14, 10, 16, 12, 9, 15, 11].map((h, i) => (
             <rect key={i} x={8 + i * 18} y={60 - h} width="10" height={h} rx="2" fill="var(--c-line)" />
@@ -163,7 +162,7 @@ function Collecting({ have, need }: { have: number; need: number }) {
   return (
     <div className="flex h-6 items-center gap-1" aria-hidden="true">
       {Array.from({ length: need }, (_, i) => (
-        <span key={i} className={`h-2.5 flex-1 rounded-full ${i < have ? "bg-accent" : "bg-line"}`} />
+        <span key={i} className={`h-2.5 flex-1  ${i < have ? "bg-accent" : "bg-line"}`} />
       ))}
     </div>
   );
@@ -218,14 +217,14 @@ function Statuses() {
         </StatusRow>
       </dl>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <p className="rounded-2xl bg-surface p-5 text-[15px] leading-relaxed">
+        <p className="bg-surface p-5 text-[15px] leading-relaxed">
           <strong>The range.</strong> <span className="text-muted">A Student t-interval for the average across events. It was
           chosen by simulation: with 8 events and no real effect it is wrong about 5% of the time, as a 95% range should be.
           The percentile bootstrap used before (rules 0.1) was wrong 11 to 18% of the time, so it was replaced before any
           claim was graded. Size claims are tested on the move&apos;s rank, which stays honest with few events. Fewer than two
           events: no interval.</span>
         </p>
-        <p className="rounded-2xl bg-surface p-5 text-[15px] leading-relaxed">
+        <p className="bg-surface p-5 text-[15px] leading-relaxed">
           <strong>Fixed stopping, one standard.</strong> <span className="text-muted">A verdict uses exactly the first N events the
           claim asked for, so nobody can wait until the numbers happen to look good; later events are shown but never
           counted. Test enough claims and some look real by luck, so p-values are adjusted (Benjamini-Hochberg) together with
@@ -250,10 +249,10 @@ const LIMITS: { title: string; body: string }[] = [
 function Limits() {
   return (
     <>
-      <ul className="grid gap-px overflow-hidden rounded-2xl bg-line sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-px overflow-hidden bg-line sm:grid-cols-2 lg:grid-cols-3">
         {LIMITS.map((l) => (
           <li key={l.title} className="bg-bg p-5">
-            <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-full bg-notice-bg text-notice-fg">
+            <span aria-hidden="true" className="grid h-8 w-8 place-items-center bg-notice-bg text-notice-fg">
               <Icon name="close" size={14} />
             </span>
             <h3 className="mt-3 font-bold">{l.title}</h3>
@@ -261,7 +260,7 @@ function Limits() {
           </li>
         ))}
       </ul>
-      <p className="mt-4 rounded-2xl bg-notice-bg px-5 py-4 text-[15px] leading-relaxed text-notice-fg">
+      <p className="mt-4 bg-notice-bg px-5 py-4 text-[15px] leading-relaxed text-notice-fg">
         <strong>Nothing on this site is investment advice.</strong> Costs, slippage, risk and regime change are not modeled,
         and a claim that held in a sample says nothing about what to buy or sell.
       </p>
@@ -324,13 +323,9 @@ const JUMP = [
 export default function Method() {
   return (
     <div className="space-y-12">
-      <header className="hex-bg relative overflow-hidden rounded-3xl border border-line bg-surface">
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] border-l border-line bg-bg md:block">
-          <AsciiField seed={7} className="absolute inset-0" />
-        </div>
-        <div className="relative px-6 py-10 md:w-[60%] md:px-10 md:py-14">
-          <p className="text-sm font-semibold text-accent">How it works</p>
-          <h1 className="mt-2 text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">How the numbers are made</h1>
+      <header className="hex-bg lift relative overflow-hidden bg-surface">
+        <div className="relative px-6 py-10 md:w-[70%] md:px-10 md:py-14">
+          <h1 className="text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">How the numbers are made</h1>
           <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-muted">
             Every claim goes through the same public steps, the standard event-study method. If this page and the code ever
             disagree, the code is wrong:{" "}
@@ -345,7 +340,7 @@ export default function Method() {
                 key={id}
                 type="button"
                 onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
-                className="rounded-full bg-bg/80 px-3.5 py-1.5 text-[13px] font-semibold text-fg hover:bg-bg"
+                className="bg-bg/80 px-3.5 py-1.5 text-[13px] font-semibold text-fg hover:bg-bg"
               >
                 {label}
               </button>
@@ -412,10 +407,10 @@ export default function Method() {
             ))}
           </ul>
           <div className="mt-8 flex flex-wrap gap-2">
-            <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
+            <Link to="/" className="inline-flex items-center gap-2 bg-fg px-4 py-2 text-sm font-semibold text-bg hover:opacity-90">
               See the claims
             </Link>
-            <Link to="/scoreboard" className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-surface">
+            <Link to="/scoreboard" className="inline-flex items-center gap-2 border border-line px-4 py-2 text-sm font-semibold hover:bg-surface">
               Scoreboard
             </Link>
           </div>

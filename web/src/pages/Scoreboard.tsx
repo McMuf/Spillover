@@ -64,12 +64,12 @@ function Board({ site }: { site: SiteData }) {
 
       <Card title="By claim" stamp={stamp} id="claims-h" kicker={{ icon: "scoreboard", label: "Forward results only" }}>
         {sb.claims.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">
+          <p className="border border-dashed border-line p-4 text-sm text-muted">
             No claims are registered yet, so there is no forward evidence to score. Draft claims are on the{" "}
             <Link className="underline" to="/">claims page</Link> with backtest-only results.
           </p>
         ) : (
-          <div tabIndex={0} role="region" aria-label="Scoreboard by claim (scrollable)" className="overflow-x-auto rounded-2xl bg-surface">
+          <div tabIndex={0} role="region" aria-label="Scoreboard by claim (scrollable)" className="overflow-x-auto bg-surface">
             <table className="w-full min-w-[44rem] text-left text-sm">
               <caption className="sr-only">Scoreboard by claim</caption>
               <thead className="bg-surface-alt text-xs text-muted">
@@ -118,7 +118,7 @@ function Board({ site }: { site: SiteData }) {
                     ["Supported", plainPct(c.share_supported)],
                     ["Hit rate", plainPct(c.hit_rate)],
                   ].map(([k, v]) => (
-                    <div key={k} className="rounded-xl bg-surface-alt px-2 py-3">
+                    <div key={k} className="bg-surface-alt px-2 py-3">
                       <dt className="text-xs text-muted">{k}</dt>
                       <dd className="text-xl font-extrabold">{v}</dd>
                     </div>

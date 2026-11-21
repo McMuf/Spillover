@@ -40,7 +40,7 @@ const EventWindowChart = lazy(() =>
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 const H3 = "mb-3 text-lg font-bold";
-const PANEL = "rounded-2xl bg-surface p-5 md:p-6";
+const PANEL = " bg-surface p-5 md:p-6";
 
 /* ---------- Situation overview ---------- */
 
@@ -74,7 +74,7 @@ function Situation({ item, site }: { item: SiteClaim; site: SiteData }) {
         </ul>
 
         <h2 className={`${H3} mt-7`}>The claim, as registered</h2>
-        <blockquote className="border-l-2 border-line pl-4 font-serif text-[18px] leading-relaxed">{clean(c.statement)}</blockquote>
+        <blockquote className="border-l-2 border-line pl-4 text-[16px] leading-relaxed">{clean(c.statement)}</blockquote>
         <p className="mt-2 text-xs text-muted">
           <span className="font-mono">{c.id}</span>
           {", by "}<PersonLink handle={c.registered_by} />
@@ -176,10 +176,10 @@ function EmbedBox({ claimId }: { claimId: string }) {
           rows={3}
           value={snippet}
           onFocus={(e) => e.currentTarget.select()}
-          className="mt-1 w-full rounded-xl bg-surface-alt p-3 font-mono text-xs text-fg"
+          className="mt-1 w-full bg-surface-alt p-3 font-mono text-xs text-fg"
         />
       </label>
-      <button type="button" onClick={copy} className="mt-2 rounded-full bg-surface-alt px-4 py-2 text-sm font-semibold hover:bg-line">
+      <button type="button" onClick={copy} className="mt-2 bg-surface-alt px-4 py-2 text-sm font-semibold hover:bg-line">
         {copied ? "Copied" : "Copy embed code"}
       </button>
     </details>
@@ -240,10 +240,10 @@ function Markets({ item, setTab }: { item: SiteClaim; setTab: (t: string) => voi
           {m.main && chart && <AreaChart values={chart.mean} markIndex={chart.days.indexOf(0)} height={170} tone={TONE[claimStat(c.measure, b?.mean).dir]} />}
           {m.main && (
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setTab("evidence")} className="rounded-full bg-fg py-2.5 font-bold text-bg hover:opacity-90">
+              <button type="button" onClick={() => setTab("evidence")} className="bg-fg py-2.5 font-bold text-bg hover:opacity-90">
                 View evidence
               </button>
-              <button type="button" onClick={() => setTab("sides")} className="rounded-full bg-surface-alt py-2.5 font-bold hover:bg-line">
+              <button type="button" onClick={() => setTab("sides")} className="bg-surface-alt py-2.5 font-bold hover:bg-line">
                 Challenge
               </button>
             </div>
@@ -262,11 +262,11 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
   const q = new URLSearchParams({ template: "challenge.yml", title: `Challenge: ${id}`, claim: id });
   const registered = item.status !== "Draft";
   const verdict = whatPastDataSays(item);
-  const link = "inline-flex rounded-full bg-surface-alt px-4 py-2 text-sm font-semibold hover:bg-line";
+  const link = "inline-flex bg-surface-alt px-4 py-2 text-sm font-semibold hover:bg-line";
   return (
     <div className="space-y-6">
       <section className={PANEL} aria-label="Opposite sides">
-        <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-full text-center text-sm font-bold">
+        <div className="grid grid-cols-2 gap-1 overflow-hidden text-center text-sm font-bold">
           <span className="bg-surface-alt py-2">Supporters</span>
           <span className="bg-surface-alt py-2 text-muted">Skeptics</span>
         </div>
@@ -292,7 +292,7 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
       </p>
 
       {!registered && (
-        <p role="note" className="rounded-2xl bg-surface p-4 text-sm text-muted">
+        <p role="note" className="bg-surface p-4 text-sm text-muted">
           This claim is a draft. Challenges and replications apply after it is registered; before that, comment on its pull
           request.
         </p>
@@ -301,7 +301,7 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
       <section aria-labelledby="resp-h">
         <h2 id="resp-h" className={H3}>Counter-claims and refinements ({item.responses.length})</h2>
         {item.claim.responds_to && (
-          <p className="mb-3 rounded-2xl bg-surface p-4 text-sm">
+          <p className="mb-3 bg-surface p-4 text-sm">
             This claim is a {item.claim.responds_to.stance === "counter" ? "counter-claim to" : "refinement of"}{" "}
             <Link className="font-semibold text-accent underline" to={`/claims/${item.claim.responds_to.claim}`}>
               {item.claim.responds_to.claim}
@@ -312,8 +312,8 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
         {item.responses.length > 0 ? (
           <ul className="space-y-2">
             {item.responses.map((r) => (
-              <li key={r.claim_id} className="rounded-2xl border border-line bg-bg p-4">
-                <span className={`mr-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${r.stance === "counter" ? "bg-pop text-on-pop" : "bg-surface-alt"}`}>
+              <li key={r.claim_id} className="border border-line bg-bg p-4">
+                <span className={`mr-2  px-2 py-0.5 text-[11px] font-semibold ${r.stance === "counter" ? "bg-pop text-on-pop" : "bg-surface-alt"}`}>
                   {r.stance === "counter" ? "Counter-claim" : "Refinement"}
                 </span>
                 <Link className="text-[15px] font-semibold hover:underline" to={`/claims/${r.claim_id}`}>
@@ -323,7 +323,7 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
             ))}
           </ul>
         ) : (
-          <p className="rounded-2xl bg-surface p-4 text-sm text-muted">
+          <p className="bg-surface p-4 text-sm text-muted">
             None yet. A counter-claim expects the opposite and is graded on its own, by the same rules, on the same events.
           </p>
         )}
@@ -331,18 +331,18 @@ function Sides({ item, site }: { item: SiteClaim; site: SiteData }) {
 
       <section aria-labelledby="chl-h">
         <h2 id="chl-h" className={H3}>Challenges ({item.challenges.length})</h2>
-        {item.challenges.length > 0 ? <ChallengeList items={item.challenges} /> : <p className="rounded-2xl bg-surface p-4 text-sm text-muted">None yet.</p>}
+        {item.challenges.length > 0 ? <ChallengeList items={item.challenges} /> : <p className="bg-surface p-4 text-sm text-muted">None yet.</p>}
       </section>
 
       <section aria-labelledby="rep-h">
         <h2 id="rep-h" className={H3}>Replications ({item.replications.length})</h2>
-        {item.replications.length > 0 ? <ReplicationList items={item.replications} measure={item.claim.measure} /> : <p className="rounded-2xl bg-surface p-4 text-sm text-muted">None yet.</p>}
+        {item.replications.length > 0 ? <ReplicationList items={item.replications} measure={item.claim.measure} /> : <p className="bg-surface p-4 text-sm text-muted">None yet.</p>}
       </section>
 
       <section aria-labelledby="start-h" className="space-y-3">
         <h2 id="start-h" className={H3}>Contribute</h2>
         <div className="flex flex-wrap gap-2">
-          <Link className="inline-flex rounded-full bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95" to={`/submit?counter=${encodeURIComponent(id)}`}>
+          <Link className="inline-flex bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95" to={`/submit?counter=${encodeURIComponent(id)}`}>
             Write a counter-claim
           </Link>
           <Link className={link} to={`/submit?refine=${encodeURIComponent(id)}`}>
@@ -377,7 +377,7 @@ function Evidence({ item, site }: { item: SiteClaim; site: SiteData }) {
   const placebo = site.claims.find((p) => p.claim.event_type === "RANDOM_DATE" && !p.superseded_by && p.backtest && p.claim.id !== item.claim.id);
   const isPlacebo = item.claim.event_type === "RANDOM_DATE";
   if (!b) return <p className="text-muted">No backtest could be run: {item.backtest_error}</p>;
-  const tableWrap = "overflow-auto rounded-2xl bg-surface";
+  const tableWrap = "overflow-auto bg-surface";
   const th = "px-4 py-3 text-[13px] font-medium text-muted";
 
   return (
@@ -547,7 +547,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             {b ? `${b.n_effective} past events tested, as of ${b.as_of}` : "Not tested yet"}
           </Stamp>
         </div>
-        <h1 className="font-serif text-[32px] font-medium leading-[1.12] md:text-[44px]">
+        <h1 className="text-3xl font-extrabold leading-tight tracking-tight md:text-[40px]">
           <Highlight text={shortHeadline(item)} terms={highlightTerms(item)} />
         </h1>
         <p className="mt-3 text-[17px] leading-relaxed text-muted">{whatWeTest(item)}</p>
@@ -573,8 +573,8 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
         </Tabs.Root>
 
         {/* Where a market page has its order ticket: the evidence so far and the citation. Nothing to buy. */}
-        <aside aria-label="Claim summary" className="lg:sticky lg:top-20 lg:self-start">
-          <div className={PANEL}>
+        <aside aria-label="Claim summary" className="lg:sticky lg:top-24 lg:self-start">
+          <div className={`${PANEL} lift`}>
             <div className="mb-5 flex items-center gap-3">
               <Logo symbol={c.instrument.symbol} size={40} />
               <div className="min-w-0">
@@ -621,7 +621,7 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
             </div>
             <div className="grid gap-2">
               <div className="grid grid-cols-[1fr_auto] gap-2">
-                <button type="button" onClick={() => void copy("text")} className="flex items-center justify-center gap-2 rounded-full bg-fg py-2.5 font-bold text-bg hover:opacity-90">
+                <button type="button" onClick={() => void copy("text")} className="flex items-center justify-center gap-2 bg-fg py-2.5 font-bold text-bg hover:opacity-90">
                   <Icon name="copy" size={16} />
                   {copied === "text" ? "Copied" : "Copy citation"}
                 </button>
@@ -629,12 +629,12 @@ function ClaimBody({ item, site }: { item: SiteClaim; site: SiteData }) {
                   type="button"
                   onClick={() => void copy("bibtex")}
                   aria-label="Copy as BibTeX, for LaTeX papers"
-                  className="rounded-full border border-line px-4 py-2.5 text-sm font-bold hover:bg-surface"
+                  className="border border-line px-4 py-2.5 text-sm font-bold hover:bg-surface"
                 >
                   {copied === "bibtex" ? "Copied" : "BibTeX"}
                 </button>
               </div>
-              <button type="button" onClick={() => setTab("sides")} className="flex items-center justify-center gap-2 rounded-full bg-surface-alt py-2.5 font-bold hover:bg-line">
+              <button type="button" onClick={() => setTab("sides")} className="flex items-center justify-center gap-2 bg-surface-alt py-2.5 font-bold hover:bg-line">
                 <Icon name="flag" size={16} />
                 Challenge this claim
               </button>

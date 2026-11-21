@@ -80,7 +80,7 @@ Spillover is a market research tool for hobbyists, students and curious people. 
 - **Backtest it before you commit.** The engine runs an *event study* over 3 to 5 years of history: it finds past events of that type, measures what the instrument did beyond what the broader market explains, and reports the result with a 95% interval.
 - **Freeze live predictions.** When a new qualifying event appears (a scheduled release, an SEC filing or a labeled headline), the engine writes a prediction, hashes it, and commits it to an append-only ledger *before* the window closes. Bitcoin-anchored timestamps (OpenTimestamps) make the commit time hard to fake.
 - **Grade against reality.** After the window closes, the engine scores the call against the realized abnormal return and a naive baseline. Wins and misses are both published.
-- **Show the reasoning as a chain.** Each claim reads left to right as who triggers it, what happens and which market should move, using a fixed visual language of six node types; a news-by-market map shows every claim at once and which pairs nobody has tested.
+- **Show the reasoning as a chain.** Each claim reads left to right as who triggers it, what happens and which market should move, using a fixed visual language of six node types.
 - **Follow the news.** A News tab with the latest market headlines from outlets worldwide (display only) and the events on record. Hover a headline (or press its **Claim ideas** button) to choose between reading the article and turning it into a claim: ideas come from fixed rules (the company, its suppliers and peers, the listed backers of an unlisted company such as Anthropic's), each opening the form partly filled in. Each story opens to what happened, what past events like it did to markets, who is involved and the measured data.
 - **Measure its own labelers.** Two free labelers turn headlines into events: phrase rules (the default) and a small open AI model that runs locally (MiniLM sentence embeddings, Apache-2.0, pinned to one commit; no API, key or cost). People label a sample of headlines by hand on the site; those labels are the test set for both, and accuracy is only published once the set holds enough real events to mean something, next to the score of always giving the most common answer.
 - **Correct mistakes in the open.** The event record is append-only. A wrong event is withdrawn by a reviewed line in `labels/retracted.txt` with its reason; the original stays visible.
@@ -97,7 +97,7 @@ Spillover is a market research tool for hobbyists, students and curious people. 
 - **[Event-study engine](#5-event-study-engine):** Market model, abnormal returns, cumulative abnormal returns, Student t-intervals checked by simulation, a fixed stopping rule and false-discovery-rate correction ([methodology](docs/methodology.md)).
 - **[Prediction ledger](#6-prediction-ledger-and-timestamps):** Append-only, hashed, timestamped records of every forward call.
 - **[Scoring and calibration](#7-scoring-and-calibration):** Public rules, applied identically to everyone.
-- **[Claim chains and the news map](#8-claim-chains-and-the-news-map):** each claim drawn as a readable chain (who → what happens → which market), and a news-by-market map of every claim.
+- **[Claim chains](#8-claim-chains):** each claim drawn as a readable chain (who → what happens → which market).
 - **[Web app](#9-web-app):** A calm, finance-app-style interface with one light theme and a lime accent, built in TypeScript.
 - **[Contribution tooling](#contributing):** `make` targets, issue forms and CI checks, including a trusted bot comment on every pull request, that give contributors fast, specific feedback.
 - **Docs:** [Methodology](docs/methodology.md), [governance](GOVERNANCE.md), [contributor guide](CONTRIBUTING.md), [security policy](SECURITY.md) and [code of conduct](CODE_OF_CONDUCT.md).
@@ -224,11 +224,11 @@ Claims are drawn with six node types. Each has its own shape, a three-letter tag
 
 - **Every numeric edge shows five things:** the estimate, its interval, the sample size, the window and the as-of date. No bare numbers.
 - **Green and red mean direction, as on any market screen.** A number above zero is green, below zero is red, and every colored number also carries its sign, so color is never the only cue. A backtest estimate in green is still a backtest: the label next to it always says so. Verdicts (Supported, Not supported) use the same colors plus a ✓ or ✕ and the word itself.
-- **Light, one theme.** A warm off-white page and near-black text, set in Geist with tabular figures for numbers. Claim statements, and only those, are set in the Newsreader serif, because a claim's words are what gets frozen. Geist Mono is kept for ids, hashes, code and the ASCII art. Labels are sentence case, without tracked capitals or `A · B` meta strings. No dark mode and no switcher.
-- **One brand color, lime.** Bright lime is only ever a fill behind dark text (the main button, the live marker, highlights), because lime text on white is hard to read; a deep olive-lime marks links, the focus ring, the "Proposed" status and chart lines whose direction does not apply. Backgrounds are flat, with barely visible hexagon geometry behind heroes and some panels for depth. Green and red say direction and nothing else. Lists are flat with hairlines; things you can tap, and panels that hold a picture, are rounded.
+- **Two planes, one theme.** Paper panels (warm off-white, near-black text) sit on a deep olive-black backdrop with a faint lime hexagon grid, so the foreground stands clearly off the background. Raised things on the paper (the hero picture, the ledger, key panels and the main buttons) have an ink edge and a hard ink shadow, and the buttons sink into it when pressed. Every corner is square. One typeface, Geist, with tabular figures for numbers; Geist Mono only for ids, hashes, code and the ASCII art. Labels are sentence case, without tracked capitals or `A · B` meta strings. No dark mode and no switcher.
+- **One brand color, lime.** Bright lime is only ever a fill behind dark text (the main button, the live marker, highlights), because lime text on white is hard to read; a deep olive-lime marks links, the focus ring, the "Proposed" status and chart lines whose direction does not apply. Green and red say direction and nothing else. Lists inside a panel are separated by hairlines.
 - **Pictures before paragraphs.** Explanations lead with a diagram (the event window to scale, a status as the interval that produces it) and keep text to a sentence or two.
 - **The mark.** A hexagonal basin with water inside and a stream spilling over its edge, in ink on lime (`web/src/components/BrandMark.tsx`); the browser-tab icon `web/public/favicon.svg` is generated from the same drawing, and a test keeps them identical.
-- **The basin.** The moving ASCII art in the home page's side column (`web/src/components/AsciiField.tsx`) is a small wave simulation: news lands as a drop, ripples spread and spill into each other, and the ticker flashes where it landed. It pauses off screen and is a still frame for people who ask for reduced motion.
+- **The pour.** The home page's ASCII art (`web/src/components/PourField.tsx`) is a glass being filled by a steady stream of stock ticks until it spills over. Each character is one tick of a random price walk, green (`/ ^ +`) when the price went up and red (`\ v -`) when it went down, and the stream sways with the price so the pour draws a chart. Once the glass is full the ticks run over the rim and across the table. It is a small falling-liquid simulation, pauses off screen, and is a still, already overflowing frame for people who ask for reduced motion.
 - **A node without a source cannot exist.** Events need a link; instruments need a data source; factors need a series definition.
 - **Index membership is its own edge type** (`weight`), drawn differently from `spillover`, so mechanical effects and real effects never share a line.
 - **The graph is capped at about 40 nodes** per view. Past that, the view collapses into a table.
@@ -241,7 +241,7 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 ## Screens and user experience
 
 > [!NOTE]
-> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: a warm off-white page, a lime accent, flat lists, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
+> Wireframes below are ASCII sketches of intent, not final designs. The visual direction is a **calm finance-app feel**: paper panels on a dark backdrop, a lime accent, square corners, tabular numerals and tabs on detail pages. Spillover does **not** copy any commercial app's branding, typeface, interface icons or screenshots.
 
 ### Design principles
 
@@ -255,11 +255,12 @@ Because many assets trade in more than one place (a stock on an exchange, a perp
 
 ### Screen 1: Home (the feed)
 
-- **The latest freeze** leads the page: the newest frozen prediction as a ledger entry, with its number, its statement, a stamp with the freeze time, the prediction's SHA-256 hash and whether its timestamp proof is attached. On first view the hash settles from noise into its value and the stamp lands, once (skipped for reduced motion).
+- **The hero** is the name, one sentence about what Spillover does, the two main actions and the pour.
 - **The ledger** lists every live claim as a numbered entry, in the order claims were frozen. Replaced versions keep their numbers, because the ledger is append-only.
 - **The feed** mixes news, claims, questions and the record, with the claims that have the most evidence first. Each claim card leads with a plain-language headline, the market it is about (with the company or index logo), a status badge and the evidence meter.
 - **Recent events** below, and a short "how it works" explanation at the bottom for first-time visitors.
-- **Explore** (`#/explore`) lists every claim with filters, and its **Map** tab is the news-by-market table: rows are kinds of news, columns are markets, and an empty cell is a pair nobody has tested.
+- **Explore** (`#/explore`) lists every claim with filters and orders.
+- **Architecture** (`#/architecture`) explains how the system is built: how data moves from inputs through the engine into Git and the website, why it has this shape, each part, the scheduled jobs, the rules for pull requests from forks, and the stack.
 - **Evidence meter** shows forward events collected versus required, so "Inconclusive" reads as "not enough data yet," not "failed."
 
 ### Screen 2: Claim page (tabs)
@@ -530,22 +531,21 @@ Events come from the FOMC calendar, your own events CSV, and [headline feeds run
 - *Rules version in each record:* grading is reproducible under the rules that applied when the claim was registered.
 - *Calibration plot, not just hit rate:* a 60% hit rate means little without knowing how confident the claim was. Calibration shows whether stated confidence matches reality.
 
-### 8. Claim chains and the news map
+### 8. Claim chains
 
-**What it does.** Shows how a claim is wired and how claims relate, without asking anyone to learn a diagram language.
+**What it does.** Shows how a claim is wired, without asking anyone to learn a diagram language.
 
-**How.** Every claim page draws the claim as a chain read left to right: **who** triggers the event (entity), **what happens** (event), and **which market** should move (instrument), with the backtest estimate on the market. Underneath sit what it is **measured against** (factor), the **rules applied** (conditions) and the **frozen predictions**. Each step keeps one of the six fixed node shapes and is labeled with its role in words, so nobody has to learn the shapes to read it. The link to the market is dashed while the sample is smaller than the claim requires, and the estimate always shows its interval, sample size, window and as-of date. Across claims, the Explore page's **Map** is a table with kinds of news as rows and markets as columns: each filled cell is a claim with its estimate, and an empty cell is a pair nobody has tested yet.
+**How.** Every claim page draws the claim as a chain read left to right: **who** triggers the event (entity), **what happens** (event), and **which market** should move (instrument), with the backtest estimate on the market. Underneath sit what it is **measured against** (factor), the **rules applied** (conditions) and the **frozen predictions**. Each step keeps one of the six fixed node shapes and is labeled with its role in words, so nobody has to learn the shapes to read it. The link to the market is dashed while the sample is smaller than the claim requires, and the estimate always shows its interval, sample size, window and as-of date.
 
 **Why this design.**
 - *A chain, not a force-directed graph:* a claim is a short, fixed sequence. Laying it out as one reads like a sentence and needs no panning, zooming or legend. An earlier Cytoscape graph was replaced for this reason, which also removed its 470 KB bundle.
-- *A matrix for relationships across claims:* "which news moves which market" is a two-way table. Rows and columns scale to hundreds of claims, stay readable on a phone, and are fully accessible as a real HTML table, which a node-link graph is not.
 - *Labels over legends:* every step says what it is in words; the six-shape legend remains on the Method page for reference.
 
 ### 9. Web app
 
 **What it does.** Presents claims, evidence, the forward log and the scoreboard.
 
-**How.** React with TypeScript on Vite, styled with Tailwind using design tokens, Radix primitives for accessible tabs and dialogs, TradingView Lightweight Charts for the event-window chart; claim chains and the news map are plain HTML and SVG. Data is loaded from static JSON produced by the engine. Types come from the generated schema.
+**How.** React with TypeScript on Vite, styled with Tailwind using design tokens, Radix primitives for accessible tabs and dialogs, TradingView Lightweight Charts for the event-window chart; claim chains are plain HTML and SVG. Data is loaded from static JSON produced by the engine. Types come from the generated schema.
 
 **Why this design.**
 - *React plus TypeScript:* the most widely known combination among front-end contributors and the stack many fintech teams use, which lowers the barrier to contribute and makes the work legible to reviewers.
@@ -632,7 +632,7 @@ Ranking leans on signals that are hard to fake: a real event just tested the cla
 | Scheduling | **GitHub Actions** | Free, versioned with the code, no server |
 | Front end | **React, TypeScript, Vite, Tailwind, Radix** | See [Web app](#9-web-app) |
 | Charts | **TradingView Lightweight Charts** | Finance-native, small, Apache-2.0 (attribution required) |
-| Claim chains and news map | **Plain HTML and SVG** | A claim is a short chain and claims form a two-way table; neither needs a graph library |
+| Claim chains | **Plain HTML and SVG** | A claim is a short chain, which needs no graph library |
 | Testing | **Vitest, Playwright, axe-core** | Fast unit tests, a browser smoke test and an automated accessibility audit |
 | Hosting | **GitHub Pages** | Free static hosting alongside the code |
 | Timestamps | **OpenTimestamps (`ots` client)** | Free, open, Bitcoin-anchored |
@@ -831,7 +831,7 @@ Security issues should be reported privately, using GitHub's "Report a vulnerabi
 |---|---|---|
 | **M1: Engine on fixtures** *(done; also runs on real data)* | Event study runs end to end on cached data | `make test-claim` produces a correct report for the two control claims |
 | **M2: Ledger** *(live: forward predictions frozen since November 16, 2026; timestamp proofs are requested as they are frozen)* | Predictions frozen, hashed and timestamped | A forward prediction is committed with a verifiable OpenTimestamps proof |
-| **M3: Web** *(live; shows real results once ingestion is on)* | Claims map, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
+| **M3: Web** *(live; shows real results once ingestion is on)* | Claim list, claim page, scoreboard | The static site deploys to Pages with the six-shape legend and accessibility checks passing |
 | **M4: Open the doors** | Contribution tooling and first outside contributors | Issue forms, CI comment bot and contributor guide live; 20 starter claims registered. *Forms, bot, guide, the guided claim form, the News tab and the label page are built. 7 live claims (5 tests and 2 controls) under rules 0.2, the newest about CrowdStrike and acquisitions. Single-stock prices are on for eleven large US stocks from Tiingo (Alpha Vantage is also built, off). Big tech listings (19 since 2012, from a reviewed list in `labels/`) are an event type, so "a big tech IPO moves its backers" can be backtested.* |
 | **M5: Community, phase 1** *(built)* | People discuss claims and see each other's records | Discussion threads on claims and stories, and profile pages; see [Community](#community-planned) |
 | **M6: Community, phases 2 and 3** *(started: Questions are built)* | Questions, backing, follows, pseudonyms, reputation | A hosted social layer that never changes a grade |

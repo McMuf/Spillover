@@ -25,7 +25,7 @@ export function CheckIns({ item }: { item: SiteClaim }) {
         {horizons.map((h) => {
           const stat = claimStat(m, h.mean);
           return (
-            <li key={h.label} className="rounded-xl border border-line bg-bg p-3">
+            <li key={h.label} className="border border-line bg-bg p-3">
               <p className="text-[13px] font-medium text-muted">{h.label}</p>
               {h.note ? (
                 <p className="mt-1 text-xs leading-snug text-muted">{h.note}</p>

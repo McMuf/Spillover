@@ -6,8 +6,8 @@ import type { SiteData } from "../generated/site";
 import { type Draft, goldRows, loadDrafts, parseTickers, saveDrafts, toJsonl } from "../lib/gold";
 import { plainPct } from "../lib/format";
 
-const PANEL = "rounded-2xl bg-surface p-5 md:p-6";
-const FIELD = "mt-1 w-full rounded-xl border border-transparent bg-surface-alt px-3 py-2.5 text-[15px] text-fg focus:border-accent";
+const PANEL = " bg-surface p-5 md:p-6";
+const FIELD = "mt-1 w-full border border-transparent bg-surface-alt px-3 py-2.5 text-[15px] text-fg focus:border-accent";
 
 function LabelBody({ site }: { site: SiteData }) {
   const lab = site.labeling;
@@ -59,7 +59,7 @@ function LabelBody({ site }: { site: SiteData }) {
         {lab.accuracy && !lab.accuracy.measurable ? (
           // Honest by construction: on a gold set of only "none of the above", a labeler that always
           // answers "none" scores 100%, so no accuracy number is shown until there are real events.
-          <div className="mt-3 rounded-xl bg-notice-bg p-4 text-[15px] leading-relaxed text-notice-fg" data-testid="accuracy-not-measurable">
+          <div className="mt-3 bg-notice-bg p-4 text-[15px] leading-relaxed text-notice-fg" data-testid="accuracy-not-measurable">
             <p className="font-semibold">Not measurable yet.</p>
             <p className="mt-1">
               {lab.accuracy.n_positive} of {lab.accuracy.n_scored} labeled headlines are real events; the rest are &ldquo;none of
@@ -77,7 +77,7 @@ function LabelBody({ site }: { site: SiteData }) {
                 ["All answers right", plainPct(lab.accuracy.type_accuracy)],
                 ["Always answering the most common label", plainPct(lab.accuracy.majority_baseline)],
               ].map(([k, v]) => (
-                <div key={k} className="rounded-xl bg-surface-alt p-3">
+                <div key={k} className="bg-surface-alt p-3">
                   <dt className="text-xs text-muted">{k}</dt>
                   <dd className="text-xl font-extrabold">{v}</dd>
                 </div>
@@ -187,11 +187,11 @@ function LabelBody({ site }: { site: SiteData }) {
             type="button"
             onClick={download}
             disabled={added === 0}
-            className="rounded-full bg-fg px-5 py-2.5 font-bold text-bg hover:brightness-110 disabled:opacity-50"
+            className="bg-fg px-5 py-2.5 font-bold text-bg hover:brightness-110 disabled:opacity-50"
           >
             Download gold.jsonl
           </button>
-          <button type="button" onClick={copy} disabled={added === 0} className="rounded-full bg-surface-alt px-5 py-2.5 font-bold hover:bg-line disabled:opacity-50">
+          <button type="button" onClick={copy} disabled={added === 0} className="bg-surface-alt px-5 py-2.5 font-bold hover:bg-line disabled:opacity-50">
             {copied ? "Copied" : "Copy contents"}
           </button>
         </div>

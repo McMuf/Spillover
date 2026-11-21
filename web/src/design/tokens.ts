@@ -1,5 +1,6 @@
 /**
- * Design tokens. Spillover has one theme: light, with a lime accent. No switcher.
+ * Design tokens. Spillover has one theme: light paper panels with a lime accent, raised on a deep
+ * olive-black backdrop so the foreground stands clearly off the background. No switcher.
  *
  * Components use semantic names (bg, fg, accent...) through CSS variables, never raw colors.
  * Green and red mean direction (up and down) and nothing else. Lime carries identity: bright lime
@@ -10,7 +11,11 @@
 export type ThemeName = "light";
 
 export interface ColorTokens {
-  /** Page background: a warm off-white. */
+  /** The plane behind everything: a deep olive-black the paper panels sit on, for depth. */
+  backdrop: string;
+  /** Text set directly on the backdrop. */
+  onBackdrop: string;
+  /** Panel background: a warm off-white paper. */
   bg: string;
   /** Panels and raised areas. */
   surface: string;
@@ -42,6 +47,8 @@ export interface ColorTokens {
 
 export const color: Record<ThemeName, ColorTokens> = {
   light: {
+    backdrop: "#1a1c15",
+    onBackdrop: "#e9ebe0",
     bg: "#fafaf7",
     surface: "#f2f2ec",
     surfaceAlt: "#e8e8e0",
@@ -64,7 +71,7 @@ export const color: Record<ThemeName, ColorTokens> = {
 
 export const THEMES: ThemeName[] = ["light"];
 
-export const radius = { card: "16px", pill: "999px" };
+export const radius = { card: "0px", pill: "0px" };
 export const font = {
   sans: '"Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   mono: '"Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
@@ -73,6 +80,7 @@ export const font = {
 /** Pairs that must meet WCAG AA (4.5:1) for normal text. Checked by a unit test. */
 export const textPairs: ReadonlyArray<readonly [keyof ColorTokens, keyof ColorTokens]> = [
   ["fg", "bg"],
+  ["onBackdrop", "backdrop"],
   ["fg", "surface"],
   ["fg", "surfaceAlt"],
   ["fg", "accentSoft"],

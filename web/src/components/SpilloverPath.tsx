@@ -12,7 +12,7 @@ import { NodeShape } from "./NodeShape";
 /** One step in the chain, labeled with its role and its node type, so no legend is needed to read it. */
 function Step({ type, role, children }: { type: NodeTypeKey; role: string; children: ReactNode }) {
   return (
-    <li className="min-w-0 rounded-2xl bg-surface p-4">
+    <li className="min-w-0 bg-surface p-4">
       <p className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-muted">
         <NodeShape type={type} size={14} />
         {role}
@@ -83,7 +83,7 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
               <p className="mb-1.5 text-xs text-muted">Equal-weighted basket of {p.market.basket.length}:</p>
               <ul className="flex flex-wrap gap-1.5" aria-label="Basket members">
                 {p.market.basket.map((m) => (
-                  <li key={m} className="flex items-center gap-1 rounded-full bg-surface-alt py-0.5 pl-0.5 pr-2 text-xs font-semibold">
+                  <li key={m} className="flex items-center gap-1 bg-surface-alt py-0.5 pl-0.5 pr-2 text-xs font-semibold">
                     <Logo symbol={m} size={16} />
                     {m}
                   </li>
@@ -109,7 +109,7 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
         </Step>
       </ol>
 
-      <dl className="mt-3 divide-y divide-line rounded-2xl bg-surface px-4">
+      <dl className="mt-3 divide-y divide-line bg-surface px-4">
         <div className="grid gap-1 py-3 sm:grid-cols-[13rem_1fr]">
           <dt className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
             <NodeShape type="factor" size={14} /> Measured against
@@ -158,7 +158,7 @@ export function SpilloverPath({ item, site }: { item: SiteClaim; site: SiteData 
                 {p.predictions.recent.map((r) => (
                   <span
                     key={r.eventId}
-                    className={`rounded-md bg-surface-alt px-2 py-0.5 text-xs font-semibold ${r.outcome === "hit" ? "text-positive" : r.outcome === "miss" ? "text-negative" : "text-muted"}`}
+                    className={` bg-surface-alt px-2 py-0.5 text-xs font-semibold ${r.outcome === "hit" ? "text-positive" : r.outcome === "miss" ? "text-negative" : "text-muted"}`}
                   >
                     {r.date} {r.outcome === "hit" ? "✓ hit" : r.outcome === "miss" ? "✕ miss" : "open"}
                   </span>

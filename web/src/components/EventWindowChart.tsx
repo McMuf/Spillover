@@ -101,7 +101,7 @@ export function EventWindowChart({ chart, tone = "neutral" }: { chart: Chart; to
         className={`pointer-events-none absolute top-0 flex h-[250px] items-start justify-center text-[10px] text-muted ${cls}`}
         style={{ left: Math.min(from, to), width: Math.abs(to - from) }}
       >
-        <span className="mt-1 whitespace-nowrap rounded bg-surface/80 px-1">{label}</span>
+        <span className="mt-1 whitespace-nowrap bg-surface/80 px-1">{label}</span>
       </div>
     ) : null;
 

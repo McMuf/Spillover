@@ -13,7 +13,7 @@ import { claimStat, intervalText, scoreboardRow } from "../lib/format";
 export default function EmbedClaim() {
   const { id } = useParams();
   return (
-    <main className="p-3">
+    <main className="min-h-screen bg-bg p-3">
       <Ready>
         {(site) => {
           const item = findClaim(site, id);
@@ -23,7 +23,7 @@ export default function EmbedClaim() {
           const b = item.backtest;
           const full = `${window.location.origin}${window.location.pathname}#/claims/${c.id}`;
           return (
-            <article className="rounded-2xl bg-surface p-5" data-testid="embed-card">
+            <article className="bg-surface p-5" data-testid="embed-card">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <StatusBadge status={item.status} />
                 <span className="font-mono text-xs text-muted">{c.id}</span>

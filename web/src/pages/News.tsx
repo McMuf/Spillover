@@ -92,8 +92,8 @@ function Headlines({ live }: { live: LiveNews }) {
       <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted">
         <span className="mr-2 inline-flex items-center gap-1.5 font-semibold text-fg">
           <span className="relative inline-block h-2 w-2">
-            {live.source === "live" && <span className="live-halo absolute inset-0 rounded-full bg-positive" />}
-            <span className={`absolute inset-0 rounded-full ${live.source === "live" ? "bg-positive" : "bg-muted"}`} />
+            {live.source === "live" && <span className="live-halo absolute inset-0 bg-positive" />}
+            <span className={`absolute inset-0  ${live.source === "live" ? "bg-positive" : "bg-muted"}`} />
           </span>
           {live.source === "live" ? "Live" : newest ? `Updated ${ago(newest, Date.now())}` : "From the last build"}
         </span>
@@ -112,7 +112,7 @@ function Headlines({ live }: { live: LiveNews }) {
             <article className={`border-b border-line pb-6 ${live.fresh.has(lead.headline_id) ? "arrive" : ""}`}>
               {lead.image && (
                 <a href={lead.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true">
-                  <NewsImage key={lead.image} src={lead.image} domain={lead.domain} onFail={markBroken} className="mb-4 aspect-[2/1] max-h-[380px] w-full rounded-2xl" />
+                  <NewsImage key={lead.image} src={lead.image} domain={lead.domain} onFail={markBroken} className="mb-4 aspect-[2/1] max-h-[380px] w-full" />
                 </a>
               )}
               <h2 className="text-[26px] font-extrabold leading-tight md:text-[30px]">
@@ -134,7 +134,7 @@ function Headlines({ live }: { live: LiveNews }) {
                 </div>
                 {h.image && (
                   <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
-                    <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 rounded-xl md:h-24 md:w-36" />
+                    <NewsImage src={h.image} domain={h.domain} className="h-20 w-28 md:h-24 md:w-36" />
                   </a>
                 )}
               </li>
@@ -154,7 +154,7 @@ function Headlines({ live }: { live: LiveNews }) {
                   </div>
                   {h.image && (
                     <a href={h.url} target="_blank" rel="noopener noreferrer nofollow" tabIndex={-1} aria-hidden="true" className="shrink-0">
-                      <NewsImage src={h.image} domain={h.domain} className="h-14 w-20 rounded-lg" />
+                      <NewsImage src={h.image} domain={h.domain} className="h-14 w-20" />
                     </a>
                   )}
                 </li>
@@ -248,7 +248,7 @@ function OnRecord({ site }: { site: SiteData }) {
         )}
       </div>
       <aside aria-label="About the record" className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <section aria-labelledby="record-about-h" className="rounded-[20px] bg-surface p-5">
+        <section aria-labelledby="record-about-h" className="bg-surface p-5">
           <h2 id="record-about-h" className="text-[17px] font-bold">
             Where these come from
           </h2>

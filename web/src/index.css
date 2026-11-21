@@ -2,6 +2,8 @@
 
 /* Semantic colors map onto the CSS variables that design/theme.ts writes from design/tokens.ts. */
 @theme inline {
+  --color-backdrop: var(--c-backdrop);
+  --color-on-backdrop: var(--c-on-backdrop);
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
   --color-surface-alt: var(--c-surface-alt);
@@ -21,9 +23,7 @@
   --color-notice-fg: var(--c-notice-fg);
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  /* Claim statements only: the words a claim froze, set apart from the interface like a quoted entry. */
-  --font-serif: "Newsreader Variable", ui-serif, Georgia, "Times New Roman", serif;
-  --radius-card: 16px;
+  --radius-card: 0px;
   /* Geist reads best a little lighter than the defaults: crisp, not heavy. */
   --font-weight-extrabold: 680;
   --font-weight-bold: 620;
@@ -38,7 +38,11 @@ html {
 
 body {
   margin: 0;
-  background: var(--c-bg, #fafaf7);
+  /* The backdrop: a deep plane with a faint lime hexagon grid. Paper panels sit on top of it. */
+  background-color: var(--c-backdrop, #1a1c15);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cpath d='M14 0 L28 8.08 L28 24.25 L14 32.33 L0 24.25 L0 8.08 Z M14 32.33 L14 48.5 M0 24.25 L0 40.42 M28 24.25 L28 40.42' fill='none' stroke='%23c5ef4a' stroke-opacity='0.07' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 28px 48.5px;
+  background-attachment: fixed;
   color: var(--c-fg, #141413);
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
@@ -63,6 +67,34 @@ h3 {
  * Barely visible hexagon geometry behind heroes and panels, for depth without decoration. Drawn
  * as an SVG tile (pointy-top hexagons, 28px across) in near-black at a few percent opacity.
  */
+/* A paper panel raised off the backdrop: the first plane of depth. */
+.sheet {
+  background: var(--c-bg);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 28px 60px -24px rgba(0, 0, 0, 0.85),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+/* Something raised off the paper: ink edge and a hard ink shadow, sharp like a cut card. */
+.lift {
+  border: 1px solid var(--c-fg);
+  box-shadow: 5px 5px 0 0 var(--c-fg);
+}
+/* A pressable lift: it sinks into its shadow when pressed. */
+.lift-press {
+  border: 1px solid var(--c-fg);
+  box-shadow: 3px 3px 0 0 var(--c-fg);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.lift-press:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--c-fg);
+}
+.lift-press:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 var(--c-fg);
+}
+
 .hex-bg {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'%3E%3Cpath d='M14 0 L28 8.08 L28 24.25 L14 32.33 L0 24.25 L0 8.08 Z M14 32.33 L14 48.5 M0 24.25 L0 40.42 M28 24.25 L28 40.42' fill='none' stroke='%23141413' stroke-opacity='0.055' stroke-width='1'/%3E%3C/svg%3E");
   background-size: 28px 48.5px;

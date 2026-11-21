@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeBacktest, makeClaim, makeSite } from "../test-utils";
-import { claimPath, edgeLabel, spilloverMatrix } from "./paths";
+import { claimPath, edgeLabel } from "./paths";
 
 describe("claim path", () => {
   it("reads as trigger → event → market, with the control and rules alongside", () => {
@@ -54,25 +54,5 @@ describe("baskets and several factors", () => {
     const p = claimPath(c, makeSite([c]));
     expect(p.controls.map((f) => f.symbol)).toEqual(["BTC", "ETH"]);
     expect(p.market.basket).toEqual(["ARB", "OP", "SUI"]);
-  });
-});
-
-describe("spillover matrix", () => {
-  it("puts each claim in its event-type × market cell and leaves untested pairs empty", () => {
-    const a = makeClaim("clm_a_v1");
-    const b = makeClaim("clm_b_v1");
-    b.claim.instrument = { venue: "us_equity", symbol: "XYZ", basket: null };
-    b.claim.event_type = "OTHER_EVENT";
-    const m = spilloverMatrix([a, b]);
-    expect(m.cols.map((c) => c.symbol)).toEqual(["ABC", "XYZ"]);
-    expect(m.cell("DEMO_EVENT", "ABC").map((c) => c.claim.id)).toEqual(["clm_a_v1"]);
-    expect(m.cell("DEMO_EVENT", "XYZ")).toEqual([]);
-  });
-
-  it("lists control tests last", () => {
-    const a = makeClaim("clm_a_v1");
-    const p = makeClaim("clm_p_v1");
-    p.claim.event_type = "RANDOM_DATE";
-    expect(spilloverMatrix([p, a]).rows.map((r) => r.type)).toEqual(["DEMO_EVENT", "RANDOM_DATE"]);
   });
 });

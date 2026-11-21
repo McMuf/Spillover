@@ -21,7 +21,7 @@ export function Discussion({
   const [open, setOpen] = useState(false);
   if (!discussionsEnabled(config)) return null;
   return (
-    <section aria-labelledby={`discussion-${term}`} className="rounded-2xl bg-surface p-5">
+    <section aria-labelledby={`discussion-${term}`} className="bg-surface p-5">
       <h2 id={`discussion-${term}`} className="text-xl font-bold">
         Discussion
       </h2>
@@ -54,7 +54,7 @@ export function Discussion({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-4 rounded-full bg-surface-alt px-5 py-2 text-sm font-semibold text-fg hover:bg-line"
+          className="mt-4 bg-surface-alt px-5 py-2 text-sm font-semibold text-fg hover:bg-line"
         >
           {comments > 0 ? `Show discussion (${comments} comment${comments === 1 ? "" : "s"})` : "Show discussion"}
         </button>

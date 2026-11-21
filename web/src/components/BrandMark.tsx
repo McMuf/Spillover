@@ -23,7 +23,7 @@ export function BrandMark({ size = 28 }: { size?: number }) {
           <path d={MARK_PATHS.hex} />
         </clipPath>
       </defs>
-      <rect width="32" height="32" rx="8" fill={MARK.tile} />
+      <rect width="32" height="32" fill={MARK.tile} />
       <path d={MARK_PATHS.water} fill={MARK.ink} clipPath={`url(#${id}-basin)`} />
       <path d={MARK_PATHS.hex} fill="none" stroke={MARK.ink} strokeWidth="2.2" strokeLinejoin="round" />
       <path d={MARK_PATHS.spill} fill="none" stroke={MARK.ink} strokeWidth="2.2" strokeLinecap="round" />
@@ -36,7 +36,7 @@ export function markSvg(): string {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">`,
     `<defs><clipPath id="b"><path d="${MARK_PATHS.hex}"/></clipPath></defs>`,
-    `<rect width="32" height="32" rx="8" fill="${MARK.tile}"/>`,
+    `<rect width="32" height="32" fill="${MARK.tile}"/>`,
     `<path d="${MARK_PATHS.water}" fill="${MARK.ink}" clip-path="url(#b)"/>`,
     `<path d="${MARK_PATHS.hex}" fill="none" stroke="${MARK.ink}" stroke-width="2.2" stroke-linejoin="round"/>`,
     `<path d="${MARK_PATHS.spill}" fill="none" stroke="${MARK.ink}" stroke-width="2.2" stroke-linecap="round"/>`,

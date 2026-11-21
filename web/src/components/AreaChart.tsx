@@ -60,8 +60,8 @@ export function AreaChart({
       {live && (
         // Drawn in HTML so the dot stays round while the line stretches to fit.
         <span className="absolute right-0 h-2 w-2 -translate-y-1/2 translate-x-1/2" style={{ top: yOf(last) }}>
-          <span className="live-halo absolute inset-0 rounded-full" style={{ background: stroke }} />
-          <span className="absolute inset-0 rounded-full" style={{ background: stroke }} />
+          <span className="live-halo absolute inset-0" style={{ background: stroke }} />
+          <span className="absolute inset-0" style={{ background: stroke }} />
         </span>
       )}
     </div>

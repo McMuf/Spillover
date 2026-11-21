@@ -14,6 +14,7 @@ const NAV: { to: string; label: string; end: boolean; icon: IconName }[] = [
   { to: "/scoreboard", label: "Scoreboard", end: false, icon: "scoreboard" },
   { to: "/people", label: "People", end: false, icon: "people" },
   { to: "/method", label: "How it works", end: false, icon: "method" },
+  { to: "/architecture", label: "Architecture", end: false, icon: "layers" },
 ];
 
 const CONTRIBUTE: { to: string; label: string; icon: IconName }[] = [
@@ -59,7 +60,7 @@ export function Shell() {
   const site = state.phase === "ready" ? state.site : null;
   const repo = site?.meta.repo ?? "McMuf/Spillover";
   // Listing and claim pages use the full width; reading pages stay at a readable measure.
-  const wide = ["/", "/explore", "/news", "/questions", "/scoreboard", "/method"].includes(pathname) || pathname.startsWith("/claims/");
+  const wide = ["/", "/explore", "/news", "/questions", "/scoreboard", "/method", "/architecture"].includes(pathname) || pathname.startsWith("/claims/");
 
   const topics = site ? topicCounts(site) : [];
   const search = (
@@ -77,9 +78,9 @@ export function Shell() {
           void navigate(q ? `/explore?q=${encodeURIComponent(q)}` : "/explore", { replace: pathname === "/explore" });
         }}
         placeholder="Search claims, markets or kinds of news"
-        className="w-full rounded-full bg-surface py-2.5 pl-11 pr-10 text-sm text-fg placeholder:text-muted focus:bg-bg"
+        className="w-full bg-surface py-2.5 pl-11 pr-10 text-sm text-fg placeholder:text-muted focus:bg-bg"
       />
-      <kbd aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-line px-1.5 text-xs text-muted xl:block">
+      <kbd aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 border border-line px-1.5 text-xs text-muted xl:block">
         /
       </kbd>
     </label>
@@ -87,12 +88,12 @@ export function Shell() {
 
   return (
     <div className="relative isolate flex min-h-screen flex-col">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-1 focus:text-on-accent">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-accent focus:px-3 focus:py-1 focus:text-on-accent">
         Skip to content
       </a>
 
       <header className="sticky top-0 z-40 px-2 pt-2 md:px-4 md:pt-3">
-        <div className="mx-auto max-w-[1440px] rounded-2xl border border-line bg-bg/85 backdrop-blur-md">
+        <div className="sheet mx-auto max-w-[1440px]">
         <div className="flex items-center gap-4 px-3 py-2.5 md:px-4 xl:gap-8">
           <Link to="/" className="flex shrink-0 items-center gap-2.5 text-[19px] font-extrabold tracking-tight xl:w-[208px]">
             <BrandMark size={30} />
@@ -100,12 +101,12 @@ export function Shell() {
           </Link>
           <div className="hidden max-w-xl flex-1 md:block">{search}</div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <Link to="/submit" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-pop px-4 py-2 text-sm font-semibold text-on-pop hover:brightness-95">
+            <Link to="/submit" className="lift-press inline-flex items-center gap-1.5 whitespace-nowrap bg-pop px-4 py-2 text-sm font-semibold text-on-pop">
               <Icon name="submit" size={16} />
               <span className="sm:hidden">Submit</span>
               <span className="hidden sm:inline">Submit a claim</span>
             </Link>
-            <a href={`https://github.com/${repo}`} aria-label="Source on GitHub" className="grid h-9 w-9 place-items-center rounded-full border border-line text-muted hover:text-fg">
+            <a href={`https://github.com/${repo}`} aria-label="Source on GitHub" className="grid h-9 w-9 place-items-center border border-line text-muted hover:text-fg">
               <Icon name="source" size={16} />
             </a>
           </div>
@@ -134,16 +135,16 @@ export function Shell() {
       </header>
 
       {site?.meta.data_synthetic && (
-        <div role="note" className="mx-2 mt-2 rounded-xl bg-notice-bg px-4 py-2 text-center text-xs text-notice-fg md:mx-4" data-testid="synthetic-banner">
+        <div role="note" className="mx-auto mt-3 w-[calc(100%-1rem)] max-w-[1440px] bg-notice-bg px-4 py-2 text-center text-xs text-notice-fg md:w-[calc(100%-2rem)]" data-testid="synthetic-banner">
           <strong className="text-fg">Synthetic demo data.</strong> Every number on this site comes from simulated returns, not
           real markets. Live data is not connected yet.
         </div>
       )}
 
-      <div className="mx-auto flex w-full max-w-[1440px] flex-1">
+      <div className="mx-auto mt-3 flex w-full max-w-[1440px] flex-1 gap-3 px-2 md:px-4">
         {/* Wide screens: a sidebar with the sections, ways to contribute and topics. */}
         <aside aria-label="Sections" className="hidden w-[240px] shrink-0 xl:block">
-          <div className="no-scrollbar sticky top-[84px] max-h-[calc(100vh-84px)] overflow-y-auto px-4 py-6">
+          <div className="sheet no-scrollbar sticky top-[88px] max-h-[calc(100vh-100px)] overflow-y-auto px-4 py-6">
             <nav aria-label="Main">
               <ul className="space-y-1">
                 {NAV.map((n) => (
@@ -152,7 +153,7 @@ export function Shell() {
                       to={n.to}
                       end={n.end}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium ${
+                        `flex items-center gap-3 px-3 py-2.5 text-[15px] font-medium ${
                           isActive ? "bg-accent-soft font-semibold text-fg" : "text-muted hover:bg-surface hover:text-fg"
                         }`
                       }
@@ -174,7 +175,7 @@ export function Shell() {
             <ul className="space-y-1">
               {CONTRIBUTE.map((n) => (
                 <li key={n.to}>
-                  <Link to={n.to} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted hover:bg-surface hover:text-fg">
+                  <Link to={n.to} className="flex items-center gap-3 px-3 py-2 text-sm text-muted hover:bg-surface hover:text-fg">
                     <Icon name={n.icon} size={17} />
                     {n.label}
                   </Link>
@@ -189,10 +190,10 @@ export function Shell() {
                     <li key={topic}>
                       <Link
                         to={`/explore?topic=${encodeURIComponent(topic)}`}
-                        className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm text-muted hover:bg-surface hover:text-fg"
+                        className="flex items-center justify-between gap-3 px-3 py-2 text-sm text-muted hover:bg-surface hover:text-fg"
                       >
                         <span className="flex items-center gap-3">
-                          <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-accent-soft text-accent">
+                          <span aria-hidden="true" className="grid h-6 w-6 place-items-center bg-accent-soft text-accent">
                             <Icon name={TOPIC_ICON[topic] ?? "layers"} size={13} />
                           </span>
                           {topic}
@@ -207,22 +208,22 @@ export function Shell() {
           </div>
         </aside>
 
-        <main id="main" className="min-w-0 flex-1 px-4 py-8 md:px-6 xl:px-10">
+        <main id="main" className="sheet min-w-0 flex-1 px-4 py-8 md:px-6 xl:px-10">
           <div className={`mx-auto w-full ${wide ? "max-w-[1180px]" : "max-w-3xl"}`}>
             <Outlet />
           </div>
         </main>
       </div>
 
-      <footer className="mt-8 border-t border-line bg-surface py-8 text-xs text-muted">
+      <footer className="mt-3 py-8 text-xs text-on-backdrop/75">
         <div className="mx-auto max-w-[1440px] space-y-2 px-4 md:px-6">
           <p>
-            <strong className="text-fg">Research, not investment advice.</strong> Spillover never places trades and holds no
+            <strong className="text-on-backdrop">Research, not investment advice.</strong> Spillover never places trades and holds no
             funds. Nothing here is a recommendation to buy or sell anything.
           </p>
           <p>
             Open source (Apache-2.0 code, CC-BY-4.0 data).{" "}
-            <a className="underline hover:text-fg" href={`https://github.com/${repo}`}>
+            <a className="underline hover:text-on-backdrop" href={`https://github.com/${repo}`}>
               Source on GitHub
             </a>
             .
@@ -231,11 +232,11 @@ export function Shell() {
             Market data via FRED, Federal Reserve Bank of St. Louis: dollar and yen series from the
             Board of Governors of the Federal Reserve System (public domain). Single-stock prices from Tiingo. S&amp;P 500 © S&amp;P Dow Jones Indices LLC; Nasdaq Composite © Nasdaq,
             Inc.; used for non-commercial educational research. Only statistics derived from them are shown. Headlines come from the{" "}
-            <a className="underline hover:text-fg" href="https://www.gdeltproject.org/" rel="noopener noreferrer">
+            <a className="underline hover:text-on-backdrop" href="https://www.gdeltproject.org/" rel="noopener noreferrer">
               GDELT Project
             </a>
             , and charts are drawn with{" "}
-            <a className="underline hover:text-fg" href="https://www.tradingview.com/" rel="noopener noreferrer">
+            <a className="underline hover:text-on-backdrop" href="https://www.tradingview.com/" rel="noopener noreferrer">
               TradingView Lightweight Charts
             </a>
             .

@@ -22,7 +22,7 @@
   <a href="docs/methodology.md"><b>Methodology</b></a>
 </p>
 
-Spillover is a market research tool for hobbyists, students and curious people. You make your assumptions regarding a particular headline or news event's influence on the
+Spillover is a market research tool for hobbyists, students and curious people. **Everything is meant to be free and open source.** You make your assumptions regarding a particular headline or news event's influence on the
 market, and your claim gets locked into the system with a time stamp. After that, real market information determines if you got it right. Spillover does not place any trades and send any signals. Each claim ends up on a scoreboard which will also contain its sample size,
 uncertainty and errors. Users can challenge a claim, comment on it and share their opinions
 regarding a particular claim or outcome.
